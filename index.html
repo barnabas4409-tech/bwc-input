@@ -908,6 +908,36 @@
             grid-template-columns: 1fr;
         }
     }
+
+    /* ── LANDSCAPE MODE (모바일 가로 방향) ── */
+    @media (max-height: 500px) and (orientation: landscape) {
+        .hdr { height: 48px; padding: 0 var(--s3); }
+        .hdr-brand h1 { font-size: 12px; }
+        nav { padding: 0 var(--s3); }
+        .nt { height: 40px; font-size: 11px; padding: 0 var(--s2); }
+        .nt-icon { font-size: 16px; }
+        main { padding: var(--s3) var(--s3) var(--s4); }
+        .page-hdr-title h2 { font-size: 16px; }
+        .page-hdr-title p { font-size: 12px; }
+        .dept-btn { height: 45px; }
+        .dept-name { font-size: 12px; }
+        .group-card-body { padding: 8px; gap: 4px; }
+        .form-card { padding: var(--s3); margin-bottom: var(--s2); }
+        .form-row { padding: var(--s1) 0; gap: var(--s2); }
+        .form-label { font-size: 12px; }
+        .form-input { width: 80px; height: 32px; font-size: 13px; }
+        .form-submit-area { gap: var(--s2); }
+        .btn-primary, .btn-secondary { height: 40px; font-size: 13px; }
+        .stat-value { font-size: 32px; }
+        .summary-stats { gap: var(--s2); margin-bottom: var(--s4); }
+        .stat-card { padding: var(--s3) var(--s4); }
+        .status-group { padding: var(--s4); margin-bottom: var(--s2); }
+        .status-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+        .done-wrap { margin: 40px auto; padding: var(--s5); }
+        .done-icon { width: 48px; height: 48px; font-size: 24px; margin-bottom: var(--s2); }
+        .done-wrap h3 { font-size: 16px; }
+        .form-date-row { gap: var(--s2); padding: var(--s2) 0; }
+    }
     </style>
 </head>
 <body>
