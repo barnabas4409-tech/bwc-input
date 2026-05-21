@@ -223,8 +223,8 @@
        MAIN
        ══════════════════════════════════════════════════ */
     main {
-        padding: var(--s5) var(--s5) var(--s8);
-        max-width: 1280px;
+        padding: var(--s5) var(--s4) var(--s8);
+        max-width: 100%;
         margin: 0 auto;
     }
     .sec { display: none; }
@@ -319,7 +319,7 @@
         color: var(--color-group-newfam);
     }
     .group-card-hdr {
-        padding: var(--s3) var(--s4);
+        padding: 10px var(--s4);
         border-bottom: 1px solid var(--color-border-default);
         background: var(--color-bg-subtle);
         display: flex;
@@ -339,27 +339,28 @@
         font-family: var(--font-mono);
     }
     .group-card-body {
-        padding: var(--s3);
+        padding: 10px;
         display: flex;
         flex-wrap: wrap;
-        gap: var(--s2);
+        gap: 6px;
         justify-content: flex-start;
         align-content: flex-start;
     }
     .dept-btn {
-        width: 130px;
-        height: 70px;
+        width: 115px;
+        height: 60px;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: var(--s3);
+        padding: var(--s2);
         background: var(--color-bg-surface);
         border: 2px solid var(--color-border-default);
         border-radius: 8px;
         cursor: pointer;
         text-align: center;
         transition: all var(--t-base) var(--ease-default);
+        font-size: 13px;
     }
     .group-card[data-group="sunday"] .dept-btn:hover {
         border-color: var(--color-group-sunday);
@@ -486,6 +487,19 @@
         margin-bottom: var(--s4);
         padding-bottom: var(--s3);
         border-bottom: 1px solid var(--color-border-default);
+    }
+    #form-fields-area .form-card > div:not(.form-card-title) {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--s3);
+    }
+    #form-fields-area .form-row {
+        display: flex;
+        align-items: center;
+        gap: var(--s2);
+    }
+    #form-fields-area .form-label {
+        min-width: 60px;
     }
     .form-row {
         display: grid;
@@ -834,23 +848,19 @@
        RESPONSIVE
        ══════════════════════════════════════════════════ */
     @media (max-width: 768px) {
-        .hdr { padding: 0 var(--s4); height: 52px; }
+        .hdr { padding: 0 var(--s3); height: 52px; }
         .hdr-brand h1 { font-size: 13px; }
         .hdr-brand p { display: none; }
         nav { padding: 0 var(--s3); }
         .nt { padding: 0 var(--s3); font-size: 12px; height: 42px; }
-        main { padding: var(--s4) var(--s4) var(--s10); }
+        main { padding: var(--s4) var(--s3) var(--s10); }
         .page-hdr-title h2 { font-size: 17px; }
-        .group-card-body {
-            grid-template-columns: 1fr;
-        }
         .form-card { padding: var(--s4); }
-        .form-row {
-            grid-template-columns: 1fr;
-            gap: var(--s2);
-        }
         .form-input { width: 100%; }
         .form-prev { text-align: left; }
+        #form-fields-area .form-card > div:not(.form-card-title) {
+            grid-template-columns: 1fr;
+        }
     }
     </style>
 </head>
