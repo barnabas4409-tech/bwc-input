@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>분당우리교회 데이터 입력 · 2026</title>
+    <meta name="theme-color" content="#635bff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BWC 입력">
+
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+
+    <style>
+    /* ══════════════════════════════════════════════════
+       DESIGN SYSTEM — 분당우리교회 대시보드와 공유
+       ══════════════════════════════════════════════════ */
+    :root {
+        --color-bg-base: #f6f8fa;
+        --color-bg-surface: #ffffff;
+        --color-bg-subtle: #f0f2f5;
+        --color-bg-muted: #e8eaed;
+        --color-border-default: rgba(0,0,0,0.08);
+        --color-border-strong: rgba(0,0,0,0.15);
+        --color-text-primary: #0a0e1a;
+        --color-text-secondary: #3c4257;
+        --color-text-tertiary: #697386;
+        --color-text-disabled: #9da8b7;
+        --color-accent: #635bff;
+        --color-accent-light: #f0efff;
+        --color-accent-dark: #4f46e5;
+        --color-positive: #09825d;
+        --color-positive-bg: #edfaf4;
+        --color-negative: #c0123c;
+        --color-negative-bg: #fff0f3;
+        --color-warning: #a16207;
+        --color-warning-bg: #fefce8;
+
+        --font-display: 'Noto Serif KR', 'Georgia', serif;
+        --font-body: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+
+        --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px;
+        --s6: 24px; --s8: 32px; --s10: 40px; --s12: 48px; --s16: 64px;
+
+        --ease-default: cubic-bezier(0.2,0,0,1);
+        --ease-spring: cubic-bezier(0.22,1,0.36,1);
+
+        --t-fast: 100ms;
+        --t-base: 150ms;
+        --t-slow: 250ms;
+
+        --r: 10px;
+        --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+        --shadow: 0 2px 8px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04);
+        --shadow-lg: 0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    /* ── RESET ── */
+    *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+    body {
+        font-family: var(--font-body);
+        background: var(--color-bg-base);
+        color: var(--color-text-primary);
+        font-size: 14px;
+        line-height: 1.5;
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    button { font-family: inherit; }
+    input, select, textarea { font-family: inherit; }
+
+    /* ══════════════════════════════════════════════════
+       HEADER
+       ══════════════════════════════════════════════════ */
+    .hdr {
+        background: var(--color-bg-surface);
+        border-bottom: 1px solid var(--color-border-default);
+        padding: 0 var(--s8);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 56px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+    .hdr-l {
+        display: flex;
+        align-items: center;
+        gap: var(--s3);
+    }
+    .cross {
+        width: 30px;
+        height: 30px;
+        background: var(--color-accent);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        flex-shrink: 0;
+    }
+    .cross::before, .cross::after {
+        content: '';
+        position: absolute;
+        background: #fff;
+        border-radius: 2px;
+    }
+    .cross::before { width: 3px; height: 16px; }
+    .cross::after { width: 12px; height: 3px; }
+    .hdr-brand h1 {
+        font-family: var(--font-display);
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--color-text-primary);
+        letter-spacing: -0.3px;
+        line-height: 1.2;
+    }
+    .hdr-brand p {
+        font-size: 11px;
+        color: var(--color-text-tertiary);
+        margin-top: 1px;
+    }
+    .hdr-r {
+        display: flex;
+        align-items: center;
+        gap: var(--s3);
+    }
+    .week-badge {
+        background: var(--color-accent-light);
+        color: var(--color-accent);
+        border: 1px solid rgba(99,91,255,0.2);
+        border-radius: 20px;
+        padding: 3px 12px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+    }
+    .deadline-badge {
+        background: var(--color-warning-bg);
+        color: var(--color-warning);
+        border: 1px solid rgba(161,98,7,0.2);
+        border-radius: 20px;
+        padding: 3px 10px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+
+    /* ══════════════════════════════════════════════════
+       NAV
+       ══════════════════════════════════════════════════ */
+    nav {
+        background: var(--color-bg-surface);
+        border-bottom: 1px solid var(--color-border-default);
+        padding: 0 var(--s8);
+        display: flex;
+        gap: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    nav::-webkit-scrollbar { display: none; }
+    .nt {
+        padding: 0 var(--s4);
+        height: 44px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--color-text-tertiary);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        white-space: nowrap;
+        flex-shrink: 0;
+        letter-spacing: -0.1px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: transparent;
+        border-top: none;
+        border-left: none;
+        border-right: none;
+        transition: color var(--t-base) var(--ease-default),
+                    border-color var(--t-base) var(--ease-default),
+                    background var(--t-base);
+    }
+    .nt:hover {
+        color: var(--color-text-secondary);
+        background: var(--color-bg-subtle);
+    }
+    .nt.on {
+        color: var(--color-accent);
+        border-bottom-color: var(--color-accent);
+        font-weight: 700;
+        background: var(--color-accent-light);
+    }
+    .nt-icon { font-size: 14px; }
+    .nt-lock {
+        font-size: 11px;
+        opacity: 0.5;
+    }
+
+    /* ══════════════════════════════════════════════════
+       MAIN
+       ══════════════════════════════════════════════════ */
+    main {
+        padding: var(--s6) var(--s8) var(--s12);
+        max-width: 1280px;
+        margin: 0 auto;
+    }
+    .sec { display: none; }
+    .sec.on { display: block; }
+
+    /* ── PAGE HEADER ── */
+    .page-hdr {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        margin-bottom: var(--s6);
+        padding-bottom: var(--s5);
+        border-bottom: 1px solid var(--color-border-default);
+        flex-wrap: wrap;
+        gap: var(--s3);
+    }
+    .page-hdr-title h2 {
+        font-family: var(--font-display);
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--color-text-primary);
+        letter-spacing: -0.5px;
+        line-height: 1.2;
+    }
+    .page-hdr-title p {
+        font-size: 12px;
+        color: var(--color-text-tertiary);
+        margin-top: 4px;
+    }
+
+    /* ══════════════════════════════════════════════════
+       INPUT TAB — 부서 선택 화면
+       ══════════════════════════════════════════════════ */
+    .select-layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--s4);
+    }
+    .group-card {
+        background: var(--color-bg-surface);
+        border: 1px solid var(--color-border-default);
+        border-radius: var(--r);
+        overflow: hidden;
+    }
+    .group-card-hdr {
+        padding: var(--s4) var(--s5);
+        border-bottom: 1px solid var(--color-border-default);
+        background: var(--color-bg-subtle);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .group-card-title {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--color-text-tertiary);
+    }
+    .group-card-count {
+        font-size: 11px;
+        color: var(--color-text-tertiary);
+        font-family: var(--font-mono);
+    }
+    .group-card-body {
+        padding: var(--s3);
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: var(--s2);
+    }
+    .dept-btn {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--s3) var(--s4);
+        background: var(--color-bg-surface);
+        border: 1px solid var(--color-border-default);
+        border-radius: 8px;
+        cursor: pointer;
+        text-align: left;
+        transition: all var(--t-base) var(--ease-default);
+    }
+    .dept-btn:hover {
+        border-color: var(--color-accent);
+        background: var(--color-accent-light);
+        transform: translateY(-1px);
+    }
+    .dept-btn-left {
+        display: flex;
+        align-items: center;
+        gap: var(--s2);
+        min-width: 0;
+    }
+    .dept-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    .dept-dot.submitted { background: var(--color-positive); }
+    .dept-dot.missing { background: var(--color-negative); }
+    .dept-dot.pending { background: var(--color-text-disabled); }
+    .dept-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+    .dept-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--color-text-primary);
+    }
+    .dept-meta {
+        font-size: 11px;
+        color: var(--color-text-tertiary);
+    }
+    .dept-badge {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 4px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        flex-shrink: 0;
+    }
+    .dept-badge.done {
+        background: var(--color-positive-bg);
+        color: var(--color-positive);
+    }
+    .dept-badge.miss {
+        background: var(--color-negative-bg);
+        color: var(--color-negative);
+    }
+
+    /* ══════════════════════════════════════════════════
+       INPUT FORM 화면
+       ══════════════════════════════════════════════════ */
+    .form-wrap {
+        max-width: 720px;
+        margin: 0 auto;
+    }
+    .form-back-btn {
+        background: transparent;
+        border: 1px solid var(--color-border-default);
+        border-radius: 7px;
+        padding: 5px 12px;
+        font-size: 12px;
+        color: var(--color-text-secondary);
+        cursor: pointer;
+        margin-bottom: var(--s4);
+        transition: all var(--t-base);
+    }
+    .form-back-btn:hover {
+        border-color: var(--color-accent);
+        color: var(--color-accent);
+    }
+    .form-card {
+        background: var(--color-bg-surface);
+        border: 1px solid var(--color-border-default);
+        border-radius: var(--r);
+        padding: var(--s6);
+        margin-bottom: var(--s4);
+    }
+    .form-card-title {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--color-text-tertiary);
+        margin-bottom: var(--s4);
+        padding-bottom: var(--s3);
+        border-bottom: 1px solid var(--color-border-default);
+    }
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        align-items: center;
+        gap: var(--s4);
+        padding: var(--s3) 0;
+        border-bottom: 1px solid var(--color-border-default);
+    }
+    .form-row:last-child { border-bottom: none; }
+    .form-label {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--color-text-primary);
+    }
+    .form-prev {
+        font-size: 11px;
+        color: var(--color-text-tertiary);
+        font-family: var(--font-mono);
+    }
+    .form-input {
+        width: 100px;
+        height: 36px;
+        padding: 0 12px;
+        border: 1px solid var(--color-border-default);
+        border-radius: 7px;
+        font-size: 14px;
+        font-family: var(--font-mono);
+        font-weight: 600;
+        color: var(--color-text-primary);
+        text-align: right;
+        background: var(--color-bg-surface);
+        outline: none;
+        transition: all var(--t-base);
+    }
+    .form-input:focus {
+        border-color: var(--color-accent);
+        box-shadow: 0 0 0 3px rgba(99,91,255,0.15);
+    }
+    .form-input::-webkit-outer-spin-button,
+    .form-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    .form-total {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--s4);
+        background: var(--color-accent-light);
+        border-radius: 8px;
+        margin-top: var(--s3);
+    }
+    .form-total-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--color-accent);
+    }
+    .form-total-value {
+        font-size: 22px;
+        font-weight: 700;
+        font-family: var(--font-mono);
+        color: var(--color-accent);
+        letter-spacing: -0.02em;
+    }
+    .form-date-row {
+        display: flex;
+        align-items: center;
+        gap: var(--s3);
+        padding: var(--s3) 0;
+    }
+    .form-date-input {
+        padding: 6px 12px;
+        border: 1px solid var(--color-border-default);
+        border-radius: 7px;
+        font-size: 13px;
+        background: var(--color-bg-surface);
+    }
+    .form-submit-area {
+        display: flex;
+        gap: var(--s3);
+        margin-top: var(--s5);
+    }
+    .btn-primary {
+        flex: 1;
+        height: 44px;
+        background: var(--color-accent);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background var(--t-base);
+    }
+    .btn-primary:hover { background: var(--color-accent-dark); }
+    .btn-secondary {
+        height: 44px;
+        padding: 0 var(--s5);
+        background: var(--color-bg-surface);
+        color: var(--color-text-secondary);
+        border: 1px solid var(--color-border-default);
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all var(--t-base);
+    }
+    .btn-secondary:hover {
+        border-color: var(--color-text-secondary);
+        background: var(--color-bg-subtle);
+    }
+
+    /* ── 알림 (이미 제출됨, 빈칸 경고 등) ── */
+    .form-alert {
+        padding: var(--s3) var(--s4);
+        border-radius: 8px;
+        font-size: 13px;
+        margin-bottom: var(--s4);
+        display: flex;
+        align-items: center;
+        gap: var(--s2);
+    }
+    .form-alert.info {
+        background: var(--color-accent-light);
+        color: var(--color-accent);
+        border: 1px solid rgba(99,91,255,0.2);
+    }
+    .form-alert.warn {
+        background: var(--color-warning-bg);
+        color: var(--color-warning);
+        border: 1px solid rgba(161,98,7,0.2);
+    }
+
+    /* ══════════════════════════════════════════════════
+       SUBMISSION STATUS (제출 현황) — 누구나
+       ══════════════════════════════════════════════════ */
+    .summary-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: var(--s3);
+        margin-bottom: var(--s5);
+    }
+    .stat-card {
+        background: var(--color-bg-surface);
+        border: 1px solid var(--color-border-default);
+        border-radius: var(--r);
+        padding: var(--s4) var(--s5);
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card-bar {
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+    }
+    .stat-card.done .stat-card-bar { background: var(--color-positive); }
+    .stat-card.miss .stat-card-bar { background: var(--color-negative); }
+    .stat-card.total .stat-card-bar { background: var(--color-accent); }
+    .stat-label {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--color-text-tertiary);
+        margin-bottom: var(--s2);
+        margin-top: var(--s1);
+    }
+    .stat-value {
+        font-size: 30px;
+        font-weight: 700;
+        line-height: 1;
+        font-family: var(--font-mono);
+        letter-spacing: -0.03em;
+        font-variant-numeric: tabular-nums;
+    }
+    .stat-card.done .stat-value { color: var(--color-positive); }
+    .stat-card.miss .stat-value { color: var(--color-negative); }
+    .stat-card.total .stat-value { color: var(--color-accent); }
+    .stat-sub {
+        font-size: 11px;
+        color: var(--color-text-tertiary);
+        margin-top: 4px;
+    }
+
+    /* ── 제출 현황 그룹별 표시 ── */
+    .status-group {
+        background: var(--color-bg-surface);
+        border: 1px solid var(--color-border-default);
+        border-radius: var(--r);
+        padding: var(--s5);
+        margin-bottom: var(--s3);
+    }
+    .status-group-hdr {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--s4);
+        padding-bottom: var(--s3);
+        border-bottom: 1px solid var(--color-border-default);
+    }
+    .status-group-title {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--color-text-tertiary);
+    }
+    .status-group-count {
+        font-size: 11px;
+        color: var(--color-text-tertiary);
+        font-family: var(--font-mono);
+    }
+    .status-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: var(--s2);
+    }
+    .status-item {
+        display: flex;
+        align-items: center;
+        gap: var(--s2);
+        padding: var(--s2) var(--s3);
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        border: 1px solid var(--color-border-default);
+    }
+    .status-item.submitted {
+        background: var(--color-positive-bg);
+        border-color: rgba(9,130,93,0.2);
+        color: var(--color-positive);
+    }
+    .status-item.missing {
+        background: var(--color-negative-bg);
+        border-color: rgba(192,18,60,0.2);
+        color: var(--color-negative);
+    }
+    .status-item.pending {
+        background: var(--color-bg-subtle);
+        color: var(--color-text-tertiary);
+    }
+
+    /* ══════════════════════════════════════════════════
+       ADMIN LOGIN
+       ══════════════════════════════════════════════════ */
+    .admin-login {
+        max-width: 420px;
+        margin: 60px auto;
+        padding: var(--s8);
+        background: var(--color-bg-surface);
+        border: 1px solid var(--color-border-default);
+        border-radius: var(--r);
+        text-align: center;
+    }
+    .admin-login-icon {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto var(--s4);
+        background: var(--color-accent-light);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+    }
+    .admin-login h3 {
+        font-family: var(--font-display);
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--color-text-primary);
+        margin-bottom: var(--s2);
+    }
+    .admin-login p {
+        font-size: 13px;
+        color: var(--color-text-tertiary);
+        margin-bottom: var(--s5);
+        line-height: 1.6;
+    }
+    .admin-input {
+        width: 100%;
+        height: 42px;
+        padding: 0 14px;
+        border: 1px solid var(--color-border-default);
+        border-radius: 8px;
+        font-size: 14px;
+        background: var(--color-bg-surface);
+        outline: none;
+        margin-bottom: var(--s3);
+        transition: all var(--t-base);
+    }
+    .admin-input:focus {
+        border-color: var(--color-accent);
+        box-shadow: 0 0 0 3px rgba(99,91,255,0.15);
+    }
+
+    /* ══════════════════════════════════════════════════
+       완료 화면
+       ══════════════════════════════════════════════════ */
+    .done-wrap {
+        max-width: 480px;
+        margin: 80px auto;
+        text-align: center;
+        padding: var(--s8);
+        background: var(--color-bg-surface);
+        border: 1px solid var(--color-border-default);
+        border-radius: var(--r);
+    }
+    .done-icon {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto var(--s4);
+        background: var(--color-positive-bg);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        color: var(--color-positive);
+        font-weight: 700;
+    }
+    .done-wrap h3 {
+        font-family: var(--font-display);
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--color-text-primary);
+        margin-bottom: var(--s2);
+    }
+    .done-wrap p {
+        font-size: 14px;
+        color: var(--color-text-secondary);
+        margin-bottom: var(--s2);
+    }
+    .done-time {
+        display: inline-block;
+        padding: 4px 12px;
+        background: var(--color-bg-subtle);
+        border-radius: 20px;
+        font-size: 12px;
+        color: var(--color-text-tertiary);
+        font-family: var(--font-mono);
+        margin-bottom: var(--s5);
+    }
+
+    /* ══════════════════════════════════════════════════
+       RESPONSIVE
+       ══════════════════════════════════════════════════ */
+    @media (max-width: 768px) {
+        .hdr { padding: 0 var(--s4); height: 52px; }
+        .hdr-brand h1 { font-size: 13px; }
+        .hdr-brand p { display: none; }
+        nav { padding: 0 var(--s3); }
+        .nt { padding: 0 var(--s3); font-size: 12px; height: 42px; }
+        main { padding: var(--s4) var(--s4) var(--s10); }
+        .page-hdr-title h2 { font-size: 17px; }
+        .group-card-body {
+            grid-template-columns: 1fr;
+        }
+        .form-card { padding: var(--s4); }
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: var(--s2);
+        }
+        .form-input { width: 100%; }
+        .form-prev { text-align: left; }
+    }
+    </style>
+</head>
+<body>
+
+    <!-- ═══════════════════════════════════════════════
+         HEADER
+         ═══════════════════════════════════════════════ -->
+    <header class="hdr">
+        <div class="hdr-l">
+            <div class="cross"></div>
+            <div class="hdr-brand">
+                <h1>분당우리교회</h1>
+                <p>출석 데이터 입력 시스템</p>
+            </div>
+        </div>
+        <div class="hdr-r">
+            <span class="deadline-badge" id="deadline-badge">화요일 마감</span>
+            <span class="week-badge" id="week-badge">2026년 5월 3주차</span>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════════════
+         NAV
+         ═══════════════════════════════════════════════ -->
+    <nav>
+        <button class="nt on" onclick="switchTab('input')" id="tab-input">
+            <span class="nt-icon">✏️</span>
+            <span>입력하기</span>
+        </button>
+        <button class="nt" onclick="switchTab('status')" id="tab-status">
+            <span class="nt-icon">📋</span>
+            <span>제출 현황</span>
+        </button>
+        <button class="nt" onclick="switchTab('admin')" id="tab-admin">
+            <span class="nt-icon">📊</span>
+            <span>데이터 현황</span>
+            <span class="nt-lock">🔒</span>
+        </button>
+    </nav>
+
+    <!-- ═══════════════════════════════════════════════
+         MAIN
+         ═══════════════════════════════════════════════ -->
+    <main>
+
+        <!-- ─── 입력하기 탭 ─── -->
+        <section class="sec on" id="sec-input">
+
+            <!-- 부서 선택 화면 -->
+            <div id="screen-select">
+                <div class="page-hdr">
+                    <div class="page-hdr-title">
+                        <h2>부서 선택</h2>
+                        <p>담당하시는 부서를 선택해 이번 주 데이터를 입력해주세요</p>
+                    </div>
+                </div>
+
+                <div class="select-layout">
+
+                    <!-- 그룹: 주일예배 -->
+                    <div class="group-card">
+                        <div class="group-card-hdr">
+                            <div class="group-card-title">주일예배</div>
+                            <div class="group-card-count" id="cnt-sunday">0/2 제출</div>
+                        </div>
+                        <div class="group-card-body" id="grp-sunday">
+                            <!-- JS로 생성 -->
+                        </div>
+                    </div>
+
+                    <!-- 그룹: 청년교구 -->
+                    <div class="group-card">
+                        <div class="group-card-hdr">
+                            <div class="group-card-title">청년교구</div>
+                            <div class="group-card-count" id="cnt-youth">0/9 제출</div>
+                        </div>
+                        <div class="group-card-body" id="grp-youth"></div>
+                    </div>
+
+                    <!-- 그룹: 주일학교 -->
+                    <div class="group-card">
+                        <div class="group-card-hdr">
+                            <div class="group-card-title">주일학교</div>
+                            <div class="group-card-count" id="cnt-school">0/13 제출</div>
+                        </div>
+                        <div class="group-card-body" id="grp-school"></div>
+                    </div>
+
+                    <!-- 그룹: 주중·새벽 -->
+                    <div class="group-card">
+                        <div class="group-card-hdr">
+                            <div class="group-card-title">주중 · 새벽</div>
+                            <div class="group-card-count" id="cnt-weekday">0/3 제출</div>
+                        </div>
+                        <div class="group-card-body" id="grp-weekday"></div>
+                    </div>
+
+                    <!-- 그룹: 리더십 (순장반) -->
+                    <div class="group-card">
+                        <div class="group-card-hdr">
+                            <div class="group-card-title">리더십 (순장반)</div>
+                            <div class="group-card-count" id="cnt-leader">0/15 제출</div>
+                        </div>
+                        <div class="group-card-body" id="grp-leader"></div>
+                    </div>
+
+                    <!-- 그룹: 소그룹 (다락방) -->
+                    <div class="group-card">
+                        <div class="group-card-hdr">
+                            <div class="group-card-title">소그룹 (다락방)</div>
+                            <div class="group-card-count" id="cnt-cell">0/14 제출</div>
+                        </div>
+                        <div class="group-card-body" id="grp-cell"></div>
+                    </div>
+
+                    <!-- 그룹: 새가족 -->
+                    <div class="group-card">
+                        <div class="group-card-hdr">
+                            <div class="group-card-title">새가족</div>
+                            <div class="group-card-count" id="cnt-newfam">0/2 제출</div>
+                        </div>
+                        <div class="group-card-body" id="grp-newfam"></div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 입력 폼 화면 -->
+            <div id="screen-form" style="display:none">
+                <div class="form-wrap">
+                    <button class="form-back-btn" onclick="goBack()">← 부서 선택으로</button>
+
+                    <div class="page-hdr">
+                        <div class="page-hdr-title">
+                            <h2 id="form-dept-name">부서명</h2>
+                            <p id="form-dept-meta">담당자 · 입력 항목 안내</p>
+                        </div>
+                    </div>
+
+                    <!-- 알림 영역 -->
+                    <div id="form-alert-area"></div>
+
+                    <!-- 날짜 선택 -->
+                    <div class="form-card">
+                        <div class="form-card-title">입력 기준일</div>
+                        <div class="form-date-row">
+                            <label style="font-size:13px;color:var(--color-text-secondary)">주일 날짜</label>
+                            <input type="date" class="form-date-input" id="form-date">
+                            <span style="font-size:11px;color:var(--color-text-tertiary)" id="form-week-label">2026년 5월 3주차</span>
+                        </div>
+                    </div>
+
+                    <!-- 입력 필드 영역 (부서별로 동적 생성) -->
+                    <div id="form-fields-area">
+                        <!-- JS로 생성 -->
+                    </div>
+
+                    <!-- 제출 버튼 -->
+                    <div class="form-submit-area">
+                        <button class="btn-secondary" onclick="goBack()">취소</button>
+                        <button class="btn-primary" id="form-submit-btn" onclick="submitForm()">제출하기</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 완료 화면 -->
+            <div id="screen-done" style="display:none">
+                <div class="done-wrap">
+                    <div class="done-icon">✓</div>
+                    <h3 id="done-dept-name">제출 완료</h3>
+                    <p>이번 주 데이터가 성공적으로 제출되었습니다</p>
+                    <div class="done-time" id="done-time">2026.05.18 10:23</div>
+                    <div style="display:flex;gap:12px;justify-content:center">
+                        <button class="btn-secondary" onclick="goSelect()">다른 부서 입력</button>
+                        <button class="btn-primary" style="flex:0 0 auto;padding:0 24px" onclick="switchTab('status')">제출 현황 보기</button>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ─── 제출 현황 탭 ─── -->
+        <section class="sec" id="sec-status">
+            <div class="page-hdr">
+                <div class="page-hdr-title">
+                    <h2>제출 현황</h2>
+                    <p>이번 주 부서별 데이터 제출 여부를 한눈에 확인합니다</p>
+                </div>
+            </div>
+
+            <!-- 요약 통계 -->
+            <div class="summary-stats">
+                <div class="stat-card total">
+                    <div class="stat-card-bar"></div>
+                    <div class="stat-label">전체 부서</div>
+                    <div class="stat-value" id="stat-total">58</div>
+                    <div class="stat-sub">담당자 입력 단위</div>
+                </div>
+                <div class="stat-card done">
+                    <div class="stat-card-bar"></div>
+                    <div class="stat-label">제출 완료</div>
+                    <div class="stat-value" id="stat-done">0</div>
+                    <div class="stat-sub">이번 주 기준</div>
+                </div>
+                <div class="stat-card miss">
+                    <div class="stat-card-bar"></div>
+                    <div class="stat-label">미제출</div>
+                    <div class="stat-value" id="stat-miss">58</div>
+                    <div class="stat-sub">마감일까지 입력 필요</div>
+                </div>
+            </div>
+
+            <!-- 그룹별 현황 -->
+            <div id="status-content">
+                <!-- JS로 생성 -->
+            </div>
+        </section>
+
+        <!-- ─── 데이터 현황 탭 (관리자) ─── -->
+        <section class="sec" id="sec-admin">
+
+            <!-- 로그인 화면 -->
+            <div id="admin-login-screen">
+                <div class="admin-login">
+                    <div class="admin-login-icon">🔒</div>
+                    <h3>관리자 로그인</h3>
+                    <p>입력된 실제 데이터를 조회·수정하려면<br>관리자 비밀번호를 입력해주세요</p>
+                    <input type="password" class="admin-input" id="admin-pwd" placeholder="비밀번호" onkeydown="if(event.key==='Enter')adminLogin()">
+                    <button class="btn-primary" onclick="adminLogin()">로그인</button>
+                </div>
+            </div>
+
+            <!-- 데이터 현황 화면 (로그인 후) -->
+            <div id="admin-dashboard" style="display:none">
+                <div class="page-hdr">
+                    <div class="page-hdr-title">
+                        <h2>데이터 현황</h2>
+                        <p>부서별 입력 데이터 조회 및 수정</p>
+                    </div>
+                </div>
+                <div style="padding:60px;text-align:center;color:var(--color-text-tertiary);background:var(--color-bg-surface);border:1px solid var(--color-border-default);border-radius:var(--r)">
+                    데이터 테이블 영역 (Claude Code에서 구현)
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <script>
+    /* ══════════════════════════════════════════════════
+       부서 마스터 데이터
+       ══════════════════════════════════════════════════ */
+    const DEPARTMENTS = {
+        sunday: {
+            label: '주일예배',
+            items: [
+                { name: '서현 1부', fields: [{label: '인원', key: 'count'}] },
+                { name: '서현 2부', fields: [{label: '인원', key: 'count'}] },
+                { name: '서현 3부', fields: [{label: '인원', key: 'count'}] },
+                { name: '송림 1부', fields: [{label: '인원', key: 'count'}] },
+                { name: '송림 2부', fields: [{label: '인원', key: 'count'}] },
+                { name: '송림 3부', fields: [{label: '인원', key: 'count'}] }
+            ]
+        },
+        youth: {
+            label: '청년교구',
+            items: [
+                {
+                    name: '1청년부',
+                    fields: [
+                        {label: '예배인원', key: 'worship'},
+                        {label: '팀모임 - 1팀', key: 'team1'},
+                        {label: '팀모임 - 2팀', key: 'team2'},
+                        {label: '팀모임 - 3팀', key: 'team3'},
+                        {label: '팀모임 - 4팀', key: 'team4'},
+                        {label: '순모임인원', key: 'order'}
+                    ]
+                },
+                {
+                    name: '2청년부',
+                    fields: [
+                        {label: '예배인원', key: 'worship'},
+                        {label: '팀모임 - 1팀', key: 'team1'},
+                        {label: '팀모임 - 2팀', key: 'team2'},
+                        {label: '팀모임 - 3팀', key: 'team3'},
+                        {label: '순모임인원', key: 'order'}
+                    ]
+                },
+                {
+                    name: '3청년부',
+                    fields: [
+                        {label: '예배인원', key: 'worship'},
+                        {label: '팀모임', key: 'team'},
+                        {label: '순모임인원', key: 'order'}
+                    ]
+                },
+                {
+                    name: '4청년부',
+                    fields: [
+                        {label: '예배인원', key: 'worship'},
+                        {label: '팀모임', key: 'team'},
+                        {label: '순모임인원', key: 'order'}
+                    ]
+                }
+            ]
+        },
+        school: {
+            label: '주일학교',
+            items: ['사랑부', '영아부', '유아부', '유치부',
+                    '송림유년부', '서현유년부',
+                    '송림초등부', '서현초등부',
+                    '송림소년부', '서현소년부',
+                    '송림청소년부', '중등부', '고등부']
+        },
+        weekday: {
+            label: '주중·새벽',
+            items: ['수요예배', '금요기도회', '새벽기도']
+        },
+        leader: {
+            label: '리더십 (순장반)',
+            items: ['1교구', '2교구', '3교구', '4교구', '5교구', '6교구', '7교구',
+                    '8교구', '9교구', '10교구', '11교구', '12교구', '13교구', '14교구',
+                    '시니어']
+        },
+        cell: {
+            label: '소그룹 (다락방)',
+            items: ['1교구', '2교구', '3교구', '4교구', '5교구', '6교구', '7교구',
+                    '8교구', '9교구', '10교구', '11교구', '12교구', '13교구', '14교구']
+        },
+        newfam: {
+            label: '새가족',
+            items: ['장년 새가족', '청년 새가족']
+        }
+    };
+
+    /* ══════════════════════════════════════════════════
+       임시 제출 상태 (실제는 Google Sheets에서 불러옴)
+       ══════════════════════════════════════════════════ */
+    const submissionStatus = {};
+
+    /* ══════════════════════════════════════════════════
+       탭 전환
+       ══════════════════════════════════════════════════ */
+    function switchTab(tab) {
+        document.querySelectorAll('.nt').forEach(b => b.classList.remove('on'));
+        document.querySelectorAll('.sec').forEach(s => s.classList.remove('on'));
+        document.getElementById('tab-' + tab).classList.add('on');
+        document.getElementById('sec-' + tab).classList.add('on');
+
+        // 입력 탭으로 돌아갈 때 부서 선택 화면으로
+        if (tab === 'input') goSelect();
+    }
+
+    /* ══════════════════════════════════════════════════
+       부서 선택 화면 렌더링
+       ══════════════════════════════════════════════════ */
+    function renderDepartmentList() {
+        const groupMap = {
+            sunday: 'grp-sunday',
+            youth: 'grp-youth',
+            school: 'grp-school',
+            weekday: 'grp-weekday',
+            leader: 'grp-leader',
+            cell: 'grp-cell',
+            newfam: 'grp-newfam'
+        };
+
+        Object.entries(DEPARTMENTS).forEach(([key, group]) => {
+            const container = document.getElementById(groupMap[key]);
+            container.innerHTML = '';
+            group.items.forEach(item => {
+                const itemName = item.name || item; // 호환성
+                const fullKey = key + ':' + itemName;
+                const status = submissionStatus[fullKey] || 'missing';
+                const btn = document.createElement('button');
+                btn.className = 'dept-btn';
+                btn.onclick = () => openForm(key, item);
+                btn.innerHTML = `
+                    <div class="dept-btn-left">
+                        <div class="dept-dot ${status === 'submitted' ? 'submitted' : 'missing'}"></div>
+                        <div class="dept-info">
+                            <div class="dept-name">${itemName}</div>
+                            <div class="dept-meta">${status === 'submitted' ? '제출 완료' : '미제출'}</div>
+                        </div>
+                    </div>
+                    <div class="dept-badge ${status === 'submitted' ? 'done' : 'miss'}">
+                        ${status === 'submitted' ? '완료' : '대기'}
+                    </div>
+                `;
+                container.appendChild(btn);
+            });
+        });
+    }
+
+    /* ══════════════════════════════════════════════════
+       제출 현황 렌더링
+       ══════════════════════════════════════════════════ */
+    function renderStatus() {
+        const container = document.getElementById('status-content');
+        container.innerHTML = '';
+
+        let totalDone = 0, totalAll = 0;
+
+        Object.entries(DEPARTMENTS).forEach(([key, group]) => {
+            const doneCount = group.items.filter(item => {
+                const itemName = item.name || item;
+                return submissionStatus[key + ':' + itemName] === 'submitted';
+            }).length;
+            totalDone += doneCount;
+            totalAll += group.items.length;
+
+            const block = document.createElement('div');
+            block.className = 'status-group';
+            block.innerHTML = `
+                <div class="status-group-hdr">
+                    <div class="status-group-title">${group.label}</div>
+                    <div class="status-group-count">${doneCount}/${group.items.length} 제출</div>
+                </div>
+                <div class="status-grid">
+                    ${group.items.map(item => {
+                        const itemName = item.name || item;
+                        const st = submissionStatus[key + ':' + itemName] === 'submitted' ? 'submitted' : 'missing';
+                        return `<div class="status-item ${st}">
+                            <div class="dept-dot ${st}"></div>
+                            <span>${itemName}</span>
+                        </div>`;
+                    }).join('')}
+                </div>
+            `;
+            container.appendChild(block);
+        });
+
+        document.getElementById('stat-done').textContent = totalDone;
+        document.getElementById('stat-miss').textContent = totalAll - totalDone;
+        document.getElementById('stat-total').textContent = totalAll;
+    }
+
+    /* ══════════════════════════════════════════════════
+       화면 전환 (입력 탭 내부)
+       ══════════════════════════════════════════════════ */
+    function goSelect() {
+        document.getElementById('screen-select').style.display = 'block';
+        document.getElementById('screen-form').style.display = 'none';
+        document.getElementById('screen-done').style.display = 'none';
+        renderDepartmentList();
+    }
+
+    function openForm(groupKey, deptItem) {
+        document.getElementById('screen-select').style.display = 'none';
+        document.getElementById('screen-form').style.display = 'block';
+        document.getElementById('screen-done').style.display = 'none';
+
+        const deptName = deptItem.name || deptItem;
+        document.getElementById('form-dept-name').textContent = deptName;
+        document.getElementById('form-dept-meta').textContent =
+            DEPARTMENTS[groupKey].label + ' · 이번 주 데이터를 입력해주세요';
+
+        // 부서별 입력 필드 동적 생성
+        const fields = deptItem.fields || [{label: '인원', key: 'count'}];
+        let fieldsHTML = '<div class="form-card"><div class="form-card-title">입력 항목</div>';
+
+        fields.forEach(field => {
+            fieldsHTML += `
+                <div class="form-row">
+                    <div class="form-label">${field.label}</div>
+                    <div style="text-align:right;width:100px">
+                        <input type="number" class="form-input" data-field="${field.key}" placeholder="0">
+                    </div>
+                </div>
+            `;
+        });
+
+        fieldsHTML += '</div>';
+        document.getElementById('form-fields-area').innerHTML = fieldsHTML;
+    }
+
+    function goBack() {
+        goSelect();
+    }
+
+    function submitForm() {
+        // 실제로는 Google Sheets에 저장
+        const deptName = document.getElementById('form-dept-name').textContent;
+        document.getElementById('screen-form').style.display = 'none';
+        document.getElementById('screen-done').style.display = 'block';
+        document.getElementById('done-dept-name').textContent = deptName + ' 제출 완료';
+
+        const now = new Date();
+        document.getElementById('done-time').textContent =
+            `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    }
+
+    /* ══════════════════════════════════════════════════
+       관리자 로그인
+       ══════════════════════════════════════════════════ */
+    function adminLogin() {
+        const pwd = document.getElementById('admin-pwd').value;
+        // 실제 비밀번호 검증은 Claude Code에서 구현
+        if (pwd === 'admin') {
+            document.getElementById('admin-login-screen').style.display = 'none';
+            document.getElementById('admin-dashboard').style.display = 'block';
+        } else {
+            alert('비밀번호가 일치하지 않습니다');
+        }
+    }
+
+    /* ══════════════════════════════════════════════════
+       초기 렌더링
+       ══════════════════════════════════════════════════ */
+    renderDepartmentList();
+    renderStatus();
+    </script>
+
+</body>
+</html>
