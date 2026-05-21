@@ -836,7 +836,7 @@
                     <div class="group-card">
                         <div class="group-card-hdr">
                             <div class="group-card-title">청년교구</div>
-                            <div class="group-card-count" id="cnt-youth">0/9 제출</div>
+                            <div class="group-card-count" id="cnt-youth">0/11 제출</div>
                         </div>
                         <div class="group-card-body" id="grp-youth"></div>
                     </div>
@@ -1070,27 +1070,17 @@
         youth: {
             label: '청년교구',
             items: [
-                {
-                    name: '1청년부',
-                    fields: [
-                        {label: '예배인원', key: 'worship'},
-                        {label: '팀모임 - 1팀', key: 'team1'},
-                        {label: '팀모임 - 2팀', key: 'team2'},
-                        {label: '팀모임 - 3팀', key: 'team3'},
-                        {label: '팀모임 - 4팀', key: 'team4'},
-                        {label: '순모임인원', key: 'order'}
-                    ]
-                },
-                {
-                    name: '2청년부',
-                    fields: [
-                        {label: '예배인원', key: 'worship'},
-                        {label: '팀모임 - 1팀', key: 'team1'},
-                        {label: '팀모임 - 2팀', key: 'team2'},
-                        {label: '팀모임 - 3팀', key: 'team3'},
-                        {label: '순모임인원', key: 'order'}
-                    ]
-                },
+                { name: '1청년부 (예배)', fields: [{label: '예배인원', key: 'worship'}] },
+                { name: '1청년부 1팀', fields: [{label: '팀모임 인원', key: 'team_members'}, {label: '순모임 인원', key: 'order'}] },
+                { name: '1청년부 2팀', fields: [{label: '팀모임 인원', key: 'team_members'}, {label: '순모임 인원', key: 'order'}] },
+                { name: '1청년부 3팀', fields: [{label: '팀모임 인원', key: 'team_members'}, {label: '순모임 인원', key: 'order'}] },
+                { name: '1청년부 4팀', fields: [{label: '팀모임 인원', key: 'team_members'}, {label: '순모임 인원', key: 'order'}] },
+
+                { name: '2청년부 (예배)', fields: [{label: '예배인원', key: 'worship'}] },
+                { name: '2청년부 1팀', fields: [{label: '팀모임 인원', key: 'team_members'}, {label: '순모임 인원', key: 'order'}] },
+                { name: '2청년부 2팀', fields: [{label: '팀모임 인원', key: 'team_members'}, {label: '순모임 인원', key: 'order'}] },
+                { name: '2청년부 3팀', fields: [{label: '팀모임 인원', key: 'team_members'}, {label: '순모임 인원', key: 'order'}] },
+
                 {
                     name: '3청년부',
                     fields: [
