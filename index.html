@@ -611,6 +611,31 @@
         transform: scale(0.98);
         box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
     }
+    .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    .btn-loading {
+        position: relative;
+        color: transparent;
+    }
+    .btn-loading::after {
+        content: '';
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        top: 50%;
+        left: 50%;
+        margin-left: -8px;
+        margin-top: -8px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin 600ms linear infinite;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
     .btn-secondary {
         height: 44px;
         padding: 0 var(--s5);
@@ -1734,20 +1759,35 @@
             return;
         }
 
-        // 제출 상태 저장
-        markSubmitted(groupKey, deptName, deptType);
+        // 제출 버튼 로딩 상태 표시
+        const submitBtn = document.getElementById('form-submit-btn');
+        const originalText = submitBtn.textContent;
+        submitBtn.classList.add('btn-loading');
+        submitBtn.disabled = true;
+        submitBtn.textContent = '제출 중...';
 
-        // 완료 화면 표시
-        document.getElementById('screen-form').style.display = 'none';
-        document.getElementById('screen-done').style.display = 'block';
-        document.getElementById('done-dept-name').textContent = deptName + ' 제출 완료';
+        // 제출 처리 (비동기 시뮬레이션)
+        setTimeout(() => {
+            // 제출 상태 저장
+            markSubmitted(groupKey, deptName, deptType);
 
-        const now = new Date();
-        document.getElementById('done-time').textContent =
-            `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            // 완료 화면 표시
+            document.getElementById('screen-form').style.display = 'none';
+            document.getElementById('screen-done').style.display = 'block';
+            document.getElementById('done-dept-name').textContent = deptName + ' 제출 완료';
 
-        // 마감 여부 확인 후 수정하기 버튼 표시
-        updateEditButtonState(deptType);
+            const now = new Date();
+            document.getElementById('done-time').textContent =
+                `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+            // 마감 여부 확인 후 수정하기 버튼 표시
+            updateEditButtonState(deptType);
+
+            // 버튼 상태 복원
+            submitBtn.classList.remove('btn-loading');
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        }, 400);
     }
 
     function updateEditButtonState(deptType) {
