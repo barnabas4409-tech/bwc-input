@@ -37,6 +37,21 @@
         --color-warning: #a16207;
         --color-warning-bg: #fefce8;
 
+        --color-group-sunday: #6366f1;
+        --color-group-sunday-light: #eef2ff;
+        --color-group-youth: #ec4899;
+        --color-group-youth-light: #fce7f3;
+        --color-group-school: #f97316;
+        --color-group-school-light: #ffedd5;
+        --color-group-weekday: #10b981;
+        --color-group-weekday-light: #d1fae5;
+        --color-group-leader: #3b82f6;
+        --color-group-leader-light: #dbeafe;
+        --color-group-cell: #8b5cf6;
+        --color-group-cell-light: #f3e8ff;
+        --color-group-newfam: #ef4444;
+        --color-group-newfam-light: #fee2e2;
+
         --font-display: 'Noto Serif KR', 'Georgia', serif;
         --font-body: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
@@ -254,6 +269,55 @@
         border-radius: var(--r);
         overflow: hidden;
     }
+    .group-card[data-group="sunday"] .group-card-hdr {
+        background: var(--color-group-sunday-light);
+        border-bottom-color: var(--color-group-sunday);
+    }
+    .group-card[data-group="sunday"] .group-card-title {
+        color: var(--color-group-sunday);
+    }
+    .group-card[data-group="youth"] .group-card-hdr {
+        background: var(--color-group-youth-light);
+        border-bottom-color: var(--color-group-youth);
+    }
+    .group-card[data-group="youth"] .group-card-title {
+        color: var(--color-group-youth);
+    }
+    .group-card[data-group="school"] .group-card-hdr {
+        background: var(--color-group-school-light);
+        border-bottom-color: var(--color-group-school);
+    }
+    .group-card[data-group="school"] .group-card-title {
+        color: var(--color-group-school);
+    }
+    .group-card[data-group="weekday"] .group-card-hdr {
+        background: var(--color-group-weekday-light);
+        border-bottom-color: var(--color-group-weekday);
+    }
+    .group-card[data-group="weekday"] .group-card-title {
+        color: var(--color-group-weekday);
+    }
+    .group-card[data-group="leader"] .group-card-hdr {
+        background: var(--color-group-leader-light);
+        border-bottom-color: var(--color-group-leader);
+    }
+    .group-card[data-group="leader"] .group-card-title {
+        color: var(--color-group-leader);
+    }
+    .group-card[data-group="cell"] .group-card-hdr {
+        background: var(--color-group-cell-light);
+        border-bottom-color: var(--color-group-cell);
+    }
+    .group-card[data-group="cell"] .group-card-title {
+        color: var(--color-group-cell);
+    }
+    .group-card[data-group="newfam"] .group-card-hdr {
+        background: var(--color-group-newfam-light);
+        border-bottom-color: var(--color-group-newfam);
+    }
+    .group-card[data-group="newfam"] .group-card-title {
+        color: var(--color-group-newfam);
+    }
     .group-card-hdr {
         padding: var(--s3) var(--s4);
         border-bottom: 1px solid var(--color-border-default);
@@ -297,9 +361,35 @@
         text-align: center;
         transition: all var(--t-base) var(--ease-default);
     }
+    .group-card[data-group="sunday"] .dept-btn:hover {
+        border-color: var(--color-group-sunday);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+    }
+    .group-card[data-group="youth"] .dept-btn:hover {
+        border-color: var(--color-group-youth);
+        box-shadow: 0 4px 12px rgba(236, 72, 153, 0.15);
+    }
+    .group-card[data-group="school"] .dept-btn:hover {
+        border-color: var(--color-group-school);
+        box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15);
+    }
+    .group-card[data-group="weekday"] .dept-btn:hover {
+        border-color: var(--color-group-weekday);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+    }
+    .group-card[data-group="leader"] .dept-btn:hover {
+        border-color: var(--color-group-leader);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    }
+    .group-card[data-group="cell"] .dept-btn:hover {
+        border-color: var(--color-group-cell);
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
+    }
+    .group-card[data-group="newfam"] .dept-btn:hover {
+        border-color: var(--color-group-newfam);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+    }
     .dept-btn:hover {
-        border-color: var(--color-accent);
-        box-shadow: 0 4px 12px rgba(99,91,255,0.15);
         transform: translateY(-2px);
     }
     .dept-btn-inner {
@@ -822,7 +912,7 @@
                 <div class="select-layout">
 
                     <!-- 그룹: 주일예배 -->
-                    <div class="group-card">
+                    <div class="group-card" data-group="sunday">
                         <div class="group-card-hdr">
                             <div class="group-card-title">주일예배</div>
                             <div class="group-card-count" id="cnt-sunday">0/2 제출</div>
@@ -833,7 +923,7 @@
                     </div>
 
                     <!-- 그룹: 청년교구 -->
-                    <div class="group-card">
+                    <div class="group-card" data-group="youth">
                         <div class="group-card-hdr">
                             <div class="group-card-title">청년교구</div>
                             <div class="group-card-count" id="cnt-youth">0/11 제출</div>
@@ -842,7 +932,7 @@
                     </div>
 
                     <!-- 그룹: 주일학교 -->
-                    <div class="group-card">
+                    <div class="group-card" data-group="school">
                         <div class="group-card-hdr">
                             <div class="group-card-title">주일학교</div>
                             <div class="group-card-count" id="cnt-school">0/13 제출</div>
@@ -851,7 +941,7 @@
                     </div>
 
                     <!-- 그룹: 주중·새벽 -->
-                    <div class="group-card">
+                    <div class="group-card" data-group="weekday">
                         <div class="group-card-hdr">
                             <div class="group-card-title">주중 · 새벽</div>
                             <div class="group-card-count" id="cnt-weekday">0/3 제출</div>
@@ -860,7 +950,7 @@
                     </div>
 
                     <!-- 그룹: 리더십 (순장반) -->
-                    <div class="group-card">
+                    <div class="group-card" data-group="leader">
                         <div class="group-card-hdr">
                             <div class="group-card-title">리더십 (순장반)</div>
                             <div class="group-card-count" id="cnt-leader">0/15 제출</div>
@@ -869,7 +959,7 @@
                     </div>
 
                     <!-- 그룹: 소그룹 (다락방) -->
-                    <div class="group-card">
+                    <div class="group-card" data-group="cell">
                         <div class="group-card-hdr">
                             <div class="group-card-title">소그룹 (다락방)</div>
                             <div class="group-card-count" id="cnt-cell">0/14 제출</div>
@@ -878,7 +968,7 @@
                     </div>
 
                     <!-- 그룹: 새가족 -->
-                    <div class="group-card">
+                    <div class="group-card" data-group="newfam">
                         <div class="group-card-hdr">
                             <div class="group-card-title">새가족</div>
                             <div class="group-card-count" id="cnt-newfam">0/2 제출</div>
