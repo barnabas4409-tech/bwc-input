@@ -490,14 +490,15 @@
         margin-bottom: var(--s3);
     }
     .form-card-title {
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 700;
         letter-spacing: 0.08em;
         text-transform: uppercase;
-        color: var(--color-text-tertiary);
+        color: var(--color-accent);
         margin-bottom: var(--s4);
         padding-bottom: var(--s3);
-        border-bottom: 1px solid var(--color-border-default);
+        border-bottom: 2px solid var(--color-accent-light);
+        display: block;
     }
     #form-fields-area .form-card > div:not(.form-card-title) {
         display: grid;
@@ -517,14 +518,16 @@
         grid-template-columns: 1fr auto auto;
         align-items: center;
         gap: var(--s3);
-        padding: var(--s2) 0;
+        padding: var(--s3) 0;
         border-bottom: 1px solid var(--color-border-default);
     }
-    .form-row:last-child { border-bottom: none; }
+    .form-row:first-child { padding-top: 0; }
+    .form-row:last-child { border-bottom: none; padding-bottom: 0; }
     .form-label {
         font-size: 14px;
-        font-weight: 500;
+        font-weight: 600;
         color: var(--color-text-primary);
+        display: block;
     }
     .form-prev {
         font-size: 11px;
