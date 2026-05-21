@@ -132,6 +132,12 @@
         justify-content: center;
         position: relative;
         flex-shrink: 0;
+        transition: all var(--t-base) var(--ease-default);
+        box-shadow: 0 2px 8px rgba(99, 91, 255, 0.2);
+    }
+    .cross:hover {
+        box-shadow: 0 4px 12px rgba(99, 91, 255, 0.3);
+        transform: scale(1.05);
     }
     .cross::before, .cross::after {
         content: '';
@@ -162,21 +168,29 @@
     .week-badge {
         background: var(--color-accent-light);
         color: var(--color-accent);
-        border: 1px solid rgba(99,91,255,0.2);
+        border: 1.5px solid var(--color-accent);
         border-radius: 20px;
-        padding: 3px 12px;
+        padding: 4px 12px;
         font-size: 11px;
         font-weight: 700;
         letter-spacing: 0.3px;
+        transition: all var(--t-base) var(--ease-default);
+    }
+    .week-badge:hover {
+        box-shadow: 0 2px 8px rgba(99, 91, 255, 0.15);
     }
     .deadline-badge {
         background: var(--color-warning-bg);
         color: var(--color-warning);
-        border: 1px solid rgba(161,98,7,0.2);
+        border: 1.5px solid var(--color-warning);
         border-radius: 20px;
-        padding: 3px 10px;
+        padding: 4px 10px;
         font-size: 11px;
-        font-weight: 500;
+        font-weight: 600;
+        transition: all var(--t-base) var(--ease-default);
+    }
+    .deadline-badge:hover {
+        box-shadow: 0 2px 8px rgba(161, 98, 7, 0.15);
     }
 
     /* ══════════════════════════════════════════════════
@@ -244,8 +258,21 @@
         max-width: 100%;
         margin: 0 auto;
     }
-    .sec { display: none; opacity: 0; }
-    .sec.on { display: block; opacity: 1; transition: opacity 200ms var(--ease-default); }
+    .sec {
+        display: none;
+        opacity: 0;
+        pointer-events: none;
+    }
+    .sec.on {
+        display: block;
+        opacity: 1;
+        pointer-events: auto;
+        animation: fadeIn 200ms var(--ease-default) forwards;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
 
     /* ── PAGE HEADER ── */
     .page-hdr {
@@ -254,9 +281,10 @@
         justify-content: space-between;
         margin-bottom: var(--s4);
         padding-bottom: var(--s3);
-        border-bottom: 1px solid var(--color-border-default);
+        border-bottom: 1.5px solid var(--color-border-default);
         flex-wrap: wrap;
         gap: var(--s3);
+        transition: border-color var(--t-base) var(--ease-default);
     }
     .page-hdr-title h2 {
         font-family: var(--font-display);
@@ -285,6 +313,14 @@
         border: 1px solid var(--color-border-default);
         border-radius: var(--r);
         overflow: hidden;
+        transition: all var(--t-base) var(--ease-default);
+    }
+    .group-card:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .group-card:focus-within {
+        border-color: rgba(99, 91, 255, 0.3);
+        box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.08);
     }
     .group-card[data-group="sunday"] .group-card-hdr {
         background: var(--color-group-sunday-light);
@@ -449,19 +485,23 @@
     .dept-badge {
         font-size: 10px;
         font-weight: 700;
-        padding: 2px 6px;
+        padding: 3px 7px;
         border-radius: 4px;
         letter-spacing: 0.04em;
         text-transform: uppercase;
         flex-shrink: 0;
+        border: 1px solid;
+        transition: all var(--t-fast) var(--ease-default);
     }
     .dept-badge.done {
         background: var(--color-positive-bg);
         color: var(--color-positive);
+        border-color: rgba(9, 130, 93, 0.4);
     }
     .dept-badge.miss {
         background: var(--color-negative-bg);
         color: var(--color-negative);
+        border-color: rgba(192, 18, 60, 0.4);
     }
     /* 이전 호환성 */
     .dept-btn-left {
@@ -743,16 +783,24 @@
         display: flex;
         align-items: center;
         gap: var(--s2);
+        border-left: 4px solid;
+        transition: all var(--t-base) var(--ease-default);
     }
     .form-alert.info {
         background: var(--color-accent-light);
         color: var(--color-accent);
-        border: 1px solid rgba(99,91,255,0.2);
+        border-color: var(--color-accent);
+        border-top: 1px solid rgba(99,91,255,0.2);
+        border-right: 1px solid rgba(99,91,255,0.2);
+        border-bottom: 1px solid rgba(99,91,255,0.2);
     }
     .form-alert.warn {
         background: var(--color-warning-bg);
         color: var(--color-warning);
-        border: 1px solid rgba(161,98,7,0.2);
+        border-color: var(--color-warning);
+        border-top: 1px solid rgba(161,98,7,0.2);
+        border-right: 1px solid rgba(161,98,7,0.2);
+        border-bottom: 1px solid rgba(161,98,7,0.2);
     }
 
     /* ══════════════════════════════════════════════════
