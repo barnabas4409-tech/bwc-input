@@ -212,11 +212,17 @@
         border-right: none;
         transition: color var(--t-base) var(--ease-default),
                     border-color var(--t-base) var(--ease-default),
-                    background var(--t-base);
+                    background var(--t-base) var(--ease-default);
+        position: relative;
     }
     .nt:hover {
         color: var(--color-text-secondary);
         background: var(--color-bg-subtle);
+    }
+    .nt:focus {
+        outline: none;
+        background: rgba(99, 91, 255, 0.08);
+        color: var(--color-accent);
     }
     .nt.on {
         color: var(--color-accent);
@@ -372,6 +378,14 @@
         text-align: center;
         transition: all var(--t-base) var(--ease-default);
         font-size: 13px;
+        position: relative;
+    }
+    .dept-btn:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px var(--color-bg-surface), 0 0 0 4px currentColor;
+    }
+    .dept-btn:active {
+        transform: scale(0.95);
     }
     .group-card[data-group="sunday"] .dept-btn:hover {
         border-color: var(--color-group-sunday);
@@ -538,7 +552,7 @@
         width: 100px;
         height: 36px;
         padding: 0 12px;
-        border: 1px solid var(--color-border-default);
+        border: 1.5px solid var(--color-border-default);
         border-radius: 7px;
         font-size: 14px;
         font-family: var(--font-mono);
@@ -547,11 +561,15 @@
         text-align: right;
         background: var(--color-bg-surface);
         outline: none;
-        transition: all var(--t-base);
+        transition: border-color var(--t-base) var(--ease-default), box-shadow var(--t-base) var(--ease-default);
+    }
+    .form-input:hover {
+        border-color: rgba(99, 91, 255, 0.3);
     }
     .form-input:focus {
         border-color: var(--color-accent);
-        box-shadow: 0 0 0 3px rgba(99,91,255,0.15);
+        box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.15);
+        background: rgba(240, 239, 255, 0.5);
     }
     .form-input::-webkit-outer-spin-button,
     .form-input::-webkit-inner-spin-button {
@@ -602,21 +620,32 @@
         height: 44px;
         background: var(--color-accent);
         color: #fff;
-        border: none;
+        border: 2px solid transparent;
         border-radius: 8px;
         font-size: 14px;
         font-weight: 600;
         cursor: pointer;
-        transition: background var(--t-base), transform var(--t-fast), box-shadow var(--t-fast);
+        transition: background var(--t-base) var(--ease-default), transform var(--t-fast) var(--ease-default), box-shadow var(--t-fast) var(--ease-default);
+        position: relative;
     }
-    .btn-primary:hover { background: var(--color-accent-dark); }
+    .btn-primary:hover {
+        background: var(--color-accent-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(99, 91, 255, 0.3);
+    }
+    .btn-primary:focus {
+        outline: none;
+        border-color: rgba(255, 255, 255, 0.5);
+        box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.2);
+    }
     .btn-primary:active {
-        transform: scale(0.98);
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        transform: translateY(1px);
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 2px 6px rgba(99, 91, 255, 0.2);
     }
     .btn-primary:disabled {
-        opacity: 0.6;
+        opacity: 0.5;
         cursor: not-allowed;
+        transform: none;
     }
     .btn-loading {
         position: relative;
@@ -644,16 +673,33 @@
         padding: 0 var(--s5);
         background: var(--color-bg-surface);
         color: var(--color-text-secondary);
-        border: 1px solid var(--color-border-default);
+        border: 1.5px solid var(--color-border-default);
         border-radius: 8px;
         font-size: 14px;
         font-weight: 500;
         cursor: pointer;
-        transition: all var(--t-base);
+        transition: all var(--t-base) var(--ease-default);
+        position: relative;
     }
     .btn-secondary:hover {
-        border-color: var(--color-text-secondary);
-        background: var(--color-bg-subtle);
+        border-color: var(--color-accent);
+        background: var(--color-accent-light);
+        color: var(--color-accent);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(99, 91, 255, 0.1);
+    }
+    .btn-secondary:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
+    }
+    .btn-secondary:active {
+        transform: translateY(0px);
+        box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .btn-secondary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
     }
 
     /* ── 알림 (이미 제출됨, 빈칸 경고 등) ── */
@@ -693,6 +739,11 @@
         padding: var(--s4) var(--s5);
         position: relative;
         overflow: hidden;
+        transition: all var(--t-base) var(--ease-default);
+    }
+    .stat-card:hover {
+        border-color: rgba(0,0,0,0.15);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
     .stat-card-bar {
         position: absolute;
@@ -772,20 +823,35 @@
         font-size: 13px;
         font-weight: 500;
         border: 1px solid var(--color-border-default);
+        transition: all var(--t-base) var(--ease-default);
+        cursor: default;
+    }
+    .status-item:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
     .status-item.submitted {
         background: var(--color-positive-bg);
         border-color: rgba(9,130,93,0.2);
         color: var(--color-positive);
     }
+    .status-item.submitted:hover {
+        box-shadow: 0 2px 6px rgba(9, 130, 93, 0.15);
+    }
     .status-item.missing {
         background: var(--color-negative-bg);
         border-color: rgba(192,18,60,0.2);
         color: var(--color-negative);
     }
+    .status-item.missing:hover {
+        box-shadow: 0 2px 6px rgba(192, 18, 60, 0.15);
+    }
     .status-item.pending {
         background: var(--color-bg-subtle);
         color: var(--color-text-tertiary);
+    }
+    .status-item.pending:hover {
+        box-shadow: 0 2px 6px rgba(0,0,0,0.04);
     }
 
     /* ══════════════════════════════════════════════════
