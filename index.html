@@ -275,62 +275,65 @@
         font-family: var(--font-mono);
     }
     .group-card-body {
-        padding: var(--s3);
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: var(--s2);
+        padding: var(--s5);
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--s3);
+        justify-content: flex-start;
+        align-content: flex-start;
     }
     .dept-btn {
+        width: 140px;
+        height: 80px;
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: space-between;
-        padding: var(--s3) var(--s4);
+        justify-content: center;
+        padding: var(--s3);
         background: var(--color-bg-surface);
-        border: 1px solid var(--color-border-default);
+        border: 2px solid var(--color-border-default);
         border-radius: 8px;
         cursor: pointer;
-        text-align: left;
+        text-align: center;
         transition: all var(--t-base) var(--ease-default);
     }
     .dept-btn:hover {
         border-color: var(--color-accent);
-        background: var(--color-accent-light);
-        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(99,91,255,0.15);
+        transform: translateY(-2px);
     }
-    .dept-btn-left {
+    .dept-btn-inner {
         display: flex;
+        flex-direction: column;
         align-items: center;
+        justify-content: center;
         gap: var(--s2);
-        min-width: 0;
+        width: 100%;
+        height: 100%;
     }
     .dept-dot {
-        width: 8px;
-        height: 8px;
+        width: 10px;
+        height: 10px;
         border-radius: 50%;
         flex-shrink: 0;
     }
     .dept-dot.submitted { background: var(--color-positive); }
     .dept-dot.missing { background: var(--color-negative); }
     .dept-dot.pending { background: var(--color-text-disabled); }
-    .dept-info {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        min-width: 0;
-    }
     .dept-name {
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 600;
         color: var(--color-text-primary);
-    }
-    .dept-meta {
-        font-size: 11px;
-        color: var(--color-text-tertiary);
+        line-height: 1.3;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     .dept-badge {
         font-size: 10px;
         font-weight: 700;
-        padding: 2px 7px;
+        padding: 2px 6px;
         border-radius: 4px;
         letter-spacing: 0.04em;
         text-transform: uppercase;
@@ -343,6 +346,16 @@
     .dept-badge.miss {
         background: var(--color-negative-bg);
         color: var(--color-negative);
+    }
+    /* 이전 호환성 */
+    .dept-btn-left {
+        display: none;
+    }
+    .dept-info {
+        display: none;
+    }
+    .dept-meta {
+        display: none;
     }
 
     /* ══════════════════════════════════════════════════
@@ -874,6 +887,45 @@
                     </div>
 
                 </div>
+
+                <!-- 이전 자료 보기 버튼 -->
+                <div style="margin-top:var(--s6);text-align:center;padding:var(--s5);border-top:1px solid var(--color-border-default)">
+                    <button class="btn-secondary" onclick="openPreviousData()" style="width:100%;max-width:300px">
+                        📋 이전 자료 보기
+                    </button>
+                </div>
+            </div>
+
+            <!-- 이전 자료 조회 화면 -->
+            <div id="screen-previous" style="display:none">
+                <div class="form-wrap">
+                    <button class="form-back-btn" onclick="goSelect()">← 부서 선택으로</button>
+
+                    <div class="page-hdr">
+                        <div class="page-hdr-title">
+                            <h2>이전 자료 조회</h2>
+                            <p>제출된 과거 데이터를 확인합니다</p>
+                        </div>
+                    </div>
+
+                    <!-- 주차 선택 -->
+                    <div class="form-card">
+                        <div class="form-card-title">주차 선택</div>
+                        <div id="previous-weeks-list" style="display:flex;flex-direction:column;gap:var(--s2)">
+                            <!-- JS로 생성 -->
+                        </div>
+                    </div>
+
+                    <!-- 선택된 주차의 데이터 -->
+                    <div id="previous-data-display" style="display:none">
+                        <div class="form-card">
+                            <div class="form-card-title" id="previous-week-title">2026년 5월 3주차</div>
+                            <div id="previous-data-content" style="display:flex;flex-direction:column;gap:var(--s3)">
+                                <!-- JS로 생성 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- 입력 폼 화면 -->
@@ -921,7 +973,8 @@
                     <h3 id="done-dept-name">제출 완료</h3>
                     <p>이번 주 데이터가 성공적으로 제출되었습니다</p>
                     <div class="done-time" id="done-time">2026.05.18 10:23</div>
-                    <div style="display:flex;gap:12px;justify-content:center">
+                    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+                        <button class="btn-secondary" onclick="editForm()">수정하기</button>
                         <button class="btn-secondary" onclick="goSelect()">다른 부서 입력</button>
                         <button class="btn-primary" style="flex:0 0 auto;padding:0 24px" onclick="switchTab('status')">제출 현황 보기</button>
                     </div>
@@ -1086,9 +1139,143 @@
     };
 
     /* ══════════════════════════════════════════════════
-       임시 제출 상태 (실제는 Google Sheets에서 불러옴)
+       주차 계산 함수
        ══════════════════════════════════════════════════ */
-    const submissionStatus = {};
+    function getWeekKey(deptType) {
+      const now = new Date();
+      const dayOfWeek = now.getDay(); // 0: 일요일, 1: 월요일 ... 6: 토요일
+      const currentDate = now.getDate();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
+      // 기준일 계산 (현재 시간 기준)
+      const isTuesdayBeforeCutoff = dayOfWeek === 2 && now.getHours() < 10; // 화요일 10:00 이전
+      const isWednesdayAfterStart = dayOfWeek === 3 && now.getHours() >= 12; // 수요일 12:00 이후
+
+      let baseDate = new Date(currentYear, currentMonth, currentDate);
+
+      if (deptType === 'sunday' || deptType === 'school' || deptType === 'youth' || deptType === 'newfam') {
+        // 주일 기준: 이번 주 일요일
+        const daysUntilSunday = (dayOfWeek === 0) ? 0 : 7 - dayOfWeek;
+        if (dayOfWeek === 0) {
+          // 오늘이 일요일
+          if (isTuesdayBeforeCutoff) baseDate = new Date(currentYear, currentMonth, currentDate - 6); // 지난주 일요일
+          else baseDate = new Date(currentYear, currentMonth, currentDate);
+        } else {
+          // 이번 주 일요일로 계산
+          const daysToSubtract = dayOfWeek;
+          baseDate = new Date(currentYear, currentMonth, currentDate - daysToSubtract);
+        }
+      } else if (deptType === 'wednesday') {
+        // 수요일 기준
+        const daysUntilWednesday = (dayOfWeek === 3) ? 0 : (3 + 7 - dayOfWeek) % 7;
+        if (dayOfWeek <= 3) {
+          baseDate = new Date(currentYear, currentMonth, currentDate - dayOfWeek + 3);
+        } else {
+          baseDate = new Date(currentYear, currentMonth, currentDate - dayOfWeek + 3 + 7);
+        }
+      } else if (deptType === 'friday') {
+        // 금요일 기준
+        const daysUntilFriday = (dayOfWeek === 5) ? 0 : (5 + 7 - dayOfWeek) % 7;
+        if (dayOfWeek <= 5) {
+          baseDate = new Date(currentYear, currentMonth, currentDate - dayOfWeek + 5);
+        } else {
+          baseDate = new Date(currentYear, currentMonth, currentDate - dayOfWeek + 5 + 7);
+        }
+      } else if (deptType === 'dawn') {
+        // 새벽기도: 당일
+        baseDate = new Date(currentYear, currentMonth, currentDate);
+      }
+
+      const year = baseDate.getFullYear();
+      const month = String(baseDate.getMonth() + 1).padStart(2, '0');
+      const day = String(baseDate.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function getDeptType(groupKey) {
+      const map = {
+        sunday: 'sunday',
+        youth: 'sunday',
+        school: 'sunday',
+        weekday: (itemName) => {
+          if (itemName.includes('수요')) return 'wednesday';
+          if (itemName.includes('금요')) return 'friday';
+          if (itemName.includes('새벽')) return 'dawn';
+          return 'sunday';
+        },
+        leader: 'sunday',
+        cell: 'sunday',
+        newfam: 'sunday'
+      };
+      return map[groupKey];
+    }
+
+    function getDeadline(deptType) {
+      // 화요일 10:00 AM
+      const now = new Date();
+      const dayOfWeek = now.getDay();
+      const currentDate = now.getDate();
+
+      let deadlineDate = new Date();
+      if (dayOfWeek <= 2) { // 일요일~화요일
+        deadlineDate = new Date(now.getFullYear(), now.getMonth(), currentDate - dayOfWeek + 2);
+      } else { // 수요일~토요일
+        deadlineDate = new Date(now.getFullYear(), now.getMonth(), currentDate - dayOfWeek + 9);
+      }
+      deadlineDate.setHours(10, 0, 0, 0);
+      return deadlineDate;
+    }
+
+    function isDeadlinePassed(deptType) {
+      return new Date() > getDeadline(deptType);
+    }
+
+    function getTimeRemaining(deptType) {
+      const deadline = getDeadline(deptType);
+      const now = new Date();
+      const diff = deadline - now;
+      if (diff <= 0) return null;
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      return { hours, minutes };
+    }
+
+    /* ══════════════════════════════════════════════════
+       주차별 제출 상태 (localStorage 기반)
+       ══════════════════════════════════════════════════ */
+    let submissionStatus = {};
+
+    function loadSubmissionStatus() {
+      const stored = localStorage.getItem('bwc-submission-data');
+      if (stored) {
+        submissionStatus = JSON.parse(stored);
+      }
+    }
+
+    function saveSubmissionStatus() {
+      localStorage.setItem('bwc-submission-data', JSON.stringify(submissionStatus));
+    }
+
+    function markSubmitted(groupKey, itemName, deptType) {
+      const weekKey = getWeekKey(deptType);
+      const fullKey = `${weekKey}:${groupKey}:${itemName}`;
+      if (!submissionStatus[weekKey]) submissionStatus[weekKey] = {};
+      submissionStatus[weekKey][fullKey] = {
+        submitted: true,
+        data: {},
+        submittedAt: new Date().toISOString()
+      };
+      saveSubmissionStatus();
+    }
+
+    function getSubmissionStatus(groupKey, itemName, deptType) {
+      const weekKey = getWeekKey(deptType);
+      const fullKey = `${weekKey}:${groupKey}:${itemName}`;
+      if (!submissionStatus[weekKey]) return 'missing';
+      return submissionStatus[weekKey][fullKey]?.submitted ? 'submitted' : 'missing';
+    }
 
     /* ══════════════════════════════════════════════════
        탭 전환
@@ -1104,7 +1291,7 @@
     }
 
     /* ══════════════════════════════════════════════════
-       부서 선택 화면 렌더링
+       부서 선택 화면 렌더링 (벤다이어그램 스타일)
        ══════════════════════════════════════════════════ */
     function renderDepartmentList() {
         const groupMap = {
@@ -1120,27 +1307,44 @@
         Object.entries(DEPARTMENTS).forEach(([key, group]) => {
             const container = document.getElementById(groupMap[key]);
             container.innerHTML = '';
+
+            const deptType = getDeptType(key);
+            let doneCount = 0;
+
             group.items.forEach(item => {
                 const itemName = item.name || item; // 호환성
-                const fullKey = key + ':' + itemName;
-                const status = submissionStatus[fullKey] || 'missing';
+                const getDeptTypeForItem = () => {
+                  if (key === 'weekday') {
+                    if (itemName.includes('수요')) return 'wednesday';
+                    if (itemName.includes('금요')) return 'friday';
+                    if (itemName.includes('새벽')) return 'dawn';
+                  }
+                  return deptType;
+                };
+                const itemDeptType = getDeptTypeForItem();
+                const status = getSubmissionStatus(key, itemName, itemDeptType);
+                if (status === 'submitted') doneCount++;
+
                 const btn = document.createElement('button');
                 btn.className = 'dept-btn';
                 btn.onclick = () => openForm(key, item);
                 btn.innerHTML = `
-                    <div class="dept-btn-left">
+                    <div class="dept-btn-inner">
                         <div class="dept-dot ${status === 'submitted' ? 'submitted' : 'missing'}"></div>
-                        <div class="dept-info">
-                            <div class="dept-name">${itemName}</div>
-                            <div class="dept-meta">${status === 'submitted' ? '제출 완료' : '미제출'}</div>
+                        <div class="dept-name">${itemName}</div>
+                        <div class="dept-badge ${status === 'submitted' ? 'done' : 'miss'}">
+                            ${status === 'submitted' ? '완료' : '대기'}
                         </div>
-                    </div>
-                    <div class="dept-badge ${status === 'submitted' ? 'done' : 'miss'}">
-                        ${status === 'submitted' ? '완료' : '대기'}
                     </div>
                 `;
                 container.appendChild(btn);
             });
+
+            // 그룹 카운트 업데이트
+            const countEl = document.getElementById('cnt-' + key);
+            if (countEl) {
+              countEl.textContent = `${doneCount}/${group.items.length} 제출`;
+            }
         });
     }
 
@@ -1156,7 +1360,16 @@
         Object.entries(DEPARTMENTS).forEach(([key, group]) => {
             const doneCount = group.items.filter(item => {
                 const itemName = item.name || item;
-                return submissionStatus[key + ':' + itemName] === 'submitted';
+                const getDeptTypeForItem = () => {
+                  if (key === 'weekday') {
+                    if (itemName.includes('수요')) return 'wednesday';
+                    if (itemName.includes('금요')) return 'friday';
+                    if (itemName.includes('새벽')) return 'dawn';
+                  }
+                  return getDeptType(key);
+                };
+                const itemDeptType = getDeptTypeForItem();
+                return getSubmissionStatus(key, itemName, itemDeptType) === 'submitted';
             }).length;
             totalDone += doneCount;
             totalAll += group.items.length;
@@ -1171,7 +1384,16 @@
                 <div class="status-grid">
                     ${group.items.map(item => {
                         const itemName = item.name || item;
-                        const st = submissionStatus[key + ':' + itemName] === 'submitted' ? 'submitted' : 'missing';
+                        const getDeptTypeForItem = () => {
+                          if (key === 'weekday') {
+                            if (itemName.includes('수요')) return 'wednesday';
+                            if (itemName.includes('금요')) return 'friday';
+                            if (itemName.includes('새벽')) return 'dawn';
+                          }
+                          return getDeptType(key);
+                        };
+                        const itemDeptType = getDeptTypeForItem();
+                        const st = getSubmissionStatus(key, itemName, itemDeptType) === 'submitted' ? 'submitted' : 'missing';
                         return `<div class="status-item ${st}">
                             <div class="dept-dot ${st}"></div>
                             <span>${itemName}</span>
@@ -1197,10 +1419,15 @@
         renderDepartmentList();
     }
 
+    // 현재 편집 중인 부서 정보
+    let currentFormContext = { groupKey: null, deptItem: null };
+
     function openForm(groupKey, deptItem) {
         document.getElementById('screen-select').style.display = 'none';
         document.getElementById('screen-form').style.display = 'block';
         document.getElementById('screen-done').style.display = 'none';
+
+        currentFormContext = { groupKey, deptItem };
 
         const deptName = deptItem.name || deptItem;
         document.getElementById('form-dept-name').textContent = deptName;
@@ -1230,9 +1457,113 @@
         goSelect();
     }
 
+    /* ══════════════════════════════════════════════════
+       이전 자료 보기
+       ══════════════════════════════════════════════════ */
+    function getPreviousWeeks() {
+        const weeks = new Set();
+        Object.keys(submissionStatus).forEach(weekKey => {
+            Object.keys(submissionStatus[weekKey]).forEach(fullKey => {
+                weeks.add(weekKey);
+            });
+        });
+        return Array.from(weeks).sort().reverse(); // 역순 정렬
+    }
+
+    function getWeekLabel(dateStr) {
+        const [year, month, day] = dateStr.split('-');
+        const date = new Date(year, parseInt(month) - 1, day);
+        const weekNum = Math.ceil((date.getDate()) / 7);
+        return `${year}년 ${parseInt(month)}월 ${weekNum}주차 (${dateStr})`;
+    }
+
+    function openPreviousData() {
+        document.getElementById('screen-select').style.display = 'none';
+        document.getElementById('screen-form').style.display = 'none';
+        document.getElementById('screen-done').style.display = 'none';
+        document.getElementById('screen-previous').style.display = 'block';
+
+        const weeks = getPreviousWeeks();
+        const listContainer = document.getElementById('previous-weeks-list');
+        listContainer.innerHTML = '';
+
+        if (weeks.length === 0) {
+            listContainer.innerHTML = '<p style="color:var(--color-text-tertiary);text-align:center;padding:var(--s5)">제출된 자료가 없습니다</p>';
+            return;
+        }
+
+        weeks.forEach(weekKey => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-secondary';
+            btn.style.cssText = 'text-align:left;padding:var(--s4);height:auto';
+            btn.textContent = getWeekLabel(weekKey);
+            btn.onclick = () => showPreviousWeekData(weekKey);
+            listContainer.appendChild(btn);
+        });
+    }
+
+    function showPreviousWeekData(weekKey) {
+        const display = document.getElementById('previous-data-display');
+        const titleEl = document.getElementById('previous-week-title');
+        const contentEl = document.getElementById('previous-data-content');
+
+        titleEl.textContent = getWeekLabel(weekKey);
+
+        let html = '';
+        Object.entries(DEPARTMENTS).forEach(([groupKey, group]) => {
+            const items = group.items.filter(item => {
+                const itemName = item.name || item;
+                const fullKey = `${weekKey}:${groupKey}:${itemName}`;
+                return submissionStatus[weekKey] && submissionStatus[weekKey][fullKey]?.submitted;
+            });
+
+            if (items.length > 0) {
+                html += `<div style="padding:var(--s4);background:var(--color-bg-subtle);border-radius:var(--r)">
+                    <div style="font-weight:700;font-size:13px;margin-bottom:var(--s3);color:var(--color-text-primary)">${group.label}</div>`;
+                items.forEach(item => {
+                    const itemName = item.name || item;
+                    html += `<div style="font-size:12px;padding:var(--s2) 0;border-bottom:1px solid var(--color-border-default)">
+                        <span style="color:var(--color-text-secondary)">${itemName}</span>
+                        <span style="color:var(--color-positive);margin-left:var(--s3)">✓ 제출됨</span>
+                    </div>`;
+                });
+                html += '</div>';
+            }
+        });
+
+        contentEl.innerHTML = html;
+        display.style.display = 'block';
+    }
+
     function submitForm() {
-        // 실제로는 Google Sheets에 저장
         const deptName = document.getElementById('form-dept-name').textContent;
+        const { groupKey, deptItem } = currentFormContext;
+
+        // 부서 유형 결정
+        const getDeptTypeForSubmit = () => {
+          if (groupKey === 'weekday') {
+            const itemName = deptItem.name || deptItem;
+            if (itemName.includes('수요')) return 'wednesday';
+            if (itemName.includes('금요')) return 'friday';
+            if (itemName.includes('새벽')) return 'dawn';
+          }
+          return getDeptType(groupKey);
+        };
+        const deptType = getDeptTypeForSubmit();
+
+        // 입력 데이터 수집
+        const formInputs = document.querySelectorAll('.form-input');
+        const formData = {};
+        formInputs.forEach(input => {
+            const fieldKey = input.getAttribute('data-field');
+            const value = input.value;
+            formData[fieldKey] = value ? parseInt(value) : 0;
+        });
+
+        // 제출 상태 저장
+        markSubmitted(groupKey, deptName, deptType);
+
+        // 완료 화면 표시
         document.getElementById('screen-form').style.display = 'none';
         document.getElementById('screen-done').style.display = 'block';
         document.getElementById('done-dept-name').textContent = deptName + ' 제출 완료';
@@ -1240,6 +1571,14 @@
         const now = new Date();
         document.getElementById('done-time').textContent =
             `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    }
+
+    function editForm() {
+        // 완료 화면에서 수정하기 버튼 클릭시
+        const { groupKey, deptItem } = currentFormContext;
+        document.getElementById('screen-done').style.display = 'none';
+        document.getElementById('screen-form').style.display = 'block';
+        // 폼이 이미 열려있는 상태로 돌아감
     }
 
     /* ══════════════════════════════════════════════════
@@ -1259,6 +1598,7 @@
     /* ══════════════════════════════════════════════════
        초기 렌더링
        ══════════════════════════════════════════════════ */
+    loadSubmissionStatus();
     renderDepartmentList();
     renderStatus();
     </script>
