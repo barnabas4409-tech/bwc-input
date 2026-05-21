@@ -38,19 +38,19 @@
         --color-warning-bg: #fefce8;
 
         --color-group-sunday: #6366f1;
-        --color-group-sunday-light: #eef2ff;
+        --color-group-sunday-light: #f7f5ff;
         --color-group-youth: #ec4899;
-        --color-group-youth-light: #fce7f3;
+        --color-group-youth-light: #fdf3f8;
         --color-group-school: #f97316;
-        --color-group-school-light: #ffedd5;
+        --color-group-school-light: #fff9f0;
         --color-group-weekday: #10b981;
-        --color-group-weekday-light: #d1fae5;
+        --color-group-weekday-light: #f0faf7;
         --color-group-leader: #3b82f6;
-        --color-group-leader-light: #dbeafe;
+        --color-group-leader-light: #f0f7ff;
         --color-group-cell: #8b5cf6;
-        --color-group-cell-light: #f3e8ff;
+        --color-group-cell-light: #faf5ff;
         --color-group-newfam: #ef4444;
-        --color-group-newfam-light: #fee2e2;
+        --color-group-newfam-light: #fff5f5;
 
         --font-display: 'Noto Serif KR', 'Georgia', serif;
         --font-body: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -915,7 +915,7 @@
                     <div class="group-card" data-group="sunday">
                         <div class="group-card-hdr">
                             <div class="group-card-title">주일예배</div>
-                            <div class="group-card-count" id="cnt-sunday">0/2 제출</div>
+                            <div class="group-card-count" id="cnt-sunday">0/6 제출</div>
                         </div>
                         <div class="group-card-body" id="grp-sunday">
                             <!-- JS로 생성 -->
@@ -1149,8 +1149,12 @@
         sunday: {
             label: '주일예배',
             items: [
-                { name: '서현 (1-3부 합계)', fields: [{label: '인원', key: 'count'}] },
-                { name: '송림 (1-3부 합계)', fields: [{label: '인원', key: 'count'}] }
+                { name: '서현 1부', fields: [{label: '인원', key: 'count'}] },
+                { name: '서현 2부', fields: [{label: '인원', key: 'count'}] },
+                { name: '서현 3부', fields: [{label: '인원', key: 'count'}] },
+                { name: '송림 1부', fields: [{label: '인원', key: 'count'}] },
+                { name: '송림 2부', fields: [{label: '인원', key: 'count'}] },
+                { name: '송림 3부', fields: [{label: '인원', key: 'count'}] }
             ]
         },
         youth: {
