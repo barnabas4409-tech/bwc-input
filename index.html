@@ -483,35 +483,52 @@
     }
     .form-back-btn {
         background: transparent;
-        border: 1px solid var(--color-border-default);
+        border: 1.5px solid var(--color-border-default);
         border-radius: 7px;
-        padding: 5px 12px;
+        padding: 6px 14px;
         font-size: 12px;
+        font-weight: 500;
         color: var(--color-text-secondary);
         cursor: pointer;
         margin-bottom: var(--s2);
-        transition: all var(--t-base);
+        transition: all var(--t-base) var(--ease-default);
     }
     .form-back-btn:hover {
         border-color: var(--color-accent);
         color: var(--color-accent);
+        background: var(--color-accent-light);
+        transform: translateX(-2px);
+    }
+    .form-back-btn:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
+    }
+    .form-back-btn:active {
+        transform: translateX(0px);
     }
     .form-card {
         background: var(--color-bg-surface);
         border: 1px solid var(--color-border-default);
+        border-left: 4px solid var(--color-accent);
         border-radius: var(--r);
         padding: var(--s4);
         margin-bottom: var(--s3);
+        transition: all var(--t-base) var(--ease-default);
+    }
+    .form-card:hover {
+        box-shadow: 0 2px 8px rgba(99, 91, 255, 0.08);
     }
     .form-card-title {
-        font-size: 12px;
+        font-size: 13px;
         font-weight: 700;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.05em;
         text-transform: uppercase;
         color: var(--color-accent);
         margin-bottom: var(--s4);
         padding-bottom: var(--s3);
+        padding-left: var(--s2);
         border-bottom: 2px solid var(--color-accent-light);
+        border-left: 3px solid var(--color-accent);
         display: block;
     }
     #form-fields-area .form-card > div:not(.form-card-title) {
@@ -532,16 +549,25 @@
         grid-template-columns: 1fr auto auto;
         align-items: center;
         gap: var(--s3);
-        padding: var(--s3) 0;
+        padding: var(--s3) var(--s3);
         border-bottom: 1px solid var(--color-border-default);
+        border-radius: 6px;
+        transition: background var(--t-fast) var(--ease-default);
     }
-    .form-row:first-child { padding-top: 0; }
-    .form-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .form-row:hover {
+        background: rgba(240, 239, 255, 0.3);
+    }
+    .form-row:first-child { padding-top: var(--s3); }
+    .form-row:last-child { border-bottom: none; padding-bottom: var(--s3); }
     .form-label {
         font-size: 14px;
         font-weight: 600;
         color: var(--color-text-primary);
         display: block;
+        transition: color var(--t-base) var(--ease-default);
+    }
+    .form-row:hover .form-label {
+        color: var(--color-accent);
     }
     .form-prev {
         font-size: 11px;
@@ -582,8 +608,14 @@
         justify-content: space-between;
         padding: var(--s4);
         background: var(--color-accent-light);
+        border: 2px solid var(--color-accent);
+        border-left: 4px solid var(--color-accent);
         border-radius: 8px;
         margin-top: var(--s3);
+        transition: all var(--t-base) var(--ease-default);
+    }
+    .form-total:hover {
+        box-shadow: 0 4px 12px rgba(99, 91, 255, 0.15);
     }
     .form-total-label {
         font-size: 12px;
