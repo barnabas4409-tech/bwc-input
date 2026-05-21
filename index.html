@@ -90,6 +90,17 @@
     }
     button { font-family: inherit; }
     input, select, textarea { font-family: inherit; }
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0,0,0,0);
+        white-space: nowrap;
+        border-width: 0;
+    }
 
     /* ══════════════════════════════════════════════════
        HEADER
@@ -223,12 +234,12 @@
        MAIN
        ══════════════════════════════════════════════════ */
     main {
-        padding: var(--s8) var(--s2) var(--s12);
+        padding: var(--s8) var(--s3) var(--s12);
         max-width: 100%;
         margin: 0 auto;
     }
-    .sec { display: none; }
-    .sec.on { display: block; }
+    .sec { display: none; opacity: 0; }
+    .sec.on { display: block; opacity: 1; transition: opacity 200ms var(--ease-default); }
 
     /* ── PAGE HEADER ── */
     .page-hdr {
@@ -593,9 +604,13 @@
         font-size: 14px;
         font-weight: 600;
         cursor: pointer;
-        transition: background var(--t-base);
+        transition: background var(--t-base), transform var(--t-fast), box-shadow var(--t-fast);
     }
     .btn-primary:hover { background: var(--color-accent-dark); }
+    .btn-primary:active {
+        transform: scale(0.98);
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    }
     .btn-secondary {
         height: 44px;
         padding: 0 var(--s5);
@@ -848,6 +863,7 @@
        RESPONSIVE
        ══════════════════════════════════════════════════ */
     @media (max-width: 768px) {
+        body { font-size: 15px; }
         .hdr { padding: 0 var(--s3); height: 52px; }
         .hdr-brand h1 { font-size: 13px; }
         .hdr-brand p { display: none; }
@@ -860,6 +876,7 @@
         .form-prev { text-align: left; }
         .dept-name { font-size: 13px; }
         .form-label { font-size: 13px; }
+        .dept-btn { width: 100%; height: 50px; }
         #form-fields-area .form-card > div:not(.form-card-title) {
             grid-template-columns: 1fr;
         }
@@ -888,16 +905,16 @@
     <!-- ═══════════════════════════════════════════════
          NAV
          ═══════════════════════════════════════════════ -->
-    <nav>
-        <button class="nt on" onclick="switchTab('input')" id="tab-input">
+    <nav role="tablist" aria-label="메인 네비게이션">
+        <button class="nt on" onclick="switchTab('input')" id="tab-input" role="tab" aria-selected="true" aria-controls="sec-input">
             <span class="nt-icon">✏️</span>
             <span>입력하기</span>
         </button>
-        <button class="nt" onclick="switchTab('status')" id="tab-status">
+        <button class="nt" onclick="switchTab('status')" id="tab-status" role="tab" aria-selected="false" aria-controls="sec-status">
             <span class="nt-icon">📋</span>
             <span>제출 현황</span>
         </button>
-        <button class="nt" onclick="switchTab('admin')" id="tab-admin">
+        <button class="nt" onclick="switchTab('admin')" id="tab-admin" role="tab" aria-selected="false" aria-controls="sec-admin">
             <span class="nt-icon">📊</span>
             <span>데이터 현황</span>
             <span class="nt-lock">🔒</span>
@@ -910,7 +927,7 @@
     <main>
 
         <!-- ─── 입력하기 탭 ─── -->
-        <section class="sec on" id="sec-input">
+        <section class="sec on" id="sec-input" role="tabpanel" aria-labelledby="tab-input">
 
             <!-- 부서 선택 화면 -->
             <div id="screen-select">
@@ -919,6 +936,12 @@
                         <h2>부서 선택</h2>
                         <p>담당하시는 부서를 선택해 이번 주 데이터를 입력해주세요</p>
                     </div>
+                </div>
+
+                <!-- 부서 검색 -->
+                <div style="margin-bottom:var(--s4);padding:var(--s4);background:var(--color-bg-subtle);border-radius:var(--r)">
+                    <input type="search" id="search-dept" placeholder="🔍 부서 검색..." aria-label="부서 검색" aria-describedby="search-help" style="width:100%;padding:10px 12px;border:1px solid var(--color-border-default);border-radius:7px;font-size:14px;background:var(--color-bg-surface);outline:none;transition:all var(--t-base)" onfocus="this.style.borderColor='var(--color-accent)';this.style.boxShadow='0 0 0 3px rgba(99,91,255,0.15)'" onblur="this.style.borderColor='';this.style.boxShadow=''">
+                    <span id="search-help" style="font-size:11px;color:var(--color-text-tertiary);display:block;margin-top:var(--s1)">부서명을 입력하여 원하는 부서를 찾을 수 있습니다</span>
                 </div>
 
                 <div class="select-layout">
@@ -992,7 +1015,7 @@
 
                 <!-- 이전 자료 보기 버튼 -->
                 <div style="margin-top:var(--s6);text-align:center;padding:var(--s5);border-top:1px solid var(--color-border-default)">
-                    <button class="btn-secondary" onclick="openPreviousData()" style="width:100%;max-width:300px">
+                    <button class="btn-secondary" onclick="openPreviousData()" style="width:100%;max-width:300px" aria-label="이전 주차 제출 데이터 조회하기">
                         📋 이전 자료 보기
                     </button>
                 </div>
@@ -1001,7 +1024,7 @@
             <!-- 이전 자료 조회 화면 -->
             <div id="screen-previous" style="display:none">
                 <div class="form-wrap">
-                    <button class="form-back-btn" onclick="goSelect()">← 부서 선택으로</button>
+                    <button class="form-back-btn" onclick="goSelect()" aria-label="부서 선택 화면으로 돌아가기">← 부서 선택으로</button>
 
                     <div class="page-hdr">
                         <div class="page-hdr-title">
@@ -1033,7 +1056,7 @@
             <!-- 입력 폼 화면 -->
             <div id="screen-form" style="display:none">
                 <div class="form-wrap">
-                    <button class="form-back-btn" onclick="goBack()">← 부서 선택으로</button>
+                    <button class="form-back-btn" onclick="goBack()" aria-label="부서 선택 화면으로 돌아가기">← 부서 선택으로</button>
 
                     <div class="page-hdr">
                         <div class="page-hdr-title">
@@ -1043,14 +1066,14 @@
                     </div>
 
                     <!-- 알림 영역 -->
-                    <div id="form-alert-area"></div>
+                    <div id="form-alert-area" role="alert" aria-live="polite" aria-atomic="true"></div>
 
                     <!-- 날짜 선택 -->
                     <div class="form-card">
                         <div class="form-card-title">입력 기준일</div>
                         <div class="form-date-row">
-                            <label style="font-size:13px;color:var(--color-text-secondary)">주일 날짜</label>
-                            <input type="date" class="form-date-input" id="form-date">
+                            <label for="form-date" style="font-size:13px;color:var(--color-text-secondary)">주일 날짜</label>
+                            <input type="date" class="form-date-input" id="form-date" aria-label="주일 날짜 선택" aria-describedby="form-week-label">
                             <span style="font-size:11px;color:var(--color-text-tertiary)" id="form-week-label">2026년 5월 3주차</span>
                         </div>
                     </div>
@@ -1062,8 +1085,8 @@
 
                     <!-- 제출 버튼 -->
                     <div class="form-submit-area">
-                        <button class="btn-secondary" onclick="goBack()">취소</button>
-                        <button class="btn-primary" id="form-submit-btn" onclick="submitForm()">제출하기</button>
+                        <button class="btn-secondary" onclick="goBack()" aria-label="입력 취소하고 부서 선택 화면으로 돌아가기">취소</button>
+                        <button class="btn-primary" id="form-submit-btn" onclick="submitForm()" aria-label="입력한 데이터 제출하기">제출하기</button>
                     </div>
                 </div>
             </div>
@@ -1076,9 +1099,9 @@
                     <p>이번 주 데이터가 성공적으로 제출되었습니다</p>
                     <div class="done-time" id="done-time">2026.05.18 10:23</div>
                     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-                        <button class="btn-secondary" onclick="editForm()">수정하기</button>
-                        <button class="btn-secondary" onclick="goSelect()">다른 부서 입력</button>
-                        <button class="btn-primary" style="flex:0 0 auto;padding:0 24px" onclick="switchTab('status')">제출 현황 보기</button>
+                        <button class="btn-secondary" onclick="editForm()" aria-label="입력한 데이터 수정하기">수정하기</button>
+                        <button class="btn-secondary" onclick="goSelect()" aria-label="다른 부서 선택하여 입력하기">다른 부서 입력</button>
+                        <button class="btn-primary" style="flex:0 0 auto;padding:0 24px" onclick="switchTab('status')" aria-label="제출 현황 탭으로 이동">제출 현황 보기</button>
                     </div>
                 </div>
             </div>
@@ -1086,7 +1109,7 @@
         </section>
 
         <!-- ─── 제출 현황 탭 ─── -->
-        <section class="sec" id="sec-status">
+        <section class="sec" id="sec-status" role="tabpanel" aria-labelledby="tab-status">
             <div class="page-hdr">
                 <div class="page-hdr-title">
                     <h2>제출 현황</h2>
@@ -1095,23 +1118,23 @@
             </div>
 
             <!-- 요약 통계 -->
-            <div class="summary-stats">
-                <div class="stat-card total">
+            <div class="summary-stats" role="region" aria-label="제출 현황 통계">
+                <div class="stat-card total" role="article" aria-label="전체 부서 58개 (담당자 입력 단위)">
                     <div class="stat-card-bar"></div>
                     <div class="stat-label">전체 부서</div>
-                    <div class="stat-value" id="stat-total">58</div>
+                    <div class="stat-value" id="stat-total" aria-live="polite">58</div>
                     <div class="stat-sub">담당자 입력 단위</div>
                 </div>
-                <div class="stat-card done">
+                <div class="stat-card done" role="article" aria-label="제출 완료 0개 (이번 주 기준)">
                     <div class="stat-card-bar"></div>
                     <div class="stat-label">제출 완료</div>
-                    <div class="stat-value" id="stat-done">0</div>
+                    <div class="stat-value" id="stat-done" aria-live="polite">0</div>
                     <div class="stat-sub">이번 주 기준</div>
                 </div>
-                <div class="stat-card miss">
+                <div class="stat-card miss" role="article" aria-label="미제출 58개 (마감일까지 입력 필요)">
                     <div class="stat-card-bar"></div>
                     <div class="stat-label">미제출</div>
-                    <div class="stat-value" id="stat-miss">58</div>
+                    <div class="stat-value" id="stat-miss" aria-live="polite">58</div>
                     <div class="stat-sub">마감일까지 입력 필요</div>
                 </div>
             </div>
@@ -1123,7 +1146,7 @@
         </section>
 
         <!-- ─── 데이터 현황 탭 (관리자) ─── -->
-        <section class="sec" id="sec-admin">
+        <section class="sec" id="sec-admin" role="tabpanel" aria-labelledby="tab-admin">
 
             <!-- 로그인 화면 -->
             <div id="admin-login-screen">
@@ -1131,8 +1154,8 @@
                     <div class="admin-login-icon">🔒</div>
                     <h3>관리자 로그인</h3>
                     <p>입력된 실제 데이터를 조회·수정하려면<br>관리자 비밀번호를 입력해주세요</p>
-                    <input type="password" class="admin-input" id="admin-pwd" placeholder="비밀번호" onkeydown="if(event.key==='Enter')adminLogin()">
-                    <button class="btn-primary" onclick="adminLogin()">로그인</button>
+                    <input type="password" class="admin-input" id="admin-pwd" placeholder="비밀번호" aria-label="관리자 비밀번호 입력" onkeydown="if(event.key==='Enter')adminLogin()">
+                    <button class="btn-primary" onclick="adminLogin()" aria-label="관리자 로그인하기">로그인</button>
                 </div>
             </div>
 
@@ -1405,9 +1428,14 @@
        탭 전환
        ══════════════════════════════════════════════════ */
     function switchTab(tab) {
-        document.querySelectorAll('.nt').forEach(b => b.classList.remove('on'));
+        document.querySelectorAll('.nt').forEach(b => {
+            b.classList.remove('on');
+            b.setAttribute('aria-selected', 'false');
+        });
         document.querySelectorAll('.sec').forEach(s => s.classList.remove('on'));
-        document.getElementById('tab-' + tab).classList.add('on');
+        const selectedTab = document.getElementById('tab-' + tab);
+        selectedTab.classList.add('on');
+        selectedTab.setAttribute('aria-selected', 'true');
         document.getElementById('sec-' + tab).classList.add('on');
 
         // 입력 탭으로 돌아갈 때 부서 선택 화면으로
@@ -1451,12 +1479,13 @@
 
                 const btn = document.createElement('button');
                 btn.className = 'dept-btn';
+                btn.setAttribute('aria-label', `${itemName} - ${status === 'submitted' ? '제출 완료' : '미제출'}`);
                 btn.onclick = () => openForm(key, item);
                 btn.innerHTML = `
                     <div class="dept-btn-inner">
-                        <div class="dept-dot ${status === 'submitted' ? 'submitted' : 'missing'}"></div>
+                        <div class="dept-dot ${status === 'submitted' ? 'submitted' : 'missing'}" role="img" aria-label="${status === 'submitted' ? '완료' : '미제출'}"></div>
                         <div class="dept-name">${itemName}</div>
-                        <div class="dept-badge ${status === 'submitted' ? 'done' : 'miss'}">
+                        <div class="dept-badge ${status === 'submitted' ? 'done' : 'miss'}" aria-hidden="true">
                             ${status === 'submitted' ? '완료' : '대기'}
                         </div>
                     </div>
@@ -1566,12 +1595,14 @@
         let fieldsHTML = '<div class="form-card"><div class="form-card-title">입력 항목</div>';
 
         fields.forEach(field => {
+            const inputId = `field-${field.key}`;
             fieldsHTML += `
                 <div class="form-row">
-                    <div class="form-label">${field.label}</div>
+                    <label for="${inputId}" class="form-label">${field.label}</label>
                     <div style="text-align:right;width:100px">
-                        <input type="number" class="form-input" data-field="${field.key}" placeholder="0">
+                        <input type="number" class="form-input" data-field="${field.key}" id="${inputId}" placeholder="0" aria-label="${field.label}" aria-describedby="input-help-${field.key}">
                     </div>
+                    <span id="input-help-${field.key}" class="sr-only">숫자를 입력해주세요</span>
                 </div>
             `;
         });
@@ -1783,11 +1814,34 @@
     }
 
     /* ══════════════════════════════════════════════════
+       부서 검색 기능
+       ══════════════════════════════════════════════════ */
+    function searchDepartments() {
+        const query = document.getElementById('search-dept').value.toLowerCase();
+        const groupCards = document.querySelectorAll('.group-card');
+
+        groupCards.forEach(card => {
+            const deptBtns = card.querySelectorAll('.dept-btn');
+            let visibleCount = 0;
+
+            deptBtns.forEach(btn => {
+                const deptName = btn.querySelector('.dept-name').textContent.toLowerCase();
+                const matches = deptName.includes(query);
+                btn.style.display = matches ? 'flex' : 'none';
+                if (matches) visibleCount++;
+            });
+
+            card.style.display = visibleCount > 0 || query === '' ? 'block' : 'none';
+        });
+    }
+
+    /* ══════════════════════════════════════════════════
        초기 렌더링
        ══════════════════════════════════════════════════ */
     loadSubmissionStatus();
     renderDepartmentList();
     renderStatus();
+    document.getElementById('search-dept').addEventListener('input', searchDepartments);
     </script>
 
 </body>
