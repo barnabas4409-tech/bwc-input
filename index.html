@@ -2313,26 +2313,26 @@
         };
         const deptType = getDeptTypeForSubmit();
 
-        // 입력 데이터 수집 및 검증
+        // 입력 데이터 수집 (빈 필드는 0으로 처리)
         const formInputs = document.querySelectorAll('.form-input');
         const formData = {};
-        let hasEmptyField = false;
+        let allEmpty = true;
 
         formInputs.forEach(input => {
             const fieldKey = input.getAttribute('data-field');
             const value = input.value;
-            if (!value || value.trim() === '') {
-                hasEmptyField = true;
+            if (value && value.trim() !== '') {
+                allEmpty = false;
             }
-            formData[fieldKey] = value ? parseInt(value) : 0;
+            formData[fieldKey] = value && value.trim() !== '' ? parseInt(value) : 0;
         });
 
-        // 검증 실패시 에러 메시지 표시
-        if (hasEmptyField) {
+        // 모든 필드가 비어있을 때만 경고
+        if (allEmpty) {
             const alertArea = document.getElementById('form-alert-area');
             alertArea.innerHTML = `
                 <div style="padding:var(--s3) var(--s4);background:var(--color-negative-bg);border:1px solid rgba(192,18,60,0.2);border-radius:var(--r);color:var(--color-negative);font-size:13px">
-                    ⚠️ 모든 필드를 입력해주세요
+                    ⚠️ 최소 한 개 이상의 필드를 입력해주세요 (없는 항목은 0으로 처리됩니다)
                 </div>
             `;
             return;
