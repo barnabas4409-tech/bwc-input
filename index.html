@@ -1563,6 +1563,7 @@
                     <h3 id="done-dept-name">제출 완료</h3>
                     <p>이번 주 데이터가 성공적으로 제출되었습니다</p>
                     <div class="done-time" id="done-time">2026.05.18 10:23</div>
+                    <div id="done-data-area"></div>
                     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
                         <button class="btn-secondary" onclick="editForm()" aria-label="입력한 데이터 수정하기">수정하기</button>
                         <button class="btn-secondary" onclick="goSelect()" aria-label="다른 부서 선택하여 입력하기">다른 부서 입력</button>
@@ -1880,13 +1881,13 @@
       localStorage.setItem('bwc-submission-data', JSON.stringify(submissionStatus));
     }
 
-    function markSubmitted(groupKey, itemName, deptType) {
+    function markSubmitted(groupKey, itemName, deptType, formData = {}) {
       const weekKey = getWeekKey(deptType);
       const fullKey = `${weekKey}:${groupKey}:${itemName}`;
       if (!submissionStatus[weekKey]) submissionStatus[weekKey] = {};
       submissionStatus[weekKey][fullKey] = {
         submitted: true,
-        data: {},
+        data: formData,
         submittedAt: new Date().toISOString()
       };
       saveSubmissionStatus();
@@ -2290,8 +2291,8 @@
 
         // 제출 처리 (비동기 시뮬레이션)
         setTimeout(() => {
-            // 제출 상태 저장
-            markSubmitted(groupKey, deptName, deptType);
+            // 제출 상태 & 데이터 저장
+            markSubmitted(groupKey, deptName, deptType, formData);
 
             // 완료 화면 표시
             document.getElementById('screen-form').style.display = 'none';
@@ -2301,6 +2302,21 @@
             const now = new Date();
             document.getElementById('done-time').textContent =
                 `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+            // 입력한 데이터 표시
+            const doneDataArea = document.getElementById('done-data-area');
+            if (doneDataArea) {
+                const fields = deptItem.fields || [{label: '인원', key: 'count'}];
+                let dataHtml = '<div style="margin-top:var(--s4);padding:var(--s3);background:var(--color-bg-subtle);border-radius:var(--r);font-size:13px">';
+                fields.forEach(field => {
+                    dataHtml += `<div style="display:flex;justify-content:space-between;padding:var(--s2) 0;border-bottom:1px solid var(--color-border-default)">
+                        <span>${field.label}</span>
+                        <strong>${formData[field.key]}</strong>
+                    </div>`;
+                });
+                dataHtml += '</div>';
+                doneDataArea.innerHTML = dataHtml;
+            }
 
             // 마감 여부 확인 후 수정하기 버튼 표시
             updateEditButtonState(deptType);
