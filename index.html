@@ -2094,11 +2094,19 @@
                             }).length}</span>`
                             : '';
 
-                        return `<div class="status-item ${st}" style="display:flex;align-items:center;">
+                        const deptTypeForItem = () => {
+                            if (key === 'weekday') {
+                                if (itemName.includes('수요')) return 'wednesday';
+                                if (itemName.includes('금요')) return 'friday';
+                                if (itemName.includes('새벽')) return 'dawn';
+                            }
+                            return getDeptType(key);
+                        };
+                        return `<button class="status-item ${st}" style="display:flex;align-items:center;background:none;border:none;cursor:pointer;width:100%;padding:var(--s3);border-radius:var(--r);transition:background var(--t-base) var(--ease-default);font-family:inherit;font-size:inherit;text-align:left" onmouseover="this.style.background='var(--color-bg-muted)'" onmouseout="this.style.background='none'" onclick="viewSubmissionData('${key}', '${itemName}', '${deptTypeForItem()}')">
                             <div class="dept-dot ${st}"></div>
                             <span>${itemName}</span>
                             ${rankBadge}
-                        </div>`;
+                        </button>`;
                     }).join('')}
                 </div>
             `;
@@ -2157,6 +2165,46 @@
 
         fieldsHTML += '</div>';
         document.getElementById('form-fields-area').innerHTML = fieldsHTML;
+    }
+
+    /* ══════════════════════════════════════════════════
+       제출현황에서 데이터 조회 및 수정
+       ══════════════════════════════════════════════════ */
+    function viewSubmissionData(groupKey, itemName, deptType) {
+        const weekKey = getWeekKey(deptType);
+        const fullKey = `${weekKey}:${groupKey}:${itemName}`;
+        const submission = submissionStatus[weekKey]?.[fullKey];
+
+        if (!submission || !submission.submitted) {
+            alert('아직 제출되지 않았습니다');
+            return;
+        }
+
+        // 부서 아이템 찾기
+        const deptItem = DEPARTMENTS[groupKey].items.find(item => {
+            const name = item.name || item;
+            return name === itemName;
+        });
+
+        if (!deptItem) {
+            alert('부서 정보를 찾을 수 없습니다');
+            return;
+        }
+
+        // 입력 폼 열기
+        openForm(groupKey, deptItem);
+
+        // 기존 데이터 미리 채우기
+        const fields = deptItem.fields || [{label: '인원', key: 'count'}];
+        fields.forEach(field => {
+            const input = document.querySelector(`[data-field="${field.key}"]`);
+            if (input && submission.data && submission.data[field.key] !== undefined) {
+                input.value = submission.data[field.key];
+            }
+        });
+
+        // 입력 탭으로 전환
+        switchTab('input');
     }
 
     function goBack() {
