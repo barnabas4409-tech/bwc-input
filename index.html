@@ -1201,6 +1201,151 @@
         .done-wrap h3 { font-size: 18px; font-weight: 800; }
         .form-date-row { gap: var(--s3); padding: var(--s3) 0; }
     }
+
+    /* ══════════════════════════════════════════════════
+       관리자 대시보드 - 데이터 카드
+       ══════════════════════════════════════════════════ */
+    .admin-group-section {
+        margin-bottom: var(--s8);
+    }
+
+    .admin-group-title {
+        font-size: 16px;
+        font-weight: 800;
+        margin-bottom: var(--s4);
+        padding-bottom: var(--s3);
+        border-bottom: 2px solid var(--color-border-default);
+        color: var(--color-text-primary);
+    }
+
+    .admin-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: var(--s4);
+    }
+
+    .admin-data-card {
+        background: var(--color-bg-surface);
+        border: 1px solid var(--color-border-default);
+        border-radius: var(--r-lg);
+        padding: var(--s4);
+        box-shadow: var(--shadow-sm);
+        transition: all 200ms var(--ease);
+    }
+
+    .admin-data-card:hover {
+        box-shadow: var(--shadow);
+        border-color: var(--color-border-interactive);
+        transform: translateY(-2px);
+    }
+
+    .admin-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--s3);
+    }
+
+    .admin-dept-name {
+        font-weight: 700;
+        font-size: 14px;
+        color: var(--color-text-primary);
+    }
+
+    .admin-submit-time {
+        font-size: 11px;
+        color: var(--color-text-tertiary);
+        margin-top: var(--s1);
+    }
+
+    .admin-card-status {
+        display: flex;
+        align-items: center;
+        gap: var(--s2);
+        padding: var(--s3);
+        background: var(--color-bg-subtle);
+        border-radius: 6px;
+        margin-bottom: var(--s3);
+    }
+
+    .admin-card-status.submitted {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .admin-card-status.missing {
+        background: rgba(192, 18, 60, 0.1);
+        border: 1px solid rgba(192, 18, 60, 0.2);
+    }
+
+    .admin-status-badge {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+
+    .admin-status-badge.submitted {
+        background: var(--color-positive);
+        color: white;
+    }
+
+    .admin-status-badge.missing {
+        background: var(--color-negative);
+        color: white;
+    }
+
+    .admin-card-data {
+        margin-bottom: var(--s3);
+    }
+
+    .admin-data-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--s2) 0;
+        border-bottom: 1px solid var(--color-border-default);
+        font-size: 13px;
+    }
+
+    .admin-data-row:last-child {
+        border-bottom: none;
+    }
+
+    .admin-data-label {
+        color: var(--color-text-secondary);
+        font-weight: 500;
+    }
+
+    .admin-data-value {
+        color: var(--color-text-primary);
+        font-weight: 700;
+        font-size: 14px;
+    }
+
+    .admin-edit-btn {
+        width: 100%;
+        padding: var(--s2) var(--s3);
+        background: var(--color-bg-subtle);
+        border: 1px solid var(--color-border-default);
+        border-radius: 6px;
+        color: var(--color-text-secondary);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 150ms var(--ease);
+    }
+
+    .admin-edit-btn:hover {
+        background: var(--color-border-default);
+        color: var(--color-text-primary);
+    }
+
+    @media (max-width: 768px) {
+        .admin-cards-grid {
+            grid-template-columns: 1fr;
+        }
+    }
     </style>
 </head>
 <body>
@@ -1487,8 +1632,18 @@
                         <p>부서별 입력 데이터 조회 및 수정</p>
                     </div>
                 </div>
-                <div style="padding:60px;text-align:center;color:var(--color-text-tertiary);background:var(--color-bg-surface);border:1px solid var(--color-border-default);border-radius:var(--r)">
-                    데이터 테이블 영역 (Claude Code에서 구현)
+
+                <!-- 주차 선택 필터 -->
+                <div style="margin-bottom:var(--s5);display:flex;gap:var(--s3);align-items:center;flex-wrap:wrap">
+                    <label for="admin-week-select" style="font-weight:600;color:var(--color-text-primary)">주차 선택:</label>
+                    <select id="admin-week-select" class="form-input" style="max-width:300px" onchange="renderAdminData()">
+                        <!-- JS로 생성 -->
+                    </select>
+                </div>
+
+                <!-- 데이터 표시 영역 -->
+                <div id="admin-data-container">
+                    <!-- JS로 생성 -->
                 </div>
             </div>
 
@@ -1763,6 +1918,14 @@
 
         // 제출현황 탭으로 전환할 때 최신 데이터로 렌더링
         if (tab === 'status') renderStatus();
+
+        // 데이터 현황 탭으로 전환할 때 초기화
+        if (tab === 'admin') {
+            if (document.getElementById('admin-week-select').options.length === 0) {
+                initAdminWeekSelect();
+                renderAdminData();
+            }
+        }
     }
 
     /* ══════════════════════════════════════════════════
@@ -2232,6 +2395,117 @@
 
             card.style.display = visibleCount > 0 || query === '' ? 'block' : 'none';
         });
+    }
+
+    /* ══════════════════════════════════════════════════
+       관리자 데이터 현황 렌더링
+       ══════════════════════════════════════════════════ */
+    function initAdminWeekSelect() {
+        const weeks = getPreviousWeeks();
+        const currentWeekKey = getWeekKey('sunday');
+
+        // 현재 주를 맨 앞에 추가
+        if (!weeks.includes(currentWeekKey)) {
+            weeks.unshift(currentWeekKey);
+        }
+
+        const select = document.getElementById('admin-week-select');
+        select.innerHTML = '';
+        weeks.forEach(weekKey => {
+            const option = document.createElement('option');
+            option.value = weekKey;
+            option.textContent = getWeekLabel(weekKey);
+            if (weekKey === currentWeekKey) option.selected = true;
+            select.appendChild(option);
+        });
+    }
+
+    function renderAdminData() {
+        const weekKey = document.getElementById('admin-week-select').value;
+        const container = document.getElementById('admin-data-container');
+        container.innerHTML = '';
+
+        // 주차별 데이터 수집
+        let html = '';
+        Object.entries(DEPARTMENTS).forEach(([groupKey, group]) => {
+            let groupHtml = '';
+
+            group.items.forEach(item => {
+                const itemName = item.name || item;
+                const getDeptTypeForItem = () => {
+                    if (groupKey === 'weekday') {
+                        if (itemName.includes('수요')) return 'wednesday';
+                        if (itemName.includes('금요')) return 'friday';
+                        if (itemName.includes('새벽')) return 'dawn';
+                    }
+                    return getDeptType(groupKey);
+                };
+                const itemDeptType = getDeptTypeForItem();
+                const fullKey = `${weekKey}:${groupKey}:${itemName}`;
+
+                const submission = submissionStatus[weekKey]?.[fullKey];
+                const isSubmitted = submission?.submitted || false;
+                const submittedAt = submission?.submittedAt ? new Date(submission.submittedAt) : null;
+                const submitTimeStr = submittedAt
+                    ? `${submittedAt.getHours()}:${String(submittedAt.getMinutes()).padStart(2, '0')}`
+                    : '';
+
+                // 제출된 데이터의 필드 정보 (또는 빈 필드)
+                const fields = item.fields || [{label: '인원', key: 'count'}];
+
+                groupHtml += `
+                    <div class="admin-data-card">
+                        <div class="admin-card-header">
+                            <div>
+                                <div class="admin-dept-name">${itemName}</div>
+                                ${submitTimeStr ? `<div class="admin-submit-time">제출: ${submitTimeStr}</div>` : ''}
+                            </div>
+                        </div>
+
+                        <div class="admin-card-status ${isSubmitted ? 'submitted' : 'missing'}">
+                            <span class="admin-status-badge ${isSubmitted ? 'submitted' : 'missing'}">
+                                ${isSubmitted ? '✓ 제출됨' : '미제출'}
+                            </span>
+                        </div>
+
+                        ${isSubmitted ? `
+                            <div class="admin-card-data">
+                                ${fields.map(field => {
+                                    const fieldValue = submission?.data?.[field.key] ?? '-';
+                                    return `
+                                        <div class="admin-data-row">
+                                            <span class="admin-data-label">${field.label}</span>
+                                            <span class="admin-data-value">${fieldValue}</span>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        ` : `
+                            <div class="admin-card-data">
+                                <div style="color:var(--color-text-tertiary);font-size:13px;text-align:center;padding:var(--s3);background:var(--color-bg-subtle);border-radius:6px">
+                                    입력된 데이터 없음
+                                </div>
+                            </div>
+                        `}
+
+                        <button class="admin-edit-btn">수정하기</button>
+                    </div>
+                `;
+            });
+
+            if (groupHtml) {
+                html += `
+                    <div class="admin-group-section">
+                        <div class="admin-group-title">${group.label}</div>
+                        <div class="admin-cards-grid">
+                            ${groupHtml}
+                        </div>
+                    </div>
+                `;
+            }
+        });
+
+        container.innerHTML = html || '<p style="text-align:center;padding:var(--s5);color:var(--color-text-tertiary)">조회 가능한 데이터가 없습니다</p>';
     }
 
     /* ══════════════════════════════════════════════════
