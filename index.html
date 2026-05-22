@@ -2390,7 +2390,15 @@
             // 제출 상태 & 데이터 저장
             markSubmitted(groupKey, deptName, deptType, formData);
 
-            // Google Apps Script로 데이터 전송 (CORS preflight 회피 - text/plain 사용)
+            // Google Apps Script로 데이터 전송 (한글 라벨로 변환)
+            const fields = deptItem.fields || [{label: '인원', key: 'count'}];
+            const labelMap = {};
+            fields.forEach(field => { labelMap[field.key] = field.label; });
+            const formDataKorean = {};
+            Object.entries(formData).forEach(([key, value]) => {
+                formDataKorean[labelMap[key] || key] = value;
+            });
+
             const gasUrl = 'https://script.google.com/macros/s/AKfycbwDfo7kvQDg1xHCE-nLeRHDVZQFxswc1tZx_YKzQjYbHlIObOTOu0HASDj90XWHHtn3/exec';
             fetch(gasUrl, {
               method: 'POST',
@@ -2399,9 +2407,9 @@
               },
               body: JSON.stringify({
                 weekKey: getWeekKey(deptType),
-                groupKey: groupKey,
+                groupKey: DEPARTMENTS[groupKey]?.label || groupKey,
                 itemName: deptName,
-                formData: formData
+                formData: formDataKorean
               })
             })
             .then(res => res.json())
