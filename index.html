@@ -1760,6 +1760,9 @@
 
         // 입력 탭으로 돌아갈 때 부서 선택 화면으로
         if (tab === 'input') goSelect();
+
+        // 제출현황 탭으로 전환할 때 최신 데이터로 렌더링
+        if (tab === 'status') renderStatus();
     }
 
     /* ══════════════════════════════════════════════════
@@ -1822,7 +1825,7 @@
     }
 
     /* ══════════════════════════════════════════════════
-       제출 현황 렌더링
+       제출 현황 렌더링 (순위 기능 포함)
        ══════════════════════════════════════════════════ */
     function renderStatus() {
         const container = document.getElementById('status-content');
@@ -1830,8 +1833,51 @@
 
         let totalDone = 0, totalAll = 0;
 
+        const groupsWithRanking = ['leader', 'cell', 'youth', 'school'];
+
         Object.entries(DEPARTMENTS).forEach(([key, group]) => {
-            const doneCount = group.items.filter(item => {
+            // Items 정렬 (순위 기능이 있는 그룹만)
+            let itemsToRender = group.items;
+
+            if (groupsWithRanking.includes(key)) {
+                itemsToRender = [...group.items].sort((a, b) => {
+                    const itemNameA = a.name || a;
+                    const itemNameB = b.name || b;
+
+                    const getDeptTypeForItem = (itemName) => {
+                        if (key === 'weekday') {
+                            if (itemName.includes('수요')) return 'wednesday';
+                            if (itemName.includes('금요')) return 'friday';
+                            if (itemName.includes('새벽')) return 'dawn';
+                        }
+                        return getDeptType(key);
+                    };
+
+                    const weekKeyA = getWeekKey(getDeptTypeForItem(itemNameA));
+                    const weekKeyB = getWeekKey(getDeptTypeForItem(itemNameB));
+                    const fullKeyA = `${weekKeyA}:${key}:${itemNameA}`;
+                    const fullKeyB = `${weekKeyB}:${key}:${itemNameB}`;
+
+                    const statusA = submissionStatus[weekKeyA]?.[fullKeyA];
+                    const statusB = submissionStatus[weekKeyB]?.[fullKeyB];
+
+                    // 미제출된 항목은 뒤로
+                    if (!statusA?.submitted && statusB?.submitted) return 1;
+                    if (statusA?.submitted && !statusB?.submitted) return -1;
+
+                    // 둘 다 제출되었을 때 제출 시간 오름차순 (먼저 제출한 것이 앞에)
+                    if (statusA?.submitted && statusB?.submitted) {
+                        const timeA = new Date(statusA.submittedAt).getTime();
+                        const timeB = new Date(statusB.submittedAt).getTime();
+                        return timeA - timeB;
+                    }
+
+                    // 둘 다 미제출이면 원래 순서 유지
+                    return 0;
+                });
+            }
+
+            const doneCount = itemsToRender.filter(item => {
                 const itemName = item.name || item;
                 const getDeptTypeForItem = () => {
                   if (key === 'weekday') {
@@ -1855,7 +1901,7 @@
                     <div class="status-group-count">${doneCount}/${group.items.length} 제출</div>
                 </div>
                 <div class="status-grid">
-                    ${group.items.map(item => {
+                    ${itemsToRender.map((item, index) => {
                         const itemName = item.name || item;
                         const getDeptTypeForItem = () => {
                           if (key === 'weekday') {
@@ -1867,9 +1913,27 @@
                         };
                         const itemDeptType = getDeptTypeForItem();
                         const st = getSubmissionStatus(key, itemName, itemDeptType) === 'submitted' ? 'submitted' : 'missing';
-                        return `<div class="status-item ${st}">
+
+                        // 순위 배지 (순위 기능이 있는 그룹에서만, 제출된 항목만)
+                        const rankBadge = (groupsWithRanking.includes(key) && st === 'submitted')
+                            ? `<span style="font-size:11px;color:var(--color-text-tertiary);margin-left:auto;margin-right:var(--s2);font-weight:600">#${itemsToRender.slice(0, index + 1).filter(i => {
+                                const iName = i.name || i;
+                                const getDT = () => {
+                                    if (key === 'weekday') {
+                                        if (iName.includes('수요')) return 'wednesday';
+                                        if (iName.includes('금요')) return 'friday';
+                                        if (iName.includes('새벽')) return 'dawn';
+                                    }
+                                    return getDeptType(key);
+                                };
+                                return getSubmissionStatus(key, iName, getDT()) === 'submitted';
+                            }).length}</span>`
+                            : '';
+
+                        return `<div class="status-item ${st}" style="display:flex;align-items:center;">
                             <div class="dept-dot ${st}"></div>
                             <span>${itemName}</span>
+                            ${rankBadge}
                         </div>`;
                     }).join('')}
                 </div>
