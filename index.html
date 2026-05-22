@@ -1233,7 +1233,7 @@
         border-radius: 6px;
         padding: var(--s2) var(--s3);
         box-shadow: var(--shadow-sm);
-        transition: all 150ms var(--ease);
+        transition: all 150ms var(--ease-default);
         display: flex;
         flex-direction: column;
         gap: var(--s1);
@@ -1330,7 +1330,7 @@
         font-size: 11px;
         font-weight: 600;
         cursor: pointer;
-        transition: all 150ms var(--ease);
+        transition: all 150ms var(--ease-default);
         margin-top: 2px;
     }
 
@@ -2305,16 +2305,35 @@
                     <div style="font-weight:700;font-size:13px;margin-bottom:var(--s3);color:var(--color-text-primary)">${group.label}</div>`;
                 items.forEach(item => {
                     const itemName = item.name || item;
-                    html += `<div style="font-size:12px;padding:var(--s2) 0;border-bottom:1px solid var(--color-border-default)">
-                        <span style="color:var(--color-text-secondary)">${itemName}</span>
-                        <span style="color:var(--color-positive);margin-left:var(--s3)">✓ 제출됨</span>
+                    const fullKey = `${weekKey}:${groupKey}:${itemName}`;
+                    const submission = submissionStatus[weekKey][fullKey];
+                    const fields = item.fields || [{label: '인원', key: 'count'}];
+
+                    // 입력값 표시
+                    const dataInline = fields.map(field => {
+                        const value = submission?.data?.[field.key] ?? '-';
+                        return `<span style="color:var(--color-text-tertiary);font-size:11px">${field.label}</span> <strong style="color:var(--color-text-primary);font-size:12px;margin-right:var(--s2)">${value}</strong>`;
+                    }).join('');
+
+                    // 제출 시간
+                    const submittedAt = submission?.submittedAt ? new Date(submission.submittedAt) : null;
+                    const timeStr = submittedAt
+                        ? `${submittedAt.getMonth()+1}/${submittedAt.getDate()} ${submittedAt.getHours()}:${String(submittedAt.getMinutes()).padStart(2,'0')}`
+                        : '';
+
+                    html += `<div style="font-size:12px;padding:var(--s3) 0;border-bottom:1px solid var(--color-border-default);display:flex;flex-direction:column;gap:4px">
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                            <span style="color:var(--color-text-primary);font-weight:600">${itemName}</span>
+                            ${timeStr ? `<span style="color:var(--color-text-tertiary);font-size:10px">${timeStr}</span>` : ''}
+                        </div>
+                        <div style="display:flex;flex-wrap:wrap;gap:6px">${dataInline}</div>
                     </div>`;
                 });
                 html += '</div>';
             }
         });
 
-        contentEl.innerHTML = html;
+        contentEl.innerHTML = html || '<p style="text-align:center;padding:var(--s5);color:var(--color-text-tertiary)">이 주차에는 제출된 데이터가 없습니다</p>';
         display.style.display = 'block';
     }
 
@@ -2447,11 +2466,11 @@
     function editForm() {
         // 완료 화면에서 수정하기 버튼 클릭시
         const { groupKey, deptItem } = currentFormContext;
+        const itemName = deptItem.name || deptItem;
 
         // 부서 유형 결정
         const getDeptTypeForEdit = () => {
           if (groupKey === 'weekday') {
-            const itemName = deptItem.name || deptItem;
             if (itemName.includes('수요')) return 'wednesday';
             if (itemName.includes('금요')) return 'friday';
             if (itemName.includes('새벽')) return 'dawn';
@@ -2466,10 +2485,32 @@
             return;
         }
 
-        document.getElementById('screen-done').style.display = 'none';
-        document.getElementById('screen-form').style.display = 'block';
-        // 알림 영역 초기화
-        document.getElementById('form-alert-area').innerHTML = '';
+        // 폼을 다시 열고 기존 데이터 채우기
+        openForm(groupKey, deptItem);
+
+        const weekKey = getWeekKey(deptType);
+        const fullKey = `${weekKey}:${groupKey}:${itemName}`;
+        const submission = submissionStatus[weekKey]?.[fullKey];
+
+        if (submission && submission.data) {
+            const fields = deptItem.fields || [{label: '인원', key: 'count'}];
+            fields.forEach(field => {
+                const input = document.querySelector(`[data-field="${field.key}"]`);
+                if (input && submission.data[field.key] !== undefined) {
+                    input.value = submission.data[field.key];
+                }
+            });
+
+            // 수정 모드 알림
+            const alertArea = document.getElementById('form-alert-area');
+            if (alertArea) {
+                alertArea.innerHTML = `
+                    <div style="padding:var(--s3) var(--s4);background:var(--color-accent-light);border:1px solid var(--color-accent);border-radius:var(--r);color:var(--color-accent-dark);font-size:13px">
+                        ✏️ 수정 모드 · 기존 데이터를 불러왔습니다
+                    </div>
+                `;
+            }
+        }
     }
 
     /* ══════════════════════════════════════════════════
