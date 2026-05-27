@@ -1345,6 +1345,110 @@
         cursor: not-allowed;
     }
 
+    /* ══════════════════════════════════════════════════
+       테이블 스타일 (제출현황 & 데이터현황)
+       ══════════════════════════════════════════════════ */
+    .data-table {
+        display: grid;
+        width: 100%;
+        border: 1px solid var(--color-border-default);
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: var(--s5);
+        background: var(--color-bg-surface);
+    }
+
+    .table-header {
+        display: contents;
+    }
+
+    .table-header > div {
+        background: var(--color-bg-muted);
+        padding: var(--s3) var(--s4);
+        font-weight: 700;
+        font-size: 12px;
+        border-bottom: 2px solid var(--color-border-default);
+        color: var(--color-text-secondary);
+    }
+
+    .table-row {
+        display: contents;
+    }
+
+    .table-row > div {
+        padding: var(--s3) var(--s4);
+        border-bottom: 1px solid var(--color-border-default);
+        font-size: 13px;
+        align-self: center;
+    }
+
+    .table-row:last-child > div {
+        border-bottom: none;
+    }
+
+    .table-dept-name {
+        font-weight: 600;
+        color: var(--color-text-primary);
+    }
+
+    .table-status {
+        display: flex;
+        align-items: center;
+        gap: var(--s2);
+    }
+
+    .table-status-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .table-status-badge.submitted {
+        background: var(--color-positive-bg);
+        color: var(--color-positive);
+    }
+
+    .table-status-badge.missing {
+        background: var(--color-negative-bg);
+        color: var(--color-negative);
+    }
+
+    .table-time {
+        color: var(--color-text-tertiary);
+        font-size: 12px;
+    }
+
+    .table-data {
+        color: var(--color-text-secondary);
+    }
+
+    .table-action {
+        text-align: right;
+    }
+
+    .table-action button {
+        padding: 4px 8px;
+        font-size: 11px;
+        font-weight: 600;
+        border: 1px solid var(--color-border-default);
+        background: var(--color-bg-subtle);
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 150ms var(--ease-default);
+        color: var(--color-text-secondary);
+    }
+
+    .table-action button:hover {
+        background: var(--color-accent);
+        color: white;
+        border-color: var(--color-accent);
+    }
+
     @media (max-width: 768px) {
         .admin-cards-grid {
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -1352,6 +1456,13 @@
         }
         .admin-dept-name {
             font-size: 11px;
+        }
+        .data-table {
+            font-size: 12px;
+        }
+        .table-header > div,
+        .table-row > div {
+            padding: var(--s2) var(--s3);
         }
     }
     </style>
@@ -2065,14 +2176,14 @@
             totalDone += doneCount;
             totalAll += group.items.length;
 
-            const block = document.createElement('div');
-            block.className = 'status-group';
-            block.innerHTML = `
-                <div class="status-group-hdr">
-                    <div class="status-group-title">${group.label}</div>
-                    <div class="status-group-count">${doneCount}/${group.items.length} 제출</div>
-                </div>
-                <div class="status-grid">
+            // 테이블 컬럼: 2fr 1.5fr 1fr
+            const tableHtml = `
+                <div class="data-table" style="grid-template-columns: 2fr 1.5fr 1fr;">
+                    <div class="table-header">
+                        <div>부서</div>
+                        <div>상태</div>
+                        <div>제출시간</div>
+                    </div>
                     ${itemsToRender.map((item, index) => {
                         const itemName = item.name || item;
                         const getDeptTypeForItem = () => {
@@ -2084,11 +2195,17 @@
                           return getDeptType(key);
                         };
                         const itemDeptType = getDeptTypeForItem();
-                        const st = getSubmissionStatus(key, itemName, itemDeptType) === 'submitted' ? 'submitted' : 'missing';
+                        const weekKey = getWeekKey(itemDeptType);
+                        const fullKey = `${weekKey}:${key}:${itemName}`;
+                        const submission = submissionStatus[weekKey]?.[fullKey];
+                        const st = submission?.submitted ? 'submitted' : 'missing';
+                        const submitTimeStr = submission?.submitted && submission?.submittedAt
+                            ? new Date(submission.submittedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                            : '-';
 
-                        // 순위 배지 (순위 기능이 있는 그룹에서만, 제출된 항목만)
-                        const rankBadge = (groupsWithRanking.includes(key) && st === 'submitted')
-                            ? `<span style="font-size:11px;color:var(--color-text-tertiary);margin-left:auto;margin-right:var(--s2);font-weight:600">#${itemsToRender.slice(0, index + 1).filter(i => {
+                        // 순위
+                        const rank = groupsWithRanking.includes(key) && st === 'submitted'
+                            ? itemsToRender.slice(0, index + 1).filter(i => {
                                 const iName = i.name || i;
                                 const getDT = () => {
                                     if (key === 'weekday') {
@@ -2099,23 +2216,33 @@
                                     return getDeptType(key);
                                 };
                                 return getSubmissionStatus(key, iName, getDT()) === 'submitted';
-                            }).length}</span>`
+                            }).length
                             : '';
 
-                        const deptTypeForItem = () => {
-                            if (key === 'weekday') {
-                                if (itemName.includes('수요')) return 'wednesday';
-                                if (itemName.includes('금요')) return 'friday';
-                                if (itemName.includes('새벽')) return 'dawn';
-                            }
-                            return getDeptType(key);
-                        };
-                        return `<button class="status-item ${st}" style="display:flex;align-items:center;background:none;border:none;cursor:pointer;width:100%;padding:var(--s3);border-radius:var(--r);transition:background var(--t-base) var(--ease-default);font-family:inherit;font-size:inherit;text-align:left" onmouseover="this.style.background='var(--color-bg-muted)'" onmouseout="this.style.background='none'" onclick="viewSubmissionData('${key}', '${itemName}', '${deptTypeForItem()}')">
-                            <div class="dept-dot ${st}"></div>
-                            <span>${itemName}</span>
-                            ${rankBadge}
-                        </button>`;
+                        return `
+                            <div class="table-row">
+                                <div class="table-dept-name" onclick="viewSubmissionData('${key}', '${itemName}', '${itemDeptType}')" style="cursor:pointer">
+                                    ${itemName}
+                                </div>
+                                <div class="table-status">
+                                    <span class="table-status-badge ${st}">${st === 'submitted' ? '✓' : '–'}</span>
+                                    ${rank ? `<span style="font-size:11px;color:var(--color-text-tertiary);font-weight:600">#${rank}</span>` : ''}
+                                </div>
+                                <div class="table-time">${submitTimeStr}</div>
+                            </div>
+                        `;
                     }).join('')}
+                </div>
+            `;
+
+            const block = document.createElement('div');
+            block.innerHTML = `
+                <div style="margin-bottom:var(--s6)">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--s4)">
+                        <h3 style="font-size:15px;font-weight:700;color:var(--color-text-primary)">${group.label}</h3>
+                        <span style="font-size:12px;color:var(--color-text-tertiary);font-weight:600">${doneCount}/${group.items.length} 제출</span>
+                    </div>
+                    ${tableHtml}
                 </div>
             `;
             container.appendChild(block);
@@ -2588,8 +2715,12 @@
         // 주차별 데이터 수집
         let html = '';
         Object.entries(DEPARTMENTS).forEach(([groupKey, group]) => {
-            let groupHtml = '';
+            // 각 그룹의 첫 번째 아이템 필드를 이용해 테이블 컬럼 구성
+            const firstItem = group.items[0];
+            const sampleFields = (firstItem?.fields || firstItem?.fields || [{label: '인원', key: 'count'}]);
+            const colCount = 3 + sampleFields.length; // 부서명 + 상태 + 시간 + 필드들
 
+            let tableRows = '';
             group.items.forEach(item => {
                 const itemName = item.name || item;
                 const getDeptTypeForItem = () => {
@@ -2607,43 +2738,47 @@
                 const isSubmitted = submission?.submitted || false;
                 const submittedAt = submission?.submittedAt ? new Date(submission.submittedAt) : null;
                 const submitTimeStr = submittedAt
-                    ? `${submittedAt.getHours()}:${String(submittedAt.getMinutes()).padStart(2, '0')}`
-                    : '';
+                    ? submittedAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                    : '-';
 
-                // 제출된 데이터의 필드 정보 (또는 빈 필드)
                 const fields = item.fields || [{label: '인원', key: 'count'}];
 
-                groupHtml += `
-                    <div class="admin-data-card ${isSubmitted ? 'submitted' : 'missing'}">
-                        <div class="admin-card-header">
-                            <div class="admin-dept-name">${itemName}</div>
-                            <span class="admin-status-badge ${isSubmitted ? 'submitted' : 'missing'}">
-                                ${isSubmitted ? '✓' : '미제출'}
+                const fieldCells = fields.map(field => {
+                    const fieldValue = isSubmitted ? (submission?.data?.[field.key] ?? '-') : '-';
+                    return `<div class="table-data">${fieldValue}</div>`;
+                }).join('');
+
+                tableRows += `
+                    <div class="table-row">
+                        <div class="table-dept-name" onclick="viewSubmissionData('${groupKey}', '${itemName.replace(/'/g, "\\'")}', '${itemDeptType}')" style="cursor:pointer;${isSubmitted ? '' : 'opacity:0.6'}">
+                            ${itemName}
+                        </div>
+                        ${fieldCells}
+                        <div class="table-status">
+                            <span class="table-status-badge ${isSubmitted ? 'submitted' : 'missing'}">
+                                ${isSubmitted ? '✓' : '–'}
                             </span>
                         </div>
-
-                        ${isSubmitted ? `
-                            <div class="admin-card-data">
-                                ${fields.map(field => {
-                                    const fieldValue = submission?.data?.[field.key] ?? '-';
-                                    return `<div class="admin-data-row"><span class="admin-data-label">${field.label}</span><span class="admin-data-value">${fieldValue}</span></div>`;
-                                }).join('')}
-                            </div>
-                            ${submitTimeStr ? `<div class="admin-submit-time">${submitTimeStr} 제출</div>` : ''}
-                            <button class="admin-edit-btn" onclick="viewSubmissionData('${groupKey}', '${itemName.replace(/'/g, "\\'")}', '${itemDeptType}')">수정하기</button>
-                        ` : `
-                            <div class="admin-empty">입력 대기</div>
-                        `}
+                        <div class="table-time">${submitTimeStr}</div>
                     </div>
                 `;
             });
 
-            if (groupHtml) {
+            if (tableRows) {
+                const fieldHeaders = sampleFields.map(f => `<div>${f.label}</div>`).join('');
+                const gridTemplate = `2fr ${sampleFields.map(() => '1fr').join(' ')} 0.8fr 1fr`;
+
                 html += `
-                    <div class="admin-group-section">
-                        <div class="admin-group-title">${group.label}</div>
-                        <div class="admin-cards-grid">
-                            ${groupHtml}
+                    <div style="margin-bottom:var(--s8)">
+                        <h3 style="font-size:15px;font-weight:700;color:var(--color-text-primary);margin-bottom:var(--s4)">${group.label}</h3>
+                        <div class="data-table" style="grid-template-columns: ${gridTemplate}">
+                            <div class="table-header">
+                                <div>부서</div>
+                                ${fieldHeaders}
+                                <div>상태</div>
+                                <div>제출시간</div>
+                            </div>
+                            ${tableRows}
                         </div>
                     </div>
                 `;
