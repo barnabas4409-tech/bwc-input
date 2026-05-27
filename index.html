@@ -2889,10 +2889,17 @@
         // 주차별 데이터 수집
         let html = '';
         Object.entries(DEPARTMENTS).forEach(([groupKey, group]) => {
-            // 각 그룹의 첫 번째 아이템 필드를 이용해 테이블 컬럼 구성
-            const firstItem = group.items[0];
-            const sampleFields = (firstItem?.fields || firstItem?.fields || [{label: '인원', key: 'count'}]);
-            const colCount = 3 + sampleFields.length; // 부서명 + 상태 + 시간 + 필드들
+            // 그룹 내 모든 필드를 수집 (각 아이템의 필드를 모두 포함)
+            const allFieldsMap = new Map();
+            group.items.forEach(item => {
+                const fields = item.fields || [{label: '인원', key: 'count'}];
+                fields.forEach(field => {
+                    if (!allFieldsMap.has(field.key)) {
+                        allFieldsMap.set(field.key, field.label);
+                    }
+                });
+            });
+            const commonFields = Array.from(allFieldsMap.entries()).map(([key, label]) => ({label, key}));
 
             let tableRows = '';
             group.items.forEach(item => {
@@ -2915,9 +2922,8 @@
                     ? submittedAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
                     : '-';
 
-                const fields = item.fields || [{label: '인원', key: 'count'}];
-
-                const fieldCells = fields.map(field => {
+                // 모든 필드에 대해 값을 표시 (없으면 -)
+                const fieldCells = commonFields.map(field => {
                     const fieldValue = isSubmitted ? (submission?.data?.[field.key] ?? '-') : '-';
                     return `<div class="table-data">${fieldValue}</div>`;
                 }).join('');
@@ -2939,8 +2945,8 @@
             });
 
             if (tableRows) {
-                const fieldHeaders = sampleFields.map(f => `<div>${f.label}</div>`).join('');
-                const gridTemplate = `2fr ${sampleFields.map(() => '1fr').join(' ')} 0.8fr 1fr`;
+                const fieldHeaders = commonFields.map(f => `<div>${f.label}</div>`).join('');
+                const gridTemplate = `2fr ${commonFields.map(() => '1fr').join(' ')} 0.8fr 1fr`;
 
                 html += `
                     <div style="margin-bottom:var(--s8)">
