@@ -326,6 +326,12 @@
         grid-template-columns: 1fr;
         gap: var(--s5);
     }
+    @media (max-width: 480px) {
+        .select-layout {
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--s4);
+        }
+    }
     .group-card {
         background: var(--color-bg-surface);
         border: 1.5px solid var(--color-border-default);
@@ -1724,6 +1730,21 @@
                 </div>
             </div>
 
+            <!-- 그룹 필터 -->
+            <div style="margin-bottom:var(--s5);display:flex;gap:var(--s3);align-items:center;flex-wrap:wrap">
+                <label for="status-group-filter" style="font-weight:600;color:var(--color-text-primary)">그룹별 보기:</label>
+                <select id="status-group-filter" class="form-input" style="max-width:300px" onchange="renderStatusFiltered()">
+                    <option value="">전체</option>
+                    <option value="sunday">주일예배</option>
+                    <option value="youth">청년교구</option>
+                    <option value="school">주일학교</option>
+                    <option value="weekday">주중·새벽</option>
+                    <option value="leader">순장반</option>
+                    <option value="cell">소그룹 (다락방)</option>
+                    <option value="newfam">새가족</option>
+                </select>
+            </div>
+
             <!-- 그룹별 현황 -->
             <div id="status-content">
                 <!-- JS로 생성 -->
@@ -2204,6 +2225,145 @@
                             : '-';
 
                         // 순위
+                        const rank = groupsWithRanking.includes(key) && st === 'submitted'
+                            ? itemsToRender.slice(0, index + 1).filter(i => {
+                                const iName = i.name || i;
+                                const getDT = () => {
+                                    if (key === 'weekday') {
+                                        if (iName.includes('수요')) return 'wednesday';
+                                        if (iName.includes('금요')) return 'friday';
+                                        if (iName.includes('새벽')) return 'dawn';
+                                    }
+                                    return getDeptType(key);
+                                };
+                                return getSubmissionStatus(key, iName, getDT()) === 'submitted';
+                            }).length
+                            : '';
+
+                        return `
+                            <div class="table-row">
+                                <div class="table-dept-name" onclick="viewSubmissionData('${key}', '${itemName}', '${itemDeptType}')" style="cursor:pointer">
+                                    ${itemName}
+                                </div>
+                                <div class="table-status">
+                                    <span class="table-status-badge ${st}">${st === 'submitted' ? '✓' : '–'}</span>
+                                    ${rank ? `<span style="font-size:11px;color:var(--color-text-tertiary);font-weight:600">#${rank}</span>` : ''}
+                                </div>
+                                <div class="table-time">${submitTimeStr}</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+
+            const block = document.createElement('div');
+            block.innerHTML = `
+                <div style="margin-bottom:var(--s6)">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--s4)">
+                        <h3 style="font-size:15px;font-weight:700;color:var(--color-text-primary)">${group.label}</h3>
+                        <span style="font-size:12px;color:var(--color-text-tertiary);font-weight:600">${doneCount}/${group.items.length} 제출</span>
+                    </div>
+                    ${tableHtml}
+                </div>
+            `;
+            container.appendChild(block);
+        });
+
+        document.getElementById('stat-done').textContent = totalDone;
+        document.getElementById('stat-miss').textContent = totalAll - totalDone;
+        document.getElementById('stat-total').textContent = totalAll;
+    }
+
+    function renderStatusFiltered() {
+        const selectedGroup = document.getElementById('status-group-filter').value;
+        const container = document.getElementById('status-content');
+        container.innerHTML = '';
+
+        let totalDone = 0, totalAll = 0;
+        const groupsWithRanking = ['leader', 'cell', 'youth', 'school'];
+
+        Object.entries(DEPARTMENTS).forEach(([key, group]) => {
+            if (selectedGroup && key !== selectedGroup) return;
+
+            let itemsToRender = group.items;
+
+            if (groupsWithRanking.includes(key)) {
+                itemsToRender = [...group.items].sort((a, b) => {
+                    const itemNameA = a.name || a;
+                    const itemNameB = b.name || b;
+
+                    const getDeptTypeForItem = (itemName) => {
+                        if (key === 'weekday') {
+                            if (itemName.includes('수요')) return 'wednesday';
+                            if (itemName.includes('금요')) return 'friday';
+                            if (itemName.includes('새벽')) return 'dawn';
+                        }
+                        return getDeptType(key);
+                    };
+
+                    const weekKeyA = getWeekKey(getDeptTypeForItem(itemNameA));
+                    const weekKeyB = getWeekKey(getDeptTypeForItem(itemNameB));
+                    const fullKeyA = `${weekKeyA}:${key}:${itemNameA}`;
+                    const fullKeyB = `${weekKeyB}:${key}:${itemNameB}`;
+
+                    const statusA = submissionStatus[weekKeyA]?.[fullKeyA];
+                    const statusB = submissionStatus[weekKeyB]?.[fullKeyB];
+
+                    if (!statusA?.submitted && statusB?.submitted) return 1;
+                    if (statusA?.submitted && !statusB?.submitted) return -1;
+
+                    if (statusA?.submitted && statusB?.submitted) {
+                        const timeA = new Date(statusA.submittedAt).getTime();
+                        const timeB = new Date(statusB.submittedAt).getTime();
+                        return timeA - timeB;
+                    }
+
+                    return 0;
+                });
+            }
+
+            const doneCount = itemsToRender.filter(item => {
+                const itemName = item.name || item;
+                const getDeptTypeForItem = () => {
+                  if (key === 'weekday') {
+                    if (itemName.includes('수요')) return 'wednesday';
+                    if (itemName.includes('금요')) return 'friday';
+                    if (itemName.includes('새벽')) return 'dawn';
+                  }
+                  return getDeptType(key);
+                };
+                const itemDeptType = getDeptTypeForItem();
+                return getSubmissionStatus(key, itemName, itemDeptType) === 'submitted';
+            }).length;
+            totalDone += doneCount;
+            totalAll += group.items.length;
+
+            const tableHtml = `
+                <div class="data-table" style="grid-template-columns: 2fr 1.5fr 1fr;">
+                    <div class="table-header">
+                        <div>부서</div>
+                        <div>상태</div>
+                        <div>제출시간</div>
+                    </div>
+                    ${itemsToRender.map((item, index) => {
+                        const itemName = item.name || item;
+                        const getDeptTypeForItem = () => {
+                          if (key === 'weekday') {
+                            if (itemName.includes('수요')) return 'wednesday';
+                            if (itemName.includes('금요')) return 'friday';
+                            if (itemName.includes('새벽')) return 'dawn';
+                          }
+                          return getDeptType(key);
+                        };
+                        const itemDeptType = getDeptTypeForItem();
+                        const weekKey = getWeekKey(itemDeptType);
+                        const fullKey = `${weekKey}:${key}:${itemName}`;
+                        const submission = submissionStatus[weekKey]?.[fullKey];
+                        const st = submission?.submitted ? 'submitted' : 'missing';
+                        const submitTimeStr = submission?.submitted && submission?.submittedAt
+                            ? new Date(submission.submittedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                            : '-';
+
                         const rank = groupsWithRanking.includes(key) && st === 'submitted'
                             ? itemsToRender.slice(0, index + 1).filter(i => {
                                 const iName = i.name || i;
