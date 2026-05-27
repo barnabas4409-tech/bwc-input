@@ -323,12 +323,11 @@
        ══════════════════════════════════════════════════ */
     .select-layout {
         display: grid;
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
         gap: var(--s5);
     }
     @media (max-width: 480px) {
         .select-layout {
-            grid-template-columns: repeat(2, 1fr);
             gap: var(--s4);
         }
     }
@@ -1453,6 +1452,21 @@
         background: var(--color-accent);
         color: white;
         border-color: var(--color-accent);
+    }
+
+    /* ══════════════════════════════════════════════════
+       제출현황 그룹 2열 배치
+       ══════════════════════════════════════════════════ */
+    #status-content {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--s6);
+    }
+
+    @media (max-width: 768px) {
+        #status-content {
+            grid-template-columns: 1fr;
+        }
     }
 
     @media (max-width: 768px) {
