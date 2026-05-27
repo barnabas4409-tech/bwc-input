@@ -697,6 +697,9 @@
         -webkit-appearance: none;
         margin: 0;
     }
+    select.form-input {
+        width: auto;
+    }
     .form-total {
         display: flex;
         align-items: center;
@@ -1542,6 +1545,14 @@
                     </div>
                 </div>
 
+                <!-- 주차 선택 필터 -->
+                <div style="margin-bottom:var(--s5);display:flex;gap:var(--s3);align-items:center;flex-wrap:wrap">
+                    <label for="input-week-select" style="font-weight:600;color:var(--color-text-primary)">주차 선택:</label>
+                    <select id="input-week-select" class="form-input" style="max-width:450px" onchange="renderDepartmentList()">
+                        <!-- JS로 생성 -->
+                    </select>
+                </div>
+
                 <!-- 부서 검색 -->
                 <div style="margin-bottom:var(--s4);padding:var(--s4);background:var(--color-bg-subtle);border-radius:var(--r)">
                     <input type="search" id="search-dept" placeholder="🔍 부서 검색..." aria-label="부서 검색" aria-describedby="search-help" style="width:100%;padding:10px 12px;border:1px solid var(--color-border-default);border-radius:7px;font-size:14px;background:var(--color-bg-surface);outline:none;transition:all var(--t-base)" onfocus="this.style.borderColor='var(--color-accent)';this.style.boxShadow='0 0 0 3px rgba(99,91,255,0.15)'" onblur="this.style.borderColor='';this.style.boxShadow=''">
@@ -1559,6 +1570,15 @@
                         <div class="group-card-body" id="grp-sunday">
                             <!-- JS로 생성 -->
                         </div>
+                    </div>
+
+                    <!-- 그룹: 주중예배/새벽기도 -->
+                    <div class="group-card" data-group="weekday">
+                        <div class="group-card-hdr">
+                            <div class="group-card-title">주중예배/새벽기도</div>
+                            <div class="group-card-count" id="cnt-weekday">0/3 제출</div>
+                        </div>
+                        <div class="group-card-body" id="grp-weekday"></div>
                     </div>
 
                     <!-- 그룹: 청년교구 -->
@@ -1579,28 +1599,19 @@
                         <div class="group-card-body" id="grp-school"></div>
                     </div>
 
-                    <!-- 그룹: 주중·새벽 -->
-                    <div class="group-card" data-group="weekday">
-                        <div class="group-card-hdr">
-                            <div class="group-card-title">주중 · 새벽</div>
-                            <div class="group-card-count" id="cnt-weekday">0/3 제출</div>
-                        </div>
-                        <div class="group-card-body" id="grp-weekday"></div>
-                    </div>
-
-                    <!-- 그룹: 리더십 (순장반) -->
+                    <!-- 그룹: 교구 순장반 -->
                     <div class="group-card" data-group="leader">
                         <div class="group-card-hdr">
-                            <div class="group-card-title">리더십 (순장반)</div>
+                            <div class="group-card-title">교구 순장반</div>
                             <div class="group-card-count" id="cnt-leader">0/15 제출</div>
                         </div>
                         <div class="group-card-body" id="grp-leader"></div>
                     </div>
 
-                    <!-- 그룹: 소그룹 (다락방) -->
+                    <!-- 그룹: 교구 다락방 -->
                     <div class="group-card" data-group="cell">
                         <div class="group-card-hdr">
-                            <div class="group-card-title">소그룹 (다락방)</div>
+                            <div class="group-card-title">교구 다락방</div>
                             <div class="group-card-count" id="cnt-cell">0/14 제출</div>
                         </div>
                         <div class="group-card-body" id="grp-cell"></div>
@@ -1744,17 +1755,23 @@
                 </div>
             </div>
 
-            <!-- 그룹 필터 -->
-            <div style="margin-bottom:var(--s5);display:flex;gap:var(--s3);align-items:center;flex-wrap:wrap">
-                <label for="status-group-filter" style="font-weight:600;color:var(--color-text-primary)">그룹별 보기:</label>
-                <select id="status-group-filter" class="form-input" style="max-width:300px" onchange="renderStatusFiltered()">
+            <!-- 주차 선택 및 그룹 필터 -->
+            <div style="margin-bottom:var(--s5);display:flex;gap:var(--s5);align-items:center;flex-wrap:wrap">
+                <div style="display:flex;gap:var(--s3);align-items:center">
+                    <label for="status-week-select" style="font-weight:600;color:var(--color-text-primary)">주차 선택:</label>
+                    <select id="status-week-select" class="form-input" style="max-width:450px" onchange="renderStatus()">
+                    </select>
+                </div>
+                <div style="display:flex;gap:var(--s3);align-items:center">
+                    <label for="status-group-filter" style="font-weight:600;color:var(--color-text-primary)">그룹별 보기:</label>
+                    <select id="status-group-filter" class="form-input" style="max-width:400px" onchange="renderStatusFiltered()">
                     <option value="">전체</option>
                     <option value="sunday">주일예배</option>
+                    <option value="weekday">주중예배/새벽기도</option>
                     <option value="youth">청년교구</option>
                     <option value="school">주일학교</option>
-                    <option value="weekday">주중·새벽</option>
-                    <option value="leader">순장반</option>
-                    <option value="cell">소그룹 (다락방)</option>
+                    <option value="leader">교구 순장반</option>
+                    <option value="cell">교구 다락방</option>
                     <option value="newfam">새가족</option>
                 </select>
             </div>
@@ -1791,7 +1808,7 @@
                 <!-- 주차 선택 필터 -->
                 <div style="margin-bottom:var(--s5);display:flex;gap:var(--s3);align-items:center;flex-wrap:wrap">
                     <label for="admin-week-select" style="font-weight:600;color:var(--color-text-primary)">주차 선택:</label>
-                    <select id="admin-week-select" class="form-input" style="max-width:300px" onchange="renderAdminData()">
+                    <select id="admin-week-select" class="form-input" style="max-width:450px" onchange="renderAdminData()">
                         <!-- JS로 생성 -->
                     </select>
                 </div>
@@ -1817,13 +1834,34 @@
                 { name: '서현', fields: [
                     {label: '1부', key: '서현 1부'},
                     {label: '2부', key: '서현 2부'},
-                    {label: '3부', key: '서현 3부'}
+                    {label: '3부', key: '서현 3부'},
+                    {label: '총계', key: '서현 총계', isTotal: true}
                 ]},
                 { name: '송림', fields: [
                     {label: '1부', key: '송림 1부'},
                     {label: '2부', key: '송림 2부'},
-                    {label: '3부', key: '송림 3부'}
+                    {label: '3부', key: '송림 3부'},
+                    {label: '총계', key: '송림 총계', isTotal: true}
                 ]}
+            ]
+        },
+        weekday: {
+            label: '주중예배/새벽기도',
+            items: [
+                { name: '수요예배', baseDay: 3 },
+                { name: '금요기도회', baseDay: 5 },
+                {
+                    name: '새벽기도',
+                    baseDay: 0,
+                    fields: [
+                        { label: '월', key: 'mon' },
+                        { label: '화', key: 'tue' },
+                        { label: '수', key: 'wed' },
+                        { label: '목', key: 'thu' },
+                        { label: '금', key: 'fri' },
+                        { label: '토', key: 'sat' }
+                    ]
+                }
             ]
         },
         youth: {
@@ -1860,18 +1898,24 @@
         },
         school: {
             label: '주일학교',
-            items: ['사랑부', '영아부', '유아부', '유치부',
-                    '송림유년부', '서현유년부',
-                    '송림초등부', '서현초등부',
-                    '송림소년부', '서현소년부',
-                    '송림청소년부', '서현중등부', '서현고등부']
-        },
-        weekday: {
-            label: '주중·새벽',
-            items: ['수요예배', '금요기도회', '새벽기도']
+            items: [
+                { name: '사랑부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
+                { name: '영아부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
+                { name: '유아부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
+                { name: '유치부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
+                { name: '송림유년부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
+                { name: '서현유년부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
+                { name: '송림초등부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
+                { name: '서현초등부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
+                { name: '송림소년부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
+                { name: '서현소년부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
+                { name: '송림청소년부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
+                { name: '서현중등부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
+                { name: '서현고등부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] }
+            ]
         },
         leader: {
-            label: '순장반',
+            label: '교구 순장반',
             items: [
                 { name: '1교구', fields: [{label: '화요순장반', key: 'tue_leader'}, {label: '직장인순장반', key: 'working_leader'}] },
                 { name: '2교구', fields: [{label: '화요순장반', key: 'tue_leader'}, {label: '직장인순장반', key: 'working_leader'}] },
@@ -1891,7 +1935,7 @@
             ]
         },
         cell: {
-            label: '소그룹 (다락방)',
+            label: '교구 다락방',
             items: [
                 { name: '1교구', fields: [{label: '여성', key: 'women'}, {label: '남성', key: 'men'}, {label: '직장인', key: 'working'}, {label: '부부', key: 'couple'}] },
                 { name: '2교구', fields: [{label: '여성', key: 'women'}, {label: '남성', key: 'men'}, {label: '직장인', key: 'working'}, {label: '부부', key: 'couple'}] },
@@ -1925,43 +1969,16 @@
       const currentMonth = now.getMonth();
       const currentYear = now.getFullYear();
 
-      // 기준일 계산 (현재 시간 기준)
-      const isTuesdayBeforeCutoff = dayOfWeek === 2 && now.getHours() < 10; // 화요일 10:00 이전
-      const isWednesdayAfterStart = dayOfWeek === 3 && now.getHours() >= 12; // 수요일 12:00 이후
-
       let baseDate = new Date(currentYear, currentMonth, currentDate);
 
-      if (deptType === 'sunday' || deptType === 'school' || deptType === 'youth' || deptType === 'newfam') {
-        // 주일 기준: 이번 주 일요일
-        const daysUntilSunday = (dayOfWeek === 0) ? 0 : 7 - dayOfWeek;
-        if (dayOfWeek === 0) {
-          // 오늘이 일요일
-          if (isTuesdayBeforeCutoff) baseDate = new Date(currentYear, currentMonth, currentDate - 6); // 지난주 일요일
-          else baseDate = new Date(currentYear, currentMonth, currentDate);
-        } else {
-          // 이번 주 일요일로 계산
-          const daysToSubtract = dayOfWeek;
-          baseDate = new Date(currentYear, currentMonth, currentDate - daysToSubtract);
-        }
-      } else if (deptType === 'wednesday') {
-        // 수요일 기준
-        const daysUntilWednesday = (dayOfWeek === 3) ? 0 : (3 + 7 - dayOfWeek) % 7;
-        if (dayOfWeek <= 3) {
-          baseDate = new Date(currentYear, currentMonth, currentDate - dayOfWeek + 3);
-        } else {
-          baseDate = new Date(currentYear, currentMonth, currentDate - dayOfWeek + 3 + 7);
-        }
-      } else if (deptType === 'friday') {
-        // 금요일 기준
-        const daysUntilFriday = (dayOfWeek === 5) ? 0 : (5 + 7 - dayOfWeek) % 7;
-        if (dayOfWeek <= 5) {
-          baseDate = new Date(currentYear, currentMonth, currentDate - dayOfWeek + 5);
-        } else {
-          baseDate = new Date(currentYear, currentMonth, currentDate - dayOfWeek + 5 + 7);
-        }
-      } else if (deptType === 'dawn') {
-        // 새벽기도: 당일
+      // 항상 주일을 기준으로 함
+      // 월(1)~토(6)에는 지난 주 주일, 일(0)에는 이번 주 주일
+      if (dayOfWeek === 0) {
+        // 오늘이 일요일 - 이번 주 주일
         baseDate = new Date(currentYear, currentMonth, currentDate);
+      } else {
+        // 월~토 - 지난 주 일요일
+        baseDate = new Date(currentYear, currentMonth, currentDate - dayOfWeek);
       }
 
       const year = baseDate.getFullYear();
@@ -2071,8 +2088,13 @@
         // 입력 탭으로 돌아갈 때 부서 선택 화면으로
         if (tab === 'input') goSelect();
 
-        // 제출현황 탭으로 전환할 때 최신 데이터로 렌더링
-        if (tab === 'status') renderStatus();
+        // 제출현황 탭으로 전환할 때 주차 선택 초기화 후 렌더링
+        if (tab === 'status') {
+            if (document.getElementById('status-week-select').options.length === 0) {
+                initStatusWeekSelect();
+            }
+            renderStatus();
+        }
 
         // 데이터 현황 탭으로 전환할 때 초기화
         if (tab === 'admin') {
@@ -2146,6 +2168,8 @@
        제출 현황 렌더링 (순위 기능 포함)
        ══════════════════════════════════════════════════ */
     function renderStatus() {
+        const selectElement = document.getElementById('status-week-select');
+        const selectedWeekKey = selectElement ? selectElement.value : getWeekKey('sunday');
         const container = document.getElementById('status-content');
         container.innerHTML = '';
 
@@ -2171,13 +2195,11 @@
                         return getDeptType(key);
                     };
 
-                    const weekKeyA = getWeekKey(getDeptTypeForItem(itemNameA));
-                    const weekKeyB = getWeekKey(getDeptTypeForItem(itemNameB));
-                    const fullKeyA = `${weekKeyA}:${key}:${itemNameA}`;
-                    const fullKeyB = `${weekKeyB}:${key}:${itemNameB}`;
+                    const fullKeyA = `${selectedWeekKey}:${key}:${itemNameA}`;
+                    const fullKeyB = `${selectedWeekKey}:${key}:${itemNameB}`;
 
-                    const statusA = submissionStatus[weekKeyA]?.[fullKeyA];
-                    const statusB = submissionStatus[weekKeyB]?.[fullKeyB];
+                    const statusA = submissionStatus[selectedWeekKey]?.[fullKeyA];
+                    const statusB = submissionStatus[selectedWeekKey]?.[fullKeyB];
 
                     // 미제출된 항목은 뒤로
                     if (!statusA?.submitted && statusB?.submitted) return 1;
@@ -2206,7 +2228,9 @@
                   return getDeptType(key);
                 };
                 const itemDeptType = getDeptTypeForItem();
-                return getSubmissionStatus(key, itemName, itemDeptType) === 'submitted';
+                const fullKey = `${selectedWeekKey}:${key}:${itemName}`;
+                const submission = submissionStatus[selectedWeekKey]?.[fullKey];
+                return submission?.submitted;
             }).length;
             totalDone += doneCount;
             totalAll += group.items.length;
@@ -2230,9 +2254,8 @@
                           return getDeptType(key);
                         };
                         const itemDeptType = getDeptTypeForItem();
-                        const weekKey = getWeekKey(itemDeptType);
-                        const fullKey = `${weekKey}:${key}:${itemName}`;
-                        const submission = submissionStatus[weekKey]?.[fullKey];
+                        const fullKey = `${selectedWeekKey}:${key}:${itemName}`;
+                        const submission = submissionStatus[selectedWeekKey]?.[fullKey];
                         const st = submission?.submitted ? 'submitted' : 'missing';
                         const submitTimeStr = submission?.submitted && submission?.submittedAt
                             ? new Date(submission.submittedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
@@ -2242,21 +2265,14 @@
                         const rank = groupsWithRanking.includes(key) && st === 'submitted'
                             ? itemsToRender.slice(0, index + 1).filter(i => {
                                 const iName = i.name || i;
-                                const getDT = () => {
-                                    if (key === 'weekday') {
-                                        if (iName.includes('수요')) return 'wednesday';
-                                        if (iName.includes('금요')) return 'friday';
-                                        if (iName.includes('새벽')) return 'dawn';
-                                    }
-                                    return getDeptType(key);
-                                };
-                                return getSubmissionStatus(key, iName, getDT()) === 'submitted';
+                                const iFullKey = `${selectedWeekKey}:${key}:${iName}`;
+                                return submissionStatus[selectedWeekKey]?.[iFullKey]?.submitted;
                             }).length
                             : '';
 
                         return `
                             <div class="table-row">
-                                <div class="table-dept-name" onclick="viewSubmissionData('${key}', '${itemName}', '${itemDeptType}')" style="cursor:pointer">
+                                <div class="table-dept-name" onclick="viewSubmissionData('${key}', '${itemName}', '${itemDeptType}', '${selectedWeekKey}')" style="cursor:pointer">
                                     ${itemName}
                                 </div>
                                 <div class="table-status">
@@ -2290,6 +2306,8 @@
 
     function renderStatusFiltered() {
         const selectedGroup = document.getElementById('status-group-filter').value;
+        const selectElement = document.getElementById('status-week-select');
+        const selectedWeekKey = selectElement ? selectElement.value : getWeekKey('sunday');
         const container = document.getElementById('status-content');
         container.innerHTML = '';
 
@@ -2306,22 +2324,11 @@
                     const itemNameA = a.name || a;
                     const itemNameB = b.name || b;
 
-                    const getDeptTypeForItem = (itemName) => {
-                        if (key === 'weekday') {
-                            if (itemName.includes('수요')) return 'wednesday';
-                            if (itemName.includes('금요')) return 'friday';
-                            if (itemName.includes('새벽')) return 'dawn';
-                        }
-                        return getDeptType(key);
-                    };
+                    const fullKeyA = `${selectedWeekKey}:${key}:${itemNameA}`;
+                    const fullKeyB = `${selectedWeekKey}:${key}:${itemNameB}`;
 
-                    const weekKeyA = getWeekKey(getDeptTypeForItem(itemNameA));
-                    const weekKeyB = getWeekKey(getDeptTypeForItem(itemNameB));
-                    const fullKeyA = `${weekKeyA}:${key}:${itemNameA}`;
-                    const fullKeyB = `${weekKeyB}:${key}:${itemNameB}`;
-
-                    const statusA = submissionStatus[weekKeyA]?.[fullKeyA];
-                    const statusB = submissionStatus[weekKeyB]?.[fullKeyB];
+                    const statusA = submissionStatus[selectedWeekKey]?.[fullKeyA];
+                    const statusB = submissionStatus[selectedWeekKey]?.[fullKeyB];
 
                     if (!statusA?.submitted && statusB?.submitted) return 1;
                     if (statusA?.submitted && !statusB?.submitted) return -1;
@@ -2338,16 +2345,8 @@
 
             const doneCount = itemsToRender.filter(item => {
                 const itemName = item.name || item;
-                const getDeptTypeForItem = () => {
-                  if (key === 'weekday') {
-                    if (itemName.includes('수요')) return 'wednesday';
-                    if (itemName.includes('금요')) return 'friday';
-                    if (itemName.includes('새벽')) return 'dawn';
-                  }
-                  return getDeptType(key);
-                };
-                const itemDeptType = getDeptTypeForItem();
-                return getSubmissionStatus(key, itemName, itemDeptType) === 'submitted';
+                const fullKey = `${selectedWeekKey}:${key}:${itemName}`;
+                return submissionStatus[selectedWeekKey]?.[fullKey]?.submitted;
             }).length;
             totalDone += doneCount;
             totalAll += group.items.length;
@@ -2370,9 +2369,8 @@
                           return getDeptType(key);
                         };
                         const itemDeptType = getDeptTypeForItem();
-                        const weekKey = getWeekKey(itemDeptType);
-                        const fullKey = `${weekKey}:${key}:${itemName}`;
-                        const submission = submissionStatus[weekKey]?.[fullKey];
+                        const fullKey = `${selectedWeekKey}:${key}:${itemName}`;
+                        const submission = submissionStatus[selectedWeekKey]?.[fullKey];
                         const st = submission?.submitted ? 'submitted' : 'missing';
                         const submitTimeStr = submission?.submitted && submission?.submittedAt
                             ? new Date(submission.submittedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
@@ -2381,21 +2379,14 @@
                         const rank = groupsWithRanking.includes(key) && st === 'submitted'
                             ? itemsToRender.slice(0, index + 1).filter(i => {
                                 const iName = i.name || i;
-                                const getDT = () => {
-                                    if (key === 'weekday') {
-                                        if (iName.includes('수요')) return 'wednesday';
-                                        if (iName.includes('금요')) return 'friday';
-                                        if (iName.includes('새벽')) return 'dawn';
-                                    }
-                                    return getDeptType(key);
-                                };
-                                return getSubmissionStatus(key, iName, getDT()) === 'submitted';
+                                const iFullKey = `${selectedWeekKey}:${key}:${iName}`;
+                                return submissionStatus[selectedWeekKey]?.[iFullKey]?.submitted;
                             }).length
                             : '';
 
                         return `
                             <div class="table-row">
-                                <div class="table-dept-name" onclick="viewSubmissionData('${key}', '${itemName}', '${itemDeptType}')" style="cursor:pointer">
+                                <div class="table-dept-name" onclick="viewSubmissionData('${key}', '${itemName}', '${itemDeptType}', '${selectedWeekKey}')" style="cursor:pointer">
                                     ${itemName}
                                 </div>
                                 <div class="table-status">
@@ -2434,6 +2425,12 @@
         document.getElementById('screen-select').style.display = 'block';
         document.getElementById('screen-form').style.display = 'none';
         document.getElementById('screen-done').style.display = 'none';
+
+        // 주차 선택 초기화
+        if (document.getElementById('input-week-select').options.length === 0) {
+            initInputWeekSelect();
+        }
+
         renderDepartmentList();
     }
 
@@ -2452,6 +2449,24 @@
         document.getElementById('form-dept-meta').textContent =
             DEPARTMENTS[groupKey].label + ' · 이번 주 데이터를 입력해주세요';
 
+        // 선택된 주차 기반으로 입력 기준일 설정
+        const selectedWeekKey = document.getElementById('input-week-select').value;
+        const [year, month, day] = selectedWeekKey.split('-').map(Number);
+        const sundayDate = new Date(year, month - 1, day);
+
+        // baseDay를 고려해서 목표 날짜 계산
+        const baseDayOffset = (deptItem.baseDay !== undefined) ? deptItem.baseDay : 0;
+        let targetDate = new Date(sundayDate);
+        targetDate.setDate(targetDate.getDate() + baseDayOffset);
+
+        const targetYear = targetDate.getFullYear();
+        const targetMonth = String(targetDate.getMonth() + 1).padStart(2, '0');
+        const targetDay = String(targetDate.getDate()).padStart(2, '0');
+        document.getElementById('form-date').value = `${targetYear}-${targetMonth}-${targetDay}`;
+
+        // 달력 항상 숨김 (주차 선택으로 대체)
+        document.querySelector('.form-date-row').style.display = 'none';
+
         // 알림 영역 초기화
         document.getElementById('form-alert-area').innerHTML = '';
 
@@ -2461,19 +2476,59 @@
 
         fields.forEach(field => {
             const inputId = `field-${field.key}`;
-            fieldsHTML += `
-                <div class="form-row">
-                    <label for="${inputId}" class="form-label">${field.label}</label>
-                    <div style="text-align:right;width:100px">
-                        <input type="number" class="form-input" data-field="${field.key}" id="${inputId}" placeholder="0" aria-label="${field.label}" aria-describedby="input-help-${field.key}">
+            const isTotal = field.isTotal || false;
+
+            if (isTotal) {
+                fieldsHTML += `
+                    <div class="form-row">
+                        <label for="${inputId}" class="form-label">${field.label}</label>
+                        <div style="text-align:right;width:100px">
+                            <input type="number" class="form-input" data-field="${field.key}" id="${inputId}" placeholder="0" aria-label="${field.label}" aria-describedby="input-help-${field.key}" disabled style="opacity:0.65;background:var(--color-bg-muted);cursor:not-allowed">
+                        </div>
+                        <span id="input-help-${field.key}" class="sr-only">자동 계산되는 총계 필드</span>
                     </div>
-                    <span id="input-help-${field.key}" class="sr-only">숫자를 입력해주세요</span>
-                </div>
-            `;
+                `;
+            } else {
+                fieldsHTML += `
+                    <div class="form-row">
+                        <label for="${inputId}" class="form-label">${field.label}</label>
+                        <div style="text-align:right;width:100px">
+                            <input type="number" class="form-input" data-field="${field.key}" id="${inputId}" placeholder="0" aria-label="${field.label}" aria-describedby="input-help-${field.key}">
+                        </div>
+                        <span id="input-help-${field.key}" class="sr-only">숫자를 입력해주세요</span>
+                    </div>
+                `;
+            }
         });
 
         fieldsHTML += '</div>';
         document.getElementById('form-fields-area').innerHTML = fieldsHTML;
+
+        // 총계 필드 자동 업데이트 이벤트 연결
+        const inputs = document.querySelectorAll('#screen-form input.form-input[data-field]:not([disabled])');
+        inputs.forEach(input => {
+            input.addEventListener('input', updateTotalFields);
+        });
+    }
+
+    function updateTotalFields() {
+        const { deptItem } = currentFormContext;
+        if (!deptItem || !deptItem.fields) return;
+
+        deptItem.fields.forEach(field => {
+            if (field.isTotal) {
+                const deptPrefix = field.key.replace(' 총계', '');
+                const relatedFields = deptItem.fields.filter(f => !f.isTotal && f.key.startsWith(deptPrefix));
+                const totalInput = document.querySelector(`[data-field="${field.key}"]`);
+                if (totalInput) {
+                    const total = relatedFields.reduce((sum, f) => {
+                        const input = document.querySelector(`[data-field="${f.key}"]`);
+                        return sum + (input ? parseInt(input.value) || 0 : 0);
+                    }, 0);
+                    totalInput.value = total;
+                }
+            }
+        });
     }
 
     /* ══════════════════════════════════════════════════
@@ -2522,6 +2577,15 @@
                 input.value = submission.data[field.key];
             }
         });
+
+        // 총계 필드 이벤트 연결 (editForm에서도 호출)
+        const inputs = document.querySelectorAll('#screen-form input.form-input[data-field]:not([disabled])');
+        inputs.forEach(input => {
+            input.addEventListener('input', updateTotalFields);
+        });
+
+        // 초기 총계 값 계산 및 표시
+        updateTotalFields();
 
         // 사용자에게 수정 모드임을 알림
         const alertArea = document.getElementById('form-alert-area');
@@ -2668,6 +2732,20 @@
             formData[fieldKey] = value && value.trim() !== '' ? parseInt(value) : 0;
         });
 
+        // 총계 자동 계산 (주일예배 등에서)
+        if (groupKey === 'sunday' || groupKey === 'youth' || groupKey === 'school') {
+            const fields = deptItem.fields || [];
+            fields.forEach(field => {
+                if (field.isTotal) {
+                    // 총계 키에서 부서명 추출 (예: '서현 총계' → '서현')
+                    const deptPrefix = field.key.replace(' 총계', '');
+                    const relatedFields = fields.filter(f => !f.isTotal && f.key.startsWith(deptPrefix));
+                    const total = relatedFields.reduce((sum, f) => sum + (formData[f.key] || 0), 0);
+                    formData[field.key] = total;
+                }
+            });
+        }
+
         // 모든 필드가 비어있을 때만 경고
         if (allEmpty) {
             const alertArea = document.getElementById('form-alert-area');
@@ -2810,6 +2888,16 @@
                 }
             });
 
+            // 총계 필드 이벤트 재연결
+            const inputs = document.querySelectorAll('#screen-form input.form-input[data-field]:not([disabled])');
+            inputs.forEach(input => {
+                input.removeEventListener('input', updateTotalFields);
+                input.addEventListener('input', updateTotalFields);
+            });
+
+            // 초기 총계 값 계산
+            updateTotalFields();
+
             // 수정 모드 알림
             const alertArea = document.getElementById('form-alert-area');
             if (alertArea) {
@@ -2881,6 +2969,46 @@
         });
     }
 
+    function initStatusWeekSelect() {
+        const weeks = getPreviousWeeks();
+        const currentWeekKey = getWeekKey('sunday');
+
+        // 현재 주를 맨 앞에 추가
+        if (!weeks.includes(currentWeekKey)) {
+            weeks.unshift(currentWeekKey);
+        }
+
+        const select = document.getElementById('status-week-select');
+        select.innerHTML = '';
+        weeks.forEach(weekKey => {
+            const option = document.createElement('option');
+            option.value = weekKey;
+            option.textContent = getWeekLabel(weekKey);
+            if (weekKey === currentWeekKey) option.selected = true;
+            select.appendChild(option);
+        });
+    }
+
+    function initInputWeekSelect() {
+        const weeks = getPreviousWeeks();
+        const currentWeekKey = getWeekKey('sunday');
+
+        // 현재 주를 맨 앞에 추가
+        if (!weeks.includes(currentWeekKey)) {
+            weeks.unshift(currentWeekKey);
+        }
+
+        const select = document.getElementById('input-week-select');
+        select.innerHTML = '';
+        weeks.forEach(weekKey => {
+            const option = document.createElement('option');
+            option.value = weekKey;
+            option.textContent = getWeekLabel(weekKey);
+            if (weekKey === currentWeekKey) option.selected = true;
+            select.appendChild(option);
+        });
+    }
+
     function renderAdminData() {
         const weekKey = document.getElementById('admin-week-select').value;
         const container = document.getElementById('admin-data-container');
@@ -2889,79 +3017,207 @@
         // 주차별 데이터 수집
         let html = '';
         Object.entries(DEPARTMENTS).forEach(([groupKey, group]) => {
-            // 그룹 내 모든 필드를 수집 (각 아이템의 필드를 모두 포함)
-            const allFieldsMap = new Map();
-            group.items.forEach(item => {
-                const fields = item.fields || [{label: '인원', key: 'count'}];
-                fields.forEach(field => {
-                    if (!allFieldsMap.has(field.key)) {
-                        allFieldsMap.set(field.key, field.label);
+            // 새벽기도 별도 처리
+            if (groupKey === 'weekday') {
+                // 새벽기도 항목 필터링
+                const dawnItem = group.items.find(item => (item.name || item).includes('새벽'));
+                const otherItems = group.items.filter(item => !(item.name || item).includes('새벽'));
+
+                // 다른 주중예배 항목들 처리
+                if (otherItems.length > 0) {
+                    let tableRows = '';
+                    let allFields = null;
+
+                    otherItems.forEach(item => {
+                        const itemName = item.name || item;
+                        const getDeptTypeForItem = () => {
+                            if (itemName.includes('수요')) return 'wednesday';
+                            if (itemName.includes('금요')) return 'friday';
+                            return getDeptType(groupKey);
+                        };
+                        const itemDeptType = getDeptTypeForItem();
+                        const fullKey = `${weekKey}:${groupKey}:${itemName}`;
+
+                        const submission = submissionStatus[weekKey]?.[fullKey];
+                        const isSubmitted = submission?.submitted || false;
+                        const submittedAt = submission?.submittedAt ? new Date(submission.submittedAt) : null;
+                        const submitTimeStr = submittedAt
+                            ? submittedAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                            : '-';
+
+                        const fields = item.fields || [{label: '인원', key: 'count'}];
+
+                        if (!allFields) {
+                            allFields = fields;
+                        }
+
+                        const fieldCells = fields.map(field => {
+                            const fieldValue = isSubmitted ? (submission?.data?.[field.key] ?? '-') : '-';
+                            return `<div class="table-data">${fieldValue}</div>`;
+                        }).join('');
+
+                        tableRows += `
+                            <div class="table-row">
+                                <div class="table-dept-name" onclick="viewSubmissionData('${groupKey}', '${itemName.replace(/'/g, "\\'")}', '${itemDeptType}')" style="cursor:pointer;${isSubmitted ? '' : 'opacity:0.6'}">
+                                    ${itemName}
+                                </div>
+                                ${fieldCells}
+                                <div class="table-status">
+                                    <span class="table-status-badge ${isSubmitted ? 'submitted' : 'missing'}">
+                                        ${isSubmitted ? '✓' : '–'}
+                                    </span>
+                                </div>
+                                <div class="table-time">${submitTimeStr}</div>
+                            </div>
+                        `;
+                    });
+
+                    if (tableRows && allFields) {
+                        const fieldHeaders = allFields.map(f => `<div>${f.label}</div>`).join('');
+                        const gridTemplate = `2fr ${allFields.map(() => '1fr').join(' ')} 0.8fr 1fr`;
+
+                        html += `
+                            <div style="margin-bottom:var(--s8)">
+                                <h3 style="font-size:15px;font-weight:700;color:var(--color-text-primary);margin-bottom:var(--s4)">${group.label}</h3>
+                                <div class="data-table" style="grid-template-columns: ${gridTemplate}">
+                                    <div class="table-header">
+                                        <div>부서</div>
+                                        ${fieldHeaders}
+                                        <div>상태</div>
+                                        <div>제출시간</div>
+                                    </div>
+                                    ${tableRows}
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+
+                // 새벽기도 별도 테이블
+                if (dawnItem) {
+                    const itemName = dawnItem.name || dawnItem;
+                    const fullKey = `${weekKey}:${groupKey}:${itemName}`;
+                    const submission = submissionStatus[weekKey]?.[fullKey];
+                    const isSubmitted = submission?.submitted || false;
+                    const submittedAt = submission?.submittedAt ? new Date(submission.submittedAt) : null;
+                    const submitTimeStr = submittedAt
+                        ? submittedAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                        : '-';
+
+                    const fields = dawnItem.fields || [{label: '인원', key: 'count'}];
+                    const fieldHeaders = fields.map(f => `<div>${f.label}</div>`).join('');
+                    const fieldCells = fields.map(field => {
+                        const fieldValue = isSubmitted ? (submission?.data?.[field.key] ?? '-') : '-';
+                        return `<div class="table-data">${fieldValue}</div>`;
+                    }).join('');
+
+                    const gridTemplate = `2fr ${fields.map(() => '1fr').join(' ')} 0.8fr 1fr`;
+
+                    html += `
+                        <div style="margin-bottom:var(--s8)">
+                            <h3 style="font-size:15px;font-weight:700;color:var(--color-text-primary);margin-bottom:var(--s4)">새벽기도</h3>
+                            <div class="data-table" style="grid-template-columns: ${gridTemplate}">
+                                <div class="table-header">
+                                    <div>부서</div>
+                                    ${fieldHeaders}
+                                    <div>상태</div>
+                                    <div>제출시간</div>
+                                </div>
+                                <div class="table-row">
+                                    <div class="table-dept-name" onclick="viewSubmissionData('${groupKey}', '${itemName.replace(/'/g, "\\'")}', 'dawn')" style="cursor:pointer;${isSubmitted ? '' : 'opacity:0.6'}">
+                                        ${itemName}
+                                    </div>
+                                    ${fieldCells}
+                                    <div class="table-status">
+                                        <span class="table-status-badge ${isSubmitted ? 'submitted' : 'missing'}">
+                                            ${isSubmitted ? '✓' : '–'}
+                                        </span>
+                                    </div>
+                                    <div class="table-time">${submitTimeStr}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else {
+                // 다른 그룹 (weekday 제외) 기존 로직
+                // 먼저 그룹 내 모든 항목의 최대 필드 개수 찾기
+                let maxFields = 0;
+                let allFields = null;
+                group.items.forEach(item => {
+                    const fields = item.fields || [{label: '인원', key: 'count'}];
+                    if (fields.length > maxFields) {
+                        maxFields = fields.length;
+                        allFields = fields;
                     }
                 });
-            });
-            const commonFields = Array.from(allFieldsMap.entries()).map(([key, label]) => ({label, key}));
 
-            let tableRows = '';
-            group.items.forEach(item => {
-                const itemName = item.name || item;
-                const getDeptTypeForItem = () => {
-                    if (groupKey === 'weekday') {
-                        if (itemName.includes('수요')) return 'wednesday';
-                        if (itemName.includes('금요')) return 'friday';
-                        if (itemName.includes('새벽')) return 'dawn';
+                let tableRows = '';
+
+                group.items.forEach(item => {
+                    const itemName = item.name || item;
+                    const getDeptTypeForItem = () => {
+                        return getDeptType(groupKey);
+                    };
+                    const itemDeptType = getDeptTypeForItem();
+                    const fullKey = `${weekKey}:${groupKey}:${itemName}`;
+
+                    const submission = submissionStatus[weekKey]?.[fullKey];
+                    const isSubmitted = submission?.submitted || false;
+                    const submittedAt = submission?.submittedAt ? new Date(submission.submittedAt) : null;
+                    const submitTimeStr = submittedAt
+                        ? submittedAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                        : '-';
+
+                    const fields = item.fields || [{label: '인원', key: 'count'}];
+
+                    // 각 항목의 필드를 최대 필드 개수만큼 채우기
+                    const fieldCells = [];
+                    for (let i = 0; i < maxFields; i++) {
+                        if (i < fields.length) {
+                            const field = fields[i];
+                            const fieldValue = isSubmitted ? (submission?.data?.[field.key] ?? '-') : '-';
+                            fieldCells.push(`<div class="table-data">${fieldValue}</div>`);
+                        } else {
+                            fieldCells.push(`<div class="table-data">-</div>`);
+                        }
                     }
-                    return getDeptType(groupKey);
-                };
-                const itemDeptType = getDeptTypeForItem();
-                const fullKey = `${weekKey}:${groupKey}:${itemName}`;
 
-                const submission = submissionStatus[weekKey]?.[fullKey];
-                const isSubmitted = submission?.submitted || false;
-                const submittedAt = submission?.submittedAt ? new Date(submission.submittedAt) : null;
-                const submitTimeStr = submittedAt
-                    ? submittedAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
-                    : '-';
-
-                // 모든 필드에 대해 값을 표시 (없으면 -)
-                const fieldCells = commonFields.map(field => {
-                    const fieldValue = isSubmitted ? (submission?.data?.[field.key] ?? '-') : '-';
-                    return `<div class="table-data">${fieldValue}</div>`;
-                }).join('');
-
-                tableRows += `
-                    <div class="table-row">
-                        <div class="table-dept-name" onclick="viewSubmissionData('${groupKey}', '${itemName.replace(/'/g, "\\'")}', '${itemDeptType}')" style="cursor:pointer;${isSubmitted ? '' : 'opacity:0.6'}">
-                            ${itemName}
-                        </div>
-                        ${fieldCells}
-                        <div class="table-status">
-                            <span class="table-status-badge ${isSubmitted ? 'submitted' : 'missing'}">
-                                ${isSubmitted ? '✓' : '–'}
-                            </span>
-                        </div>
-                        <div class="table-time">${submitTimeStr}</div>
-                    </div>
-                `;
-            });
-
-            if (tableRows) {
-                const fieldHeaders = commonFields.map(f => `<div>${f.label}</div>`).join('');
-                const gridTemplate = `2fr ${commonFields.map(() => '1fr').join(' ')} 0.8fr 1fr`;
-
-                html += `
-                    <div style="margin-bottom:var(--s8)">
-                        <h3 style="font-size:15px;font-weight:700;color:var(--color-text-primary);margin-bottom:var(--s4)">${group.label}</h3>
-                        <div class="data-table" style="grid-template-columns: ${gridTemplate}">
-                            <div class="table-header">
-                                <div>부서</div>
-                                ${fieldHeaders}
-                                <div>상태</div>
-                                <div>제출시간</div>
+                    tableRows += `
+                        <div class="table-row">
+                            <div class="table-dept-name" onclick="viewSubmissionData('${groupKey}', '${itemName.replace(/'/g, "\\'")}', '${itemDeptType}')" style="cursor:pointer;${isSubmitted ? '' : 'opacity:0.6'}">
+                                ${itemName}
                             </div>
-                            ${tableRows}
+                            ${fieldCells.join('')}
+                            <div class="table-status">
+                                <span class="table-status-badge ${isSubmitted ? 'submitted' : 'missing'}">
+                                    ${isSubmitted ? '✓' : '–'}
+                                </span>
+                            </div>
+                            <div class="table-time">${submitTimeStr}</div>
                         </div>
-                    </div>
-                `;
+                    `;
+                });
+
+                if (tableRows && allFields) {
+                    const fieldHeaders = allFields.map(f => `<div>${f.label}</div>`).join('');
+                    const gridTemplate = `2fr ${allFields.map(() => '1fr').join(' ')} 0.8fr 1fr`;
+
+                    html += `
+                        <div style="margin-bottom:var(--s8)">
+                            <h3 style="font-size:15px;font-weight:700;color:var(--color-text-primary);margin-bottom:var(--s4)">${group.label}</h3>
+                            <div class="data-table" style="grid-template-columns: ${gridTemplate}">
+                                <div class="table-header">
+                                    <div>부서</div>
+                                    ${fieldHeaders}
+                                    <div>상태</div>
+                                    <div>제출시간</div>
+                                </div>
+                                ${tableRows}
+                            </div>
+                        </div>
+                    `;
+                }
             }
         });
 
