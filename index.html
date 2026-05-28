@@ -54,7 +54,7 @@
         --color-group-newfam: #e11d48;
         --color-group-newfam-light: #ffe2e8;
 
-        --font-display: 'Noto Serif KR', 'Georgia', serif;
+        --font-display: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         --font-body: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
 
@@ -212,24 +212,27 @@
        NAV
        ══════════════════════════════════════════════════ */
     nav {
-        background: linear-gradient(180deg, var(--color-bg-surface) 0%, rgba(240, 244, 248, 0.3) 100%);
+        background: var(--color-bg-surface);
         border-bottom: 1.5px solid var(--color-border-default);
         padding: 0 var(--s8);
         display: flex;
-        gap: 0;
+        gap: var(--s2);
+        align-items: center;
         overflow-x: auto;
         scrollbar-width: none;
         box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        height: 64px;
     }
     nav::-webkit-scrollbar { display: none; }
     .nt {
-        padding: 0 var(--s4);
-        height: 44px;
-        font-size: 13px;
-        font-weight: 500;
+        padding: 0 var(--s5);
+        height: 40px;
+        font-size: 15px;
+        font-weight: 600;
         color: var(--color-text-tertiary);
         cursor: pointer;
-        border-bottom: 2px solid transparent;
+        border: none;
+        border-radius: 99px;
         white-space: nowrap;
         flex-shrink: 0;
         letter-spacing: -0.1px;
@@ -237,34 +240,24 @@
         align-items: center;
         gap: 6px;
         background: transparent;
-        border-top: none;
-        border-left: none;
-        border-right: none;
         transition: color var(--t-base) var(--ease-default),
-                    border-color var(--t-base) var(--ease-default),
                     background var(--t-base) var(--ease-default);
-        position: relative;
     }
     .nt:hover {
-        color: var(--color-text-secondary);
+        color: var(--color-text-primary);
         background: var(--color-bg-subtle);
     }
-    .nt:focus {
-        outline: none;
-        background: rgba(99, 91, 255, 0.08);
-        color: var(--color-accent);
-    }
+    .nt:focus { outline: none; }
     .nt.on {
-        color: var(--color-accent);
-        border-bottom-color: var(--color-accent);
+        color: #fff;
         font-weight: 700;
-        background: var(--color-accent-light);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.18);
     }
-    .nt-icon { font-size: 14px; }
-    .nt-lock {
-        font-size: 11px;
-        opacity: 0.5;
-    }
+    #tab-input.on        { background: #6355ff; box-shadow: 0 2px 8px rgba(99,91,255,0.35); }
+    #tab-sunday-school.on { background: #16a34a; box-shadow: 0 2px 8px rgba(22,163,74,0.35); }
+    #tab-status.on       { background: #ea580c; box-shadow: 0 2px 8px rgba(234,88,12,0.35); }
+    #tab-admin.on        { background: #2563eb; box-shadow: 0 2px 8px rgba(37,99,235,0.35); }
+    .nt-lock { font-size: 11px; opacity: 0.7; }
 
     /* ══════════════════════════════════════════════════
        MAIN
@@ -293,10 +286,10 @@
     /* ── PAGE HEADER ── */
     .page-hdr {
         display: flex;
-        align-items: flex-end;
+        align-items: center;
         justify-content: space-between;
         margin-bottom: var(--s6);
-        padding-bottom: var(--s5);
+        padding: var(--s5) 0;
         border-bottom: 2px solid var(--color-border-default);
         flex-wrap: wrap;
         gap: var(--s4);
@@ -311,10 +304,11 @@
         line-height: 1.3;
     }
     .page-hdr-title p {
-        font-size: 14px;
+        font-size: 15px;
+        font-weight: 500;
         color: var(--color-text-secondary);
-        margin-top: 8px;
-        letter-spacing: -0.1px;
+        margin-top: 0;
+        letter-spacing: -0.2px;
         line-height: 1.6;
     }
 
@@ -618,18 +612,54 @@
         border-left: 3px solid var(--color-accent);
         display: block;
     }
-    #form-fields-area .form-card > div:not(.form-card-title) {
+    #form-fields-area .form-card > div:not(.form-card-title):not(.form-row):not(.form-row-header) {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: var(--s3);
     }
     #form-fields-area .form-row {
-        display: flex;
+        display: grid;
+        grid-template-columns: 1fr 60px 60px 112px;
         align-items: center;
         gap: var(--s2);
     }
     #form-fields-area .form-label {
-        min-width: 60px;
+        min-width: 0;
+    }
+    #form-fields-area .form-input {
+        width: 100%;
+    }
+    .form-row-header {
+        display: grid;
+        grid-template-columns: 1fr 60px 60px 112px;
+        gap: var(--s2);
+        padding: var(--s2) var(--s3) var(--s3);
+        border-bottom: 1px solid var(--color-border-default);
+        margin-bottom: var(--s1);
+    }
+    .form-row-header > div {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--color-text-tertiary);
+        text-align: center;
+        letter-spacing: -0.1px;
+    }
+    .form-row-header > div:first-child { text-align: left; color: transparent; }
+    .form-row-header .fh-current {
+        color: var(--color-accent);
+    }
+    .form-prev-val {
+        text-align: center;
+        font-size: 13px;
+        font-weight: 600;
+        font-family: var(--font-mono);
+        color: var(--color-text-tertiary);
+        user-select: none;
+        padding: 0 2px;
+    }
+    .form-prev-val.no-data {
+        color: var(--color-text-disabled);
+        font-weight: 300;
     }
     .form-row {
         display: grid;
@@ -1142,6 +1172,76 @@
     }
 
     /* ══════════════════════════════════════════════════
+       이전 주차 데이터 참고
+       ══════════════════════════════════════════════════ */
+    .previous-weeks-container {
+        background: linear-gradient(135deg, rgba(99, 91, 255, 0.03) 0%, rgba(99, 102, 241, 0.05) 100%);
+        border: 1.5px solid rgba(99, 91, 255, 0.2);
+        border-radius: var(--r);
+        padding: var(--s5);
+        margin-top: var(--s6);
+    }
+    .previous-weeks-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--color-text-primary);
+        margin-bottom: var(--s4);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: flex;
+        align-items: center;
+        gap: var(--s2);
+    }
+    .previous-weeks-title::before {
+        content: '';
+        width: 4px;
+        height: 16px;
+        background: var(--color-accent);
+        border-radius: 2px;
+    }
+    .previous-week-row {
+        background: var(--color-bg-surface);
+        border: 1px solid var(--color-border-default);
+        border-radius: 8px;
+        padding: var(--s4);
+        margin-bottom: var(--s3);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--s4);
+    }
+    .previous-week-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--color-text-secondary);
+        min-width: 100px;
+    }
+    .previous-week-values {
+        display: flex;
+        gap: var(--s4);
+        flex: 1;
+        flex-wrap: wrap;
+    }
+    .previous-week-field {
+        display: flex;
+        align-items: center;
+        gap: var(--s2);
+    }
+    .previous-week-field-label {
+        font-size: 11px;
+        color: var(--color-text-tertiary);
+        font-weight: 600;
+    }
+    .previous-week-field-value {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--color-accent);
+        font-family: var(--font-mono);
+        min-width: 30px;
+        text-align: right;
+    }
+
+    /* ══════════════════════════════════════════════════
        RESPONSIVE
        ══════════════════════════════════════════════════ */
     @media (max-width: 768px) {
@@ -1150,7 +1250,7 @@
         .hdr-brand h1 { font-size: 15px; font-weight: 800; }
         .hdr-brand p { display: none; }
         nav { padding: 0 var(--s4); border-bottom: 1.5px solid var(--color-border-default); box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-        .nt { padding: 0 var(--s4); font-size: 13px; height: 44px; font-weight: 600; }
+        .nt { padding: 0 var(--s4); font-size: 14px; height: 36px; }
         main { padding: var(--s6) var(--s4) var(--s10); }
         .page-hdr-title h2 { font-size: 20px; letter-spacing: -0.6px; font-weight: 800; }
         .page-hdr { margin-bottom: var(--s5); padding-bottom: var(--s4); border-bottom: 2px solid var(--color-border-default); }
@@ -1162,8 +1262,9 @@
         .form-label { font-size: 14px; font-weight: 700; }
         .dept-btn { width: 100%; height: 60px; border: 2px solid var(--color-border-default); border-radius: 12px; }
         .dept-btn:hover { border-color: var(--color-accent); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
-        #form-fields-area .form-card > div:not(.form-card-title) {
-            grid-template-columns: 1fr;
+        #form-fields-area .form-row,
+        .form-row-header {
+            grid-template-columns: 1fr 52px 52px 96px;
         }
         .summary-stats { gap: var(--s5); margin-bottom: var(--s6); }
         .stat-card { padding: var(--s5) var(--s5); border-radius: 14px; }
@@ -1182,7 +1283,7 @@
         .hdr-brand h1 { font-size: 14px; font-weight: 800; }
         .hdr-brand p { display: none; }
         nav { padding: 0 var(--s4); border-bottom: 1.5px solid var(--color-border-default); box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-        .nt { height: 42px; font-size: 12px; padding: 0 var(--s3); font-weight: 600; }
+        .nt { padding: 0 var(--s3); font-size: 13px; height: 34px; }
         .nt-icon { font-size: 16px; }
         .nt.on { background: linear-gradient(135deg, var(--color-accent-light) 0%, rgba(99, 102, 241, 0.05) 100%); }
         main { padding: var(--s4) var(--s4) var(--s5); }
@@ -1504,8 +1605,7 @@
             </div>
         </div>
         <div class="hdr-r">
-            <span class="deadline-badge" id="deadline-badge">화요일 마감</span>
-            <span class="week-badge" id="week-badge">2026년 5월 3주차</span>
+            <button onclick="location.reload()" style="padding:6px 14px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;color:var(--color-text-secondary)" aria-label="새로고침">🔄 새로고침</button>
         </div>
     </header>
 
@@ -1513,19 +1613,10 @@
          NAV
          ═══════════════════════════════════════════════ -->
     <nav role="tablist" aria-label="메인 네비게이션">
-        <button class="nt on" onclick="switchTab('input')" id="tab-input" role="tab" aria-selected="true" aria-controls="sec-input">
-            <span class="nt-icon">✏️</span>
-            <span>입력하기</span>
-        </button>
-        <button class="nt" onclick="switchTab('status')" id="tab-status" role="tab" aria-selected="false" aria-controls="sec-status">
-            <span class="nt-icon">📋</span>
-            <span>제출 현황</span>
-        </button>
-        <button class="nt" onclick="switchTab('admin')" id="tab-admin" role="tab" aria-selected="false" aria-controls="sec-admin">
-            <span class="nt-icon">📊</span>
-            <span>데이터 현황</span>
-            <span class="nt-lock">🔒</span>
-        </button>
+        <button class="nt on" onclick="switchTab('input')" id="tab-input" role="tab" aria-selected="true" aria-controls="sec-input">교구/청년교구</button>
+        <button class="nt" onclick="switchTab('sunday-school')" id="tab-sunday-school" role="tab" aria-selected="false" aria-controls="sec-sunday-school">주일학교</button>
+        <button class="nt" onclick="switchTab('status')" id="tab-status" role="tab" aria-selected="false" aria-controls="sec-status">제출 현황</button>
+        <button class="nt" onclick="switchTab('admin')" id="tab-admin" role="tab" aria-selected="false" aria-controls="sec-admin">데이터 현황 🔒</button>
     </nav>
 
     <!-- ═══════════════════════════════════════════════
@@ -1540,17 +1631,17 @@
             <div id="screen-select">
                 <div class="page-hdr">
                     <div class="page-hdr-title">
-                        <h2>부서 선택</h2>
-                        <p>담당하시는 부서를 선택해 이번 주 데이터를 입력해주세요</p>
+                        <p>담당하시는 부서를 선택해 이번 주 데이터를 입력해주세요.</p>
                     </div>
                 </div>
 
                 <!-- 주차 선택 필터 -->
-                <div style="margin-bottom:var(--s5);display:flex;gap:var(--s3);align-items:center;flex-wrap:wrap">
-                    <label for="input-week-select" style="font-weight:600;color:var(--color-text-primary)">주차 선택:</label>
-                    <select id="input-week-select" class="form-input" style="max-width:450px" onchange="renderDepartmentList()">
+                <div style="margin-bottom:var(--s5);display:flex;gap:var(--s2);align-items:center">
+                    <button onclick="shiftWeek('input-week-select', -1, renderDepartmentList)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="이전 주">‹</button>
+                    <select id="input-week-select" class="form-input" style="flex:1;max-width:360px;text-align:center" onchange="renderDepartmentList()">
                         <!-- JS로 생성 -->
                     </select>
+                    <button onclick="shiftWeek('input-week-select', 1, renderDepartmentList)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="다음 주">›</button>
                 </div>
 
                 <!-- 부서 검색 -->
@@ -1576,27 +1667,18 @@
                     <div class="group-card" data-group="weekday">
                         <div class="group-card-hdr">
                             <div class="group-card-title">주중예배/새벽기도</div>
-                            <div class="group-card-count" id="cnt-weekday">0/3 제출</div>
+                            <div class="group-card-count" id="cnt-weekday">0/4 제출</div>
                         </div>
                         <div class="group-card-body" id="grp-weekday"></div>
                     </div>
 
-                    <!-- 그룹: 청년교구 -->
-                    <div class="group-card" data-group="youth">
+                    <!-- 그룹: 교구 다락방 -->
+                    <div class="group-card" data-group="cell">
                         <div class="group-card-hdr">
-                            <div class="group-card-title">청년교구</div>
-                            <div class="group-card-count" id="cnt-youth">0/11 제출</div>
+                            <div class="group-card-title">교구 다락방</div>
+                            <div class="group-card-count" id="cnt-cell">0/14 제출</div>
                         </div>
-                        <div class="group-card-body" id="grp-youth"></div>
-                    </div>
-
-                    <!-- 그룹: 주일학교 -->
-                    <div class="group-card" data-group="school">
-                        <div class="group-card-hdr">
-                            <div class="group-card-title">주일학교</div>
-                            <div class="group-card-count" id="cnt-school">0/13 제출</div>
-                        </div>
-                        <div class="group-card-body" id="grp-school"></div>
+                        <div class="group-card-body" id="grp-cell"></div>
                     </div>
 
                     <!-- 그룹: 교구 순장반 -->
@@ -1608,13 +1690,13 @@
                         <div class="group-card-body" id="grp-leader"></div>
                     </div>
 
-                    <!-- 그룹: 교구 다락방 -->
-                    <div class="group-card" data-group="cell">
+                    <!-- 그룹: 청년교구 -->
+                    <div class="group-card" data-group="youth">
                         <div class="group-card-hdr">
-                            <div class="group-card-title">교구 다락방</div>
-                            <div class="group-card-count" id="cnt-cell">0/14 제출</div>
+                            <div class="group-card-title">청년교구</div>
+                            <div class="group-card-count" id="cnt-youth">0/11 제출</div>
                         </div>
-                        <div class="group-card-body" id="grp-cell"></div>
+                        <div class="group-card-body" id="grp-youth"></div>
                     </div>
 
                     <!-- 그룹: 새가족 -->
@@ -1674,27 +1756,30 @@
                     <button class="form-back-btn" onclick="goBack()" aria-label="부서 선택 화면으로 돌아가기">← 부서 선택으로</button>
 
                     <div class="page-hdr">
-                        <div class="page-hdr-title">
-                            <h2 id="form-dept-name">부서명</h2>
-                            <p id="form-dept-meta">담당자 · 입력 항목 안내</p>
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--s4)">
+                            <h2 id="form-dept-name" style="margin:0">부서명</h2>
+                            <div style="display:flex;gap:var(--s1);align-items:center;flex-shrink:0">
+                                <button onclick="shiftWeek('form-week-select', -1, onFormWeekChange)" style="width:30px;height:30px;border:1px solid rgba(255,255,255,0.4);background:var(--color-accent);color:#fff;border-radius:8px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="이전 주">‹</button>
+                                <select id="form-week-select" onchange="onFormWeekChange()" style="padding:5px 10px;background:var(--color-accent);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;outline:none"></select>
+                                <button onclick="shiftWeek('form-week-select', 1, onFormWeekChange)" style="width:30px;height:30px;border:1px solid rgba(255,255,255,0.4);background:var(--color-accent);color:#fff;border-radius:8px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="다음 주">›</button>
+                            </div>
                         </div>
+                        <p id="form-dept-meta" style="margin-top:4px"></p>
                     </div>
 
                     <!-- 알림 영역 -->
                     <div id="form-alert-area" role="alert" aria-live="polite" aria-atomic="true"></div>
 
-                    <!-- 날짜 선택 -->
-                    <div class="form-card">
-                        <div class="form-card-title">입력 기준일</div>
-                        <div class="form-date-row">
-                            <label for="form-date" style="font-size:13px;color:var(--color-text-secondary)">주일 날짜</label>
-                            <input type="date" class="form-date-input" id="form-date" aria-label="주일 날짜 선택" aria-describedby="form-week-label">
-                            <span style="font-size:11px;color:var(--color-text-tertiary)" id="form-week-label">2026년 5월 3주차</span>
-                        </div>
-                    </div>
+                    <!-- 날짜 숨김 필드 (내부용) -->
+                    <input type="hidden" id="form-date">
 
                     <!-- 입력 필드 영역 (부서별로 동적 생성) -->
                     <div id="form-fields-area">
+                        <!-- JS로 생성 -->
+                    </div>
+
+                    <!-- 지난 2주 데이터 (참고용) -->
+                    <div id="form-previous-weeks-area" style="display:none">
                         <!-- JS로 생성 -->
                     </div>
 
@@ -1728,17 +1813,16 @@
         <section class="sec" id="sec-status" role="tabpanel" aria-labelledby="tab-status">
             <div class="page-hdr">
                 <div class="page-hdr-title">
-                    <h2>제출 현황</h2>
-                    <p>이번 주 부서별 데이터 제출 여부를 한눈에 확인합니다</p>
+                    <p>이번 주 부서별 데이터 제출 여부를 한 눈에 확인합니다.</p>
                 </div>
             </div>
 
             <!-- 요약 통계 -->
             <div class="summary-stats" role="region" aria-label="제출 현황 통계">
-                <div class="stat-card total" role="article" aria-label="전체 부서 58개 (담당자 입력 단위)">
+                <div class="stat-card total" role="article" aria-label="전체 부서 74개 (담당자 입력 단위)">
                     <div class="stat-card-bar"></div>
                     <div class="stat-label">전체 부서</div>
-                    <div class="stat-value" id="stat-total" aria-live="polite">58</div>
+                    <div class="stat-value" id="stat-total" aria-live="polite">74</div>
                     <div class="stat-sub">담당자 입력 단위</div>
                 </div>
                 <div class="stat-card done" role="article" aria-label="제출 완료 0개 (이번 주 기준)">
@@ -1747,33 +1831,34 @@
                     <div class="stat-value" id="stat-done" aria-live="polite">0</div>
                     <div class="stat-sub">이번 주 기준</div>
                 </div>
-                <div class="stat-card miss" role="article" aria-label="미제출 58개 (마감일까지 입력 필요)">
+                <div class="stat-card miss" role="article" aria-label="미제출 74개 (마감일까지 입력 필요)">
                     <div class="stat-card-bar"></div>
                     <div class="stat-label">미제출</div>
-                    <div class="stat-value" id="stat-miss" aria-live="polite">58</div>
+                    <div class="stat-value" id="stat-miss" aria-live="polite">74</div>
                     <div class="stat-sub">마감일까지 입력 필요</div>
                 </div>
             </div>
 
             <!-- 주차 선택 및 그룹 필터 -->
-            <div style="margin-bottom:var(--s5);display:flex;gap:var(--s5);align-items:center;flex-wrap:wrap">
-                <div style="display:flex;gap:var(--s3);align-items:center">
-                    <label for="status-week-select" style="font-weight:600;color:var(--color-text-primary)">주차 선택:</label>
-                    <select id="status-week-select" class="form-input" style="max-width:450px" onchange="renderStatus()">
-                    </select>
+            <div style="margin-bottom:var(--s5);display:flex;flex-wrap:wrap;gap:var(--s4);align-items:center">
+                <div style="display:flex;gap:var(--s2);align-items:center">
+                    <button onclick="shiftWeek('status-week-select', -1, renderStatus)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="이전 주">‹</button>
+                    <select id="status-week-select" class="form-input" style="max-width:300px" onchange="renderStatus()"></select>
+                    <button onclick="shiftWeek('status-week-select', 1, renderStatus)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="다음 주">›</button>
                 </div>
                 <div style="display:flex;gap:var(--s3);align-items:center">
                     <label for="status-group-filter" style="font-weight:600;color:var(--color-text-primary)">그룹별 보기:</label>
-                    <select id="status-group-filter" class="form-input" style="max-width:400px" onchange="renderStatusFiltered()">
-                    <option value="">전체</option>
-                    <option value="sunday">주일예배</option>
-                    <option value="weekday">주중예배/새벽기도</option>
-                    <option value="youth">청년교구</option>
-                    <option value="school">주일학교</option>
-                    <option value="leader">교구 순장반</option>
-                    <option value="cell">교구 다락방</option>
-                    <option value="newfam">새가족</option>
-                </select>
+                    <select id="status-group-filter" class="form-input" style="max-width:220px" onchange="renderStatusFiltered()">
+                        <option value="">전체</option>
+                        <option value="sunday">주일예배</option>
+                        <option value="weekday">주중예배/새벽기도</option>
+                        <option value="cell">교구 다락방</option>
+                        <option value="leader">교구 순장반</option>
+                        <option value="youth">청년교구</option>
+                        <option value="school">주일학교</option>
+                        <option value="newfam">새가족</option>
+                    </select>
+                </div>
             </div>
 
             <!-- 그룹별 현황 -->
@@ -1806,11 +1891,17 @@
                 </div>
 
                 <!-- 주차 선택 필터 -->
-                <div style="margin-bottom:var(--s5);display:flex;gap:var(--s3);align-items:center;flex-wrap:wrap">
-                    <label for="admin-week-select" style="font-weight:600;color:var(--color-text-primary)">주차 선택:</label>
-                    <select id="admin-week-select" class="form-input" style="max-width:450px" onchange="renderAdminData()">
+                <div style="margin-bottom:var(--s5);display:flex;gap:var(--s2);align-items:center">
+                    <button onclick="shiftWeek('admin-week-select', -1, renderAdminData)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="이전 주">‹</button>
+                    <select id="admin-week-select" class="form-input" style="flex:1;max-width:360px;text-align:center" onchange="renderAdminData()">
                         <!-- JS로 생성 -->
                     </select>
+                    <button onclick="shiftWeek('admin-week-select', 1, renderAdminData)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="다음 주">›</button>
+                </div>
+
+                <!-- 엑셀 복사 버튼 -->
+                <div style="margin-bottom:var(--s4);text-align:right">
+                    <button onclick="copyToExcel()" style="padding:8px 18px;border:1px solid var(--color-accent);background:var(--color-accent-light);color:var(--color-accent-dark);border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">📋 엑셀에 복사</button>
                 </div>
 
                 <!-- 데이터 표시 영역 -->
@@ -1819,6 +1910,44 @@
                 </div>
             </div>
 
+        </section>
+
+        <!-- ─── 주일학교 탭 ─── -->
+        <section class="sec" id="sec-sunday-school" role="tabpanel" aria-labelledby="tab-sunday-school">
+            <div id="screen-sunday-school-select">
+                <div class="page-hdr">
+                    <div class="page-hdr-title">
+                        <p>담당하시는 부서를 선택해 이번 주 데이터를 입력해주세요.</p>
+                    </div>
+                </div>
+
+                <!-- 주차 선택 필터 -->
+                <div style="margin-bottom:var(--s5);display:flex;gap:var(--s2);align-items:center">
+                    <button onclick="shiftWeek('sunday-school-week-select', -1, renderSundaySchoolDeptList)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="이전 주">‹</button>
+                    <select id="sunday-school-week-select" class="form-input" style="flex:1;max-width:360px;text-align:center" onchange="renderSundaySchoolDeptList()">
+                    </select>
+                    <button onclick="shiftWeek('sunday-school-week-select', 1, renderSundaySchoolDeptList)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="다음 주">›</button>
+                </div>
+
+                <!-- 벤다이어그램 스타일 부서 선택 -->
+                <div class="dept-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--s6);margin-top:var(--s8)">
+                    <!-- JS로 생성 -->
+                    <div id="sunday-school-group-1"></div>
+                    <div id="sunday-school-group-2"></div>
+                    <div id="sunday-school-group-3"></div>
+                </div>
+
+            </div>
+
+            <!-- 입력 화면 -->
+            <div id="screen-sunday-school-form" style="display:none">
+                <!-- JS로 생성 -->
+            </div>
+
+            <!-- 완료 화면 -->
+            <div id="screen-sunday-school-done" style="display:none">
+                <!-- JS로 생성 -->
+            </div>
         </section>
 
     </main>
@@ -1848,8 +1977,14 @@
         weekday: {
             label: '주중예배/새벽기도',
             items: [
-                { name: '수요예배', baseDay: 3 },
-                { name: '금요기도회', baseDay: 5 },
+                { name: '수요예배', baseDay: 3, fields: [
+                    { label: '인원', key: 'count' },
+                    { label: '비고', key: 'note', type: 'text' }
+                ]},
+                { name: '금요기도회', baseDay: 5, fields: [
+                    { label: '인원', key: 'count' },
+                    { label: '비고', key: 'note', type: 'text' }
+                ]},
                 {
                     name: '새벽기도',
                     baseDay: 0,
@@ -1860,6 +1995,15 @@
                         { label: '목', key: 'thu' },
                         { label: '금', key: 'fri' },
                         { label: '토', key: 'sat' }
+                    ]
+                },
+                {
+                    name: '온라인예배',
+                    baseDay: 0,
+                    fields: [
+                        { label: '주일 온라인', key: 'sunday_online' },
+                        { label: '수요 온라인', key: 'wed_online' },
+                        { label: '금요 온라인', key: 'fri_online' }
                     ]
                 }
             ]
@@ -1896,22 +2040,51 @@
                 }
             ]
         },
-        school: {
+        sunday_school: {
             label: '주일학교',
-            items: [
-                { name: '사랑부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
-                { name: '영아부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
-                { name: '유아부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
-                { name: '유치부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
-                { name: '송림유년부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
-                { name: '서현유년부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
-                { name: '송림초등부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
-                { name: '서현초등부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
-                { name: '송림소년부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
-                { name: '서현소년부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
-                { name: '송림청소년부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
-                { name: '서현중등부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] },
-                { name: '서현고등부', fields: [{label: '1부(학생)', key: 's1_1_student'}, {label: '1부(교사)', key: 's1_1_teacher'}, {label: '2부(학생)', key: 's1_2_student'}, {label: '2부(교사)', key: 's1_2_teacher'}] }
+            deptType: 'sunday',
+            groups: [
+                {
+                    name: '사랑부-유치부',
+                    items: [
+                        { name: '사랑부 1부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '사랑부 2부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '영아부 1부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '영아부 2부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '유아부 1부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '유아부 2부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '유치부 1부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '유치부 2부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] }
+                    ]
+                },
+                {
+                    name: '유년부-소년부',
+                    items: [
+                        { name: '송림유년부 1부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '송림유년부 2부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '서현유년부 1부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '서현유년부 2부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '송림초등부 1부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '송림초등부 2부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '서현초등부 1부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '서현초등부 2부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '송림소년부 1부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '송림소년부 2부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '서현소년부 1부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '서현소년부 2부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] }
+                    ]
+                },
+                {
+                    name: '청소년-고등부',
+                    items: [
+                        { name: '송림청소년부 1부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '송림청소년부 2부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '서현중등부 1부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '서현중등부 2부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '서현고등부 1부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] },
+                        { name: '서현고등부 2부', fields: [{label: '학생', key: 'student'}, {label: '교사', key: 'teacher'}, {label: '방문자', key: 'visitor'}, {label: '등반자', key: 'attendee'}, {label: '헌금', key: 'offering'}] }
+                    ]
+                }
             ]
         },
         leader: {
@@ -1992,6 +2165,7 @@
         sunday: 'sunday',
         youth: 'sunday',
         school: 'sunday',
+        sunday_school: 'sunday',
         weekday: (itemName) => {
           if (itemName.includes('수요')) return 'wednesday';
           if (itemName.includes('금요')) return 'friday';
@@ -2052,8 +2226,8 @@
       localStorage.setItem('bwc-submission-data', JSON.stringify(submissionStatus));
     }
 
-    function markSubmitted(groupKey, itemName, deptType, formData = {}) {
-      const weekKey = getWeekKey(deptType);
+    function markSubmitted(groupKey, itemName, deptType, formData = {}, weekKeyOverride = null) {
+      const weekKey = weekKeyOverride || getWeekKey(deptType);
       const fullKey = `${weekKey}:${groupKey}:${itemName}`;
       if (!submissionStatus[weekKey]) submissionStatus[weekKey] = {};
       submissionStatus[weekKey][fullKey] = {
@@ -2064,8 +2238,10 @@
       saveSubmissionStatus();
     }
 
-    function getSubmissionStatus(groupKey, itemName, deptType) {
-      const weekKey = getWeekKey(deptType);
+    function getSubmissionStatus(groupKey, itemName, deptType, weekKeyOverride) {
+      const weekKey = weekKeyOverride ||
+          (document.getElementById('input-week-select')?.value) ||
+          getWeekKey(deptType);
       const fullKey = `${weekKey}:${groupKey}:${itemName}`;
       if (!submissionStatus[weekKey]) return 'missing';
       return submissionStatus[weekKey][fullKey]?.submitted ? 'submitted' : 'missing';
@@ -2087,6 +2263,11 @@
 
         // 입력 탭으로 돌아갈 때 부서 선택 화면으로
         if (tab === 'input') goSelect();
+
+        // 주일학교 탭으로 전환할 때
+        if (tab === 'sunday-school') {
+            goSundaySchoolSelect();
+        }
 
         // 제출현황 탭으로 전환할 때 주차 선택 초기화 후 렌더링
         if (tab === 'status') {
@@ -2119,7 +2300,13 @@
             newfam: 'grp-newfam'
         };
 
-        Object.entries(DEPARTMENTS).forEach(([key, group]) => {
+        // 표시 순서: 주일예배 > 주중예배 > 교구다락방 > 교구순장반 > 청년교구 > 새가족
+        const deptOrder = ['sunday', 'weekday', 'cell', 'leader', 'youth', 'newfam'];
+
+        deptOrder.forEach(key => {
+            const group = DEPARTMENTS[key];
+            if (!group) return;
+
             const container = document.getElementById(groupMap[key]);
             container.innerHTML = '';
 
@@ -2175,9 +2362,12 @@
 
         let totalDone = 0, totalAll = 0;
 
-        const groupsWithRanking = ['leader', 'cell', 'youth', 'school'];
+        const groupsWithRanking = ['leader', 'cell', 'youth'];
+        const deptOrder = ['sunday', 'weekday', 'cell', 'leader', 'youth', 'newfam'];
 
-        Object.entries(DEPARTMENTS).forEach(([key, group]) => {
+        deptOrder.forEach(key => {
+            const group = DEPARTMENTS[key];
+            if (!group) return;
             // Items 정렬 (순위 기능이 있는 그룹만)
             let itemsToRender = group.items;
 
@@ -2258,7 +2448,7 @@
                         const submission = submissionStatus[selectedWeekKey]?.[fullKey];
                         const st = submission?.submitted ? 'submitted' : 'missing';
                         const submitTimeStr = submission?.submitted && submission?.submittedAt
-                            ? new Date(submission.submittedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                            ? new Date(submission.submittedAt).toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
                             : '-';
 
                         // 순위
@@ -2299,6 +2489,56 @@
             container.appendChild(block);
         });
 
+        // 주일학교 (groups 구조 별도 처리)
+        const sundaySchool = DEPARTMENTS.sunday_school;
+        sundaySchool.groups.forEach(group => {
+            const items = group.items;
+            const doneCount = items.filter(item => {
+                const fullKey = `${selectedWeekKey}:sunday_school:${item.name}`;
+                return submissionStatus[selectedWeekKey]?.[fullKey]?.submitted;
+            }).length;
+            totalDone += doneCount;
+            totalAll += items.length;
+
+            const tableHtml = `
+                <div class="data-table" style="grid-template-columns: 2fr 1.5fr 1fr;">
+                    <div class="table-header">
+                        <div>부서</div>
+                        <div>상태</div>
+                        <div>제출시간</div>
+                    </div>
+                    ${items.map(item => {
+                        const fullKey = `${selectedWeekKey}:sunday_school:${item.name}`;
+                        const submission = submissionStatus[selectedWeekKey]?.[fullKey];
+                        const st = submission?.submitted ? 'submitted' : 'missing';
+                        const submitTimeStr = submission?.submitted && submission?.submittedAt
+                            ? new Date(submission.submittedAt).toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+                            : '-';
+                        return `
+                            <div class="table-row">
+                                <div class="table-dept-name">${item.name}</div>
+                                <div class="table-status">
+                                    <span class="table-status-badge ${st}">${st === 'submitted' ? '✓' : '–'}</span>
+                                </div>
+                                <div class="table-time">${submitTimeStr}</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+            const block = document.createElement('div');
+            block.innerHTML = `
+                <div style="margin-bottom:var(--s6)">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--s4)">
+                        <h3 style="font-size:15px;font-weight:700;color:var(--color-text-primary)">주일학교 · ${group.name}</h3>
+                        <span style="font-size:12px;color:var(--color-text-tertiary);font-weight:600">${doneCount}/${items.length} 제출</span>
+                    </div>
+                    ${tableHtml}
+                </div>
+            `;
+            container.appendChild(block);
+        });
+
         document.getElementById('stat-done').textContent = totalDone;
         document.getElementById('stat-miss').textContent = totalAll - totalDone;
         document.getElementById('stat-total').textContent = totalAll;
@@ -2312,10 +2552,12 @@
         container.innerHTML = '';
 
         let totalDone = 0, totalAll = 0;
-        const groupsWithRanking = ['leader', 'cell', 'youth', 'school'];
+        const groupsWithRanking = ['leader', 'cell', 'youth'];
+        const deptOrder = ['sunday', 'weekday', 'cell', 'leader', 'youth', 'newfam'];
 
-        Object.entries(DEPARTMENTS).forEach(([key, group]) => {
-            if (selectedGroup && key !== selectedGroup) return;
+        deptOrder.forEach(key => {
+            const group = DEPARTMENTS[key];
+            if (!group || (selectedGroup && key !== selectedGroup)) return;
 
             let itemsToRender = group.items;
 
@@ -2373,7 +2615,7 @@
                         const submission = submissionStatus[selectedWeekKey]?.[fullKey];
                         const st = submission?.submitted ? 'submitted' : 'missing';
                         const submitTimeStr = submission?.submitted && submission?.submittedAt
-                            ? new Date(submission.submittedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                            ? new Date(submission.submittedAt).toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
                             : '-';
 
                         const rank = groupsWithRanking.includes(key) && st === 'submitted'
@@ -2413,6 +2655,57 @@
             container.appendChild(block);
         });
 
+        // 주일학교 (groups 구조, 필터 적용)
+        if (!selectedGroup || selectedGroup === 'school') {
+            DEPARTMENTS.sunday_school.groups.forEach(group => {
+                const items = group.items;
+                const doneCount = items.filter(item => {
+                    const fullKey = `${selectedWeekKey}:sunday_school:${item.name}`;
+                    return submissionStatus[selectedWeekKey]?.[fullKey]?.submitted;
+                }).length;
+                totalDone += doneCount;
+                totalAll += items.length;
+
+                const tableHtml = `
+                    <div class="data-table" style="grid-template-columns: 2fr 1.5fr 1fr;">
+                        <div class="table-header">
+                            <div>부서</div>
+                            <div>상태</div>
+                            <div>제출시간</div>
+                        </div>
+                        ${items.map(item => {
+                            const fullKey = `${selectedWeekKey}:sunday_school:${item.name}`;
+                            const submission = submissionStatus[selectedWeekKey]?.[fullKey];
+                            const st = submission?.submitted ? 'submitted' : 'missing';
+                            const submitTimeStr = submission?.submitted && submission?.submittedAt
+                                ? new Date(submission.submittedAt).toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+                                : '-';
+                            return `
+                                <div class="table-row">
+                                    <div class="table-dept-name">${item.name}</div>
+                                    <div class="table-status">
+                                        <span class="table-status-badge ${st}">${st === 'submitted' ? '✓' : '–'}</span>
+                                    </div>
+                                    <div class="table-time">${submitTimeStr}</div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+                const block = document.createElement('div');
+                block.innerHTML = `
+                    <div style="margin-bottom:var(--s6)">
+                        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--s4)">
+                            <h3 style="font-size:15px;font-weight:700;color:var(--color-text-primary)">주일학교 · ${group.name}</h3>
+                            <span style="font-size:12px;color:var(--color-text-tertiary);font-weight:600">${doneCount}/${items.length} 제출</span>
+                        </div>
+                        ${tableHtml}
+                    </div>
+                `;
+                container.appendChild(block);
+            });
+        }
+
         document.getElementById('stat-done').textContent = totalDone;
         document.getElementById('stat-miss').textContent = totalAll - totalDone;
         document.getElementById('stat-total').textContent = totalAll;
@@ -2446,12 +2739,32 @@
 
         const deptName = deptItem.name || deptItem;
         document.getElementById('form-dept-name').textContent = deptName;
-        document.getElementById('form-dept-meta').textContent =
-            DEPARTMENTS[groupKey].label + ' · 이번 주 데이터를 입력해주세요';
 
-        // 선택된 주차 기반으로 입력 기준일 설정
-        const selectedWeekKey = document.getElementById('input-week-select').value;
+        // 폼 내 주차 드롭다운 채우기
+        const formWeekSelect = document.getElementById('form-week-select');
+        const allWeeks = getPreviousWeeks();
+        const currentWeekKey0 = getWeekKey('sunday');
+        if (!allWeeks.includes(currentWeekKey0)) allWeeks.unshift(currentWeekKey0);
+        formWeekSelect.innerHTML = '';
+        allWeeks.forEach(wk => {
+            const opt = document.createElement('option');
+            opt.value = wk;
+            const [y, m, d] = wk.split('-').map(Number);
+            opt.textContent = `📅 ${m}월 ${d}일(주일)`;
+            formWeekSelect.appendChild(opt);
+        });
+        // 부서 선택 화면의 주차와 동기화
+        const selectElement = document.getElementById('input-week-select');
+        const selectedWeekKey = selectElement.value;
+        formWeekSelect.value = selectedWeekKey;
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        const weekLabel = selectedOption?.textContent || '날짜 미선택';
+
+        document.getElementById('form-dept-meta').textContent = '';
+
+        // sundayDate 계산
         const [year, month, day] = selectedWeekKey.split('-').map(Number);
+
         const sundayDate = new Date(year, month - 1, day);
 
         // baseDay를 고려해서 목표 날짜 계산
@@ -2464,51 +2777,190 @@
         const targetDay = String(targetDate.getDate()).padStart(2, '0');
         document.getElementById('form-date').value = `${targetYear}-${targetMonth}-${targetDay}`;
 
-        // 달력 항상 숨김 (주차 선택으로 대체)
-        document.querySelector('.form-date-row').style.display = 'none';
-
         // 알림 영역 초기화
         document.getElementById('form-alert-area').innerHTML = '';
 
         // 부서별 입력 필드 동적 생성
         const fields = deptItem.fields || [{label: '인원', key: 'count'}];
-        let fieldsHTML = '<div class="form-card"><div class="form-card-title">입력 항목</div>';
+
+        // 새벽기도: 주일 기준 이전 주 월~토 날짜 매핑
+        const dawnDayOffset = { mon: -6, tue: -5, wed: -4, thu: -3, fri: -2, sat: -1 };
+        const isDawn = deptItem.name === '새벽기도';
+        // 온라인예배: 주일·수요·금요 각 날짜 매핑
+        const onlineDayOffset = { sunday_online: 0, wed_online: 3, fri_online: 5 };
+        const isOnline = deptItem.name === '온라인예배';
+
+        // 이전 2주 데이터 조회
+        const deptNameForHistory = deptItem.name || deptItem;
+        const prev1D = new Date(sundayDate); prev1D.setDate(prev1D.getDate() - 7);
+        const prev2D = new Date(sundayDate); prev2D.setDate(prev2D.getDate() - 14);
+        const toKey = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        const prev1Key = toKey(prev1D), prev2Key = toKey(prev2D);
+        const prev1Sub = submissionStatus[prev1Key]?.[`${prev1Key}:${groupKey}:${deptNameForHistory}`];
+        const prev2Sub = submissionStatus[prev2Key]?.[`${prev2Key}:${groupKey}:${deptNameForHistory}`];
+        const prev1Label = `${prev1D.getMonth()+1}/${prev1D.getDate()}`;
+        const prev2Label = `${prev2D.getMonth()+1}/${prev2D.getDate()}`;
+        const currLabel  = `${sundayDate.getMonth()+1}/${sundayDate.getDate()}`;
+
+        let fieldsHTML = `
+            <div class="form-card">
+                <div class="form-card-title">입력 항목</div>
+                <div class="form-row-header">
+                    <div></div>
+                    <div>${prev2Label}</div>
+                    <div>${prev1Label}</div>
+                    <div class="fh-current">${currLabel}</div>
+                </div>`;
 
         fields.forEach(field => {
             const inputId = `field-${field.key}`;
             const isTotal = field.isTotal || false;
 
+            // 날짜 서브라벨 계산 (새벽기도 / 온라인예배)
+            let dateSub = '';
+            if (isDawn && dawnDayOffset[field.key] !== undefined) {
+                const d = new Date(sundayDate);
+                d.setDate(d.getDate() + dawnDayOffset[field.key]);
+                dateSub = ` <span style="font-size:11px;color:var(--color-text-tertiary);font-weight:400">${d.getMonth()+1}/${d.getDate()}</span>`;
+            } else if (isOnline && onlineDayOffset[field.key] !== undefined) {
+                const d = new Date(sundayDate);
+                d.setDate(d.getDate() + onlineDayOffset[field.key]);
+                dateSub = ` <span style="font-size:11px;color:var(--color-text-tertiary);font-weight:400">${d.getMonth()+1}/${d.getDate()}</span>`;
+            }
+
+            // 이전 주 데이터 셀
+            const p2v = prev2Sub?.data?.[field.key];
+            const p1v = prev1Sub?.data?.[field.key];
+            const prev2Cell = `<div class="form-prev-val${p2v !== undefined ? '' : ' no-data'}">${p2v !== undefined ? p2v : '·'}</div>`;
+            const prev1Cell = `<div class="form-prev-val${p1v !== undefined ? '' : ' no-data'}">${p1v !== undefined ? p1v : '·'}</div>`;
+
+            const isText = field.type === 'text';
+
             if (isTotal) {
                 fieldsHTML += `
                     <div class="form-row">
-                        <label for="${inputId}" class="form-label">${field.label}</label>
-                        <div style="text-align:right;width:100px">
-                            <input type="number" class="form-input" data-field="${field.key}" id="${inputId}" placeholder="0" aria-label="${field.label}" aria-describedby="input-help-${field.key}" disabled style="opacity:0.65;background:var(--color-bg-muted);cursor:not-allowed">
-                        </div>
+                        <label for="${inputId}" class="form-label">${field.label}${dateSub}</label>
+                        ${prev2Cell}
+                        ${prev1Cell}
+                        <div><input type="number" class="form-input" data-field="${field.key}" id="${inputId}" placeholder="–" aria-label="${field.label}" aria-describedby="input-help-${field.key}" disabled style="opacity:0.65;background:var(--color-bg-muted);cursor:not-allowed;text-align:center"></div>
                         <span id="input-help-${field.key}" class="sr-only">자동 계산되는 총계 필드</span>
-                    </div>
-                `;
+                    </div>`;
+            } else if (isText) {
+                // 비고 등 텍스트 필드: 이전값은 이탤릭 텍스트, 입력은 text input (full-width, 별도 행)
+                const p2text = prev2Sub?.data?.[field.key];
+                const p1text = prev1Sub?.data?.[field.key];
+                const p2tCell = `<div class="form-prev-val${p2text ? '' : ' no-data'}" style="font-family:var(--font-body);font-size:11px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px">${p2text || '·'}</div>`;
+                const p1tCell = `<div class="form-prev-val${p1text ? '' : ' no-data'}" style="font-family:var(--font-body);font-size:11px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px">${p1text || '·'}</div>`;
+                fieldsHTML += `
+                    <div class="form-row">
+                        <label for="${inputId}" class="form-label">${field.label}${dateSub}</label>
+                        ${p2tCell}
+                        ${p1tCell}
+                        <div><input type="text" class="form-input" data-field="${field.key}" id="${inputId}" placeholder="특별행사 메모" aria-label="${field.label}" style="font-size:12px;padding:0 8px"></div>
+                        <span id="input-help-${field.key}" class="sr-only">텍스트를 입력해주세요</span>
+                    </div>`;
             } else {
                 fieldsHTML += `
                     <div class="form-row">
-                        <label for="${inputId}" class="form-label">${field.label}</label>
-                        <div style="text-align:right;width:100px">
-                            <input type="number" class="form-input" data-field="${field.key}" id="${inputId}" placeholder="0" aria-label="${field.label}" aria-describedby="input-help-${field.key}">
-                        </div>
+                        <label for="${inputId}" class="form-label">${field.label}${dateSub}</label>
+                        ${prev2Cell}
+                        ${prev1Cell}
+                        <div><input type="number" class="form-input" data-field="${field.key}" id="${inputId}" placeholder="0" aria-label="${field.label}" aria-describedby="input-help-${field.key}" style="text-align:center"></div>
                         <span id="input-help-${field.key}" class="sr-only">숫자를 입력해주세요</span>
-                    </div>
-                `;
+                    </div>`;
             }
         });
 
         fieldsHTML += '</div>';
         document.getElementById('form-fields-area').innerHTML = fieldsHTML;
+        document.getElementById('form-previous-weeks-area').style.display = 'none';
 
         // 총계 필드 자동 업데이트 이벤트 연결
         const inputs = document.querySelectorAll('#screen-form input.form-input[data-field]:not([disabled])');
         inputs.forEach(input => {
             input.addEventListener('input', updateTotalFields);
         });
+    }
+
+    function onFormWeekChange() {
+        if (!currentFormContext) return;
+        const { groupKey, deptItem } = currentFormContext;
+        const newWeekKey = document.getElementById('form-week-select').value;
+        // 부서 선택 화면 드롭다운 동기화
+        document.getElementById('input-week-select').value = newWeekKey;
+        // 폼 전체 재렌더링 (새벽기도 날짜 등 입력항목도 갱신)
+        openForm(groupKey, deptItem);
+    }
+
+    function renderPreviousWeeksData(groupKey, deptItem, currentWeekKey) {
+        const deptName = deptItem.name || deptItem;
+        const fields = deptItem.fields || [{label: '인원', key: 'count'}];
+
+        // 현재 주를 포함해 이전 3주를 계산
+        const [year, month, day] = currentWeekKey.split('-').map(Number);
+        const currentDate = new Date(year, month - 1, day);
+
+        const weeks = [];
+        for (let i = 0; i < 3; i++) {
+            const weekDate = new Date(currentDate);
+            weekDate.setDate(weekDate.getDate() - (i * 7));
+            const y = weekDate.getFullYear();
+            const m = String(weekDate.getMonth() + 1).padStart(2, '0');
+            const d = String(weekDate.getDate()).padStart(2, '0');
+            const weekKey = `${y}-${m}-${d}`;
+            weeks.push({ key: weekKey, date: weekDate });
+        }
+
+        // 현재 주를 제외한 이전 2주만 표시
+        const previousWeeks = weeks.slice(1, 3);
+
+        let html = '';
+        let hasData = false;
+
+        previousWeeks.forEach(week => {
+            const fullKey = `${week.key}:${groupKey}:${deptName}`;
+            const submission = submissionStatus[week.key]?.[fullKey];
+
+            if (submission && submission.data) {
+                hasData = true;
+                const weekLabel = week.date.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' });
+
+                let fieldValuesHtml = fields
+                    .filter(f => !f.isTotal)
+                    .map(field => {
+                        const value = submission.data[field.key] ?? '-';
+                        return `
+                            <div class="previous-week-field">
+                                <span class="previous-week-field-label">${field.label}</span>
+                                <span class="previous-week-field-value">${value}</span>
+                            </div>
+                        `;
+                    })
+                    .join('');
+
+                html += `
+                    <div class="previous-week-row">
+                        <div class="previous-week-label">${weekLabel}</div>
+                        <div class="previous-week-values">
+                            ${fieldValuesHtml}
+                        </div>
+                    </div>
+                `;
+            }
+        });
+
+        const container = document.getElementById('form-previous-weeks-area');
+        if (hasData) {
+            container.innerHTML = `
+                <div class="previous-weeks-container">
+                    <div class="previous-weeks-title">지난 2주 참고 데이터</div>
+                    ${html}
+                </div>
+            `;
+            container.style.display = 'block';
+        } else {
+            container.style.display = 'none';
+        }
     }
 
     function updateTotalFields() {
@@ -2534,8 +2986,8 @@
     /* ══════════════════════════════════════════════════
        제출현황에서 데이터 조회 및 수정
        ══════════════════════════════════════════════════ */
-    function viewSubmissionData(groupKey, itemName, deptType) {
-        const weekKey = getWeekKey(deptType);
+    function viewSubmissionData(groupKey, itemName, deptType, weekKeyOverride) {
+        const weekKey = weekKeyOverride || getWeekKey(deptType);
         const fullKey = `${weekKey}:${groupKey}:${itemName}`;
         const submission = submissionStatus[weekKey]?.[fullKey];
 
@@ -2566,7 +3018,9 @@
         inputTab.setAttribute('aria-selected', 'true');
         document.getElementById('sec-input').classList.add('on');
 
-        // 입력 폼 열기 (screen-select 숨기고 screen-form 표시)
+        // 입력 주차 드롭다운을 해당 주차로 맞추고 폼 열기
+        const inputWeekSelect = document.getElementById('input-week-select');
+        if (inputWeekSelect && weekKey) inputWeekSelect.value = weekKey;
         openForm(groupKey, deptItem);
 
         // 기존 데이터 미리 채우기
@@ -2609,13 +3063,32 @@
        이전 자료 보기
        ══════════════════════════════════════════════════ */
     function getPreviousWeeks() {
-        const weeks = new Set();
-        Object.keys(submissionStatus).forEach(weekKey => {
-            Object.keys(submissionStatus[weekKey]).forEach(fullKey => {
-                weeks.add(weekKey);
-            });
-        });
-        return Array.from(weeks).sort().reverse(); // 역순 정렬
+        // 최근 8주 + 실제 제출 데이터가 있는 주차 합산, 최신순 정렬
+        const weekSet = new Set();
+        const currentWeekKey = getWeekKey('sunday');
+        const [y, m, d] = currentWeekKey.split('-').map(Number);
+        const base = new Date(y, m - 1, d);
+        for (let i = 0; i < 8; i++) {
+            const wk = new Date(base);
+            wk.setDate(wk.getDate() - i * 7);
+            const year = wk.getFullYear();
+            const month = String(wk.getMonth() + 1).padStart(2, '0');
+            const day = String(wk.getDate()).padStart(2, '0');
+            weekSet.add(`${year}-${month}-${day}`);
+        }
+        // 제출된 데이터가 있는 오래된 주차도 포함
+        Object.keys(submissionStatus).forEach(wk => weekSet.add(wk));
+        return Array.from(weekSet).sort().reverse(); // 최신순
+    }
+
+    function shiftWeek(selectId, direction, callback) {
+        const select = document.getElementById(selectId);
+        const idx = select.selectedIndex;
+        const newIdx = idx - direction; // 최신순이므로 방향 반전
+        if (newIdx >= 0 && newIdx < select.options.length) {
+            select.selectedIndex = newIdx;
+            if (callback) callback();
+        }
     }
 
     function getWeekLabel(dateStr) {
@@ -2659,6 +3132,9 @@
 
         let html = '';
         Object.entries(DEPARTMENTS).forEach(([groupKey, group]) => {
+            // sunday_school은 groups[] 구조라 별도 처리
+            if (groupKey === 'sunday_school') return;
+            if (!group.items) return;
             const items = group.items.filter(item => {
                 const itemName = item.name || item;
                 const fullKey = `${weekKey}:${groupKey}:${itemName}`;
@@ -2698,6 +3174,39 @@
             }
         });
 
+        // 주일학교 (groups[] 구조 별도 처리)
+        DEPARTMENTS.sunday_school.groups.forEach(group => {
+            const items = group.items.filter(item => {
+                const fullKey = `${weekKey}:sunday_school:${item.name}`;
+                return submissionStatus[weekKey]?.[fullKey]?.submitted;
+            });
+            if (items.length > 0) {
+                html += `<div style="padding:var(--s4);background:var(--color-bg-subtle);border-radius:var(--r)">
+                    <div style="font-weight:700;font-size:13px;margin-bottom:var(--s3);color:var(--color-text-primary)">주일학교 · ${group.name}</div>`;
+                items.forEach(item => {
+                    const fullKey = `${weekKey}:sunday_school:${item.name}`;
+                    const submission = submissionStatus[weekKey]?.[fullKey];
+                    const fields = item.fields || [];
+                    const dataInline = fields.map(f => {
+                        const value = submission?.data?.[f.key] ?? '-';
+                        return `<span style="color:var(--color-text-tertiary);font-size:11px">${f.label}</span> <strong style="color:var(--color-text-primary);font-size:12px;margin-right:var(--s2)">${value}</strong>`;
+                    }).join('');
+                    const submittedAt = submission?.submittedAt ? new Date(submission.submittedAt) : null;
+                    const timeStr = submittedAt
+                        ? `${submittedAt.getMonth()+1}/${submittedAt.getDate()} ${submittedAt.getHours()}:${String(submittedAt.getMinutes()).padStart(2,'0')}`
+                        : '';
+                    html += `<div style="font-size:12px;padding:var(--s3) 0;border-bottom:1px solid var(--color-border-default);display:flex;flex-direction:column;gap:4px">
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                            <span style="color:var(--color-text-primary);font-weight:600">${item.name}</span>
+                            ${timeStr ? `<span style="color:var(--color-text-tertiary);font-size:10px">${timeStr}</span>` : ''}
+                        </div>
+                        <div style="display:flex;flex-wrap:wrap;gap:6px">${dataInline}</div>
+                    </div>`;
+                });
+                html += '</div>';
+            }
+        });
+
         contentEl.innerHTML = html || '<p style="text-align:center;padding:var(--s5);color:var(--color-text-tertiary)">이 주차에는 제출된 데이터가 없습니다</p>';
         display.style.display = 'block';
     }
@@ -2726,10 +3235,12 @@
         formInputs.forEach(input => {
             const fieldKey = input.getAttribute('data-field');
             const value = input.value;
-            if (value && value.trim() !== '') {
-                allEmpty = false;
+            if (input.type === 'text') {
+                formData[fieldKey] = value.trim();
+            } else {
+                if (value && value.trim() !== '') allEmpty = false;
+                formData[fieldKey] = value && value.trim() !== '' ? parseInt(value) : 0;
             }
-            formData[fieldKey] = value && value.trim() !== '' ? parseInt(value) : 0;
         });
 
         // 총계 자동 계산 (주일예배 등에서)
@@ -2765,31 +3276,45 @@
         submitBtn.textContent = '제출 중...';
 
         // 제출 처리 (비동기 시뮬레이션)
+        const selectedWeekKey = document.getElementById('form-week-select')?.value || getWeekKey(deptType);
         setTimeout(() => {
-            // 제출 상태 & 데이터 저장
-            markSubmitted(groupKey, deptName, deptType, formData);
+            // 제출 상태 & 데이터 저장 (폼에서 선택한 주차 기준)
+            markSubmitted(groupKey, deptName, deptType, formData, selectedWeekKey);
 
             // Google Apps Script로 데이터 전송 (한글 라벨로 변환)
             const fields = deptItem.fields || [{label: '인원', key: 'count'}];
             const labelMap = {};
+            const textFieldKeys = new Set(fields.filter(f => f.type === 'text').map(f => f.key));
             fields.forEach(field => { labelMap[field.key] = field.label; });
+
+            // 숫자 필드와 텍스트(비고) 필드를 분리
             const formDataKorean = {};
+            const notesKorean = {};
             Object.entries(formData).forEach(([key, value]) => {
-                formDataKorean[labelMap[key] || key] = value;
+                if (textFieldKeys.has(key)) {
+                    if (value) notesKorean[labelMap[key] || key] = value;
+                } else {
+                    formDataKorean[labelMap[key] || key] = value;
+                }
             });
 
-            const gasUrl = 'https://script.google.com/macros/s/AKfycbwDfo7kvQDg1xHCE-nLeRHDVZQFxswc1tZx_YKzQjYbHlIObOTOu0HASDj90XWHHtn3/exec';
+            const gasPayload = {
+                weekKey: selectedWeekKey,
+                groupKey: DEPARTMENTS[groupKey]?.label || groupKey,
+                itemName: deptName,
+                formData: formDataKorean
+            };
+            if (Object.keys(notesKorean).length > 0) {
+                gasPayload.notes = notesKorean;
+            }
+
+            const gasUrl = 'https://script.google.com/macros/s/AKfycbza1cBnU7PLac5_upzq8EbX-poTIx3l56iQ3HUL9cz9dJfmu1Bl45bUJdByRQKvEjoT/exec';
             fetch(gasUrl, {
               method: 'POST',
               headers: {
                 'Content-Type': 'text/plain;charset=utf-8',
               },
-              body: JSON.stringify({
-                weekKey: getWeekKey(deptType),
-                groupKey: DEPARTMENTS[groupKey]?.label || groupKey,
-                itemName: deptName,
-                formData: formDataKorean
-              })
+              body: JSON.stringify(gasPayload)
             })
             .then(res => res.json())
             .then(data => console.log('GAS 응답:', data))
@@ -2837,16 +3362,14 @@
         const now = new Date();
         const isExpired = now > deadline;
 
+        // 항상 수정 가능 - 마감 전후 모두 가능
+        editBtn.disabled = false;
+        editBtn.style.opacity = '1';
+        editBtn.style.cursor = 'pointer';
         if (isExpired) {
-            editBtn.disabled = true;
-            editBtn.style.opacity = '0.5';
-            editBtn.style.cursor = 'not-allowed';
-            editBtn.title = '마감이 지났으므로 수정할 수 없습니다';
+            editBtn.title = '마감 이후 수정 · 클릭하여 데이터를 수정할 수 있습니다';
         } else {
-            editBtn.disabled = false;
-            editBtn.style.opacity = '1';
-            editBtn.style.cursor = 'pointer';
-            editBtn.title = '';
+            editBtn.title = '데이터를 수정할 수 있습니다';
         }
     }
 
@@ -2866,18 +3389,23 @@
         };
         const deptType = getDeptTypeForEdit();
 
-        // 마감 확인
-        if (isDeadlinePassed(deptType)) {
-            alert('마감이 지났으므로 수정할 수 없습니다');
-            return;
-        }
-
         // 폼을 다시 열고 기존 데이터 채우기
         openForm(groupKey, deptItem);
 
-        const weekKey = getWeekKey(deptType);
+        const weekKey = document.getElementById('form-week-select')?.value || getWeekKey(deptType);
         const fullKey = `${weekKey}:${groupKey}:${itemName}`;
         const submission = submissionStatus[weekKey]?.[fullKey];
+
+        // 마감 여부 확인
+        const deadlinePassed = isDeadlinePassed(deptType);
+        const alertArea = document.getElementById('form-alert-area');
+        if (deadlinePassed && alertArea) {
+            alertArea.innerHTML = `
+                <div style="padding:var(--s3) var(--s4);background:#fff3cd;border:1px solid #ffc107;border-radius:var(--r);color:#856404;font-size:13px">
+                    ⚠️ 마감 이후 수정 · 제출 마감이 지났지만 데이터 수정이 필요한 경우 변경 후 제출할 수 있습니다
+                </div>
+            `;
+        }
 
         if (submission && submission.data) {
             const fields = deptItem.fields || [{label: '인원', key: 'count'}];
@@ -2915,10 +3443,11 @@
        ══════════════════════════════════════════════════ */
     function adminLogin() {
         const pwd = document.getElementById('admin-pwd').value;
-        // 실제 비밀번호 검증은 Claude Code에서 구현
         if (pwd === 'admin') {
             document.getElementById('admin-login-screen').style.display = 'none';
             document.getElementById('admin-dashboard').style.display = 'block';
+            initAdminWeekSelect();
+            renderAdminData();
         } else {
             alert('비밀번호가 일치하지 않습니다');
         }
@@ -3009,6 +3538,286 @@
         });
     }
 
+    function initSundaySchoolWeekSelect() {
+        const weeks = getPreviousWeeks();
+        const currentWeekKey = getWeekKey('sunday');
+
+        if (!weeks.includes(currentWeekKey)) {
+            weeks.unshift(currentWeekKey);
+        }
+
+        const select = document.getElementById('sunday-school-week-select');
+        select.innerHTML = '';
+        weeks.forEach(weekKey => {
+            const option = document.createElement('option');
+            option.value = weekKey;
+            option.textContent = getWeekLabel(weekKey);
+            if (weekKey === currentWeekKey) option.selected = true;
+            select.appendChild(option);
+        });
+    }
+
+    /* ══════════════════════════════════════════════════
+       주일학교 부서 선택 화면 렌더링
+       ══════════════════════════════════════════════════ */
+    function renderSundaySchoolDeptList() {
+        const sundaySchool = DEPARTMENTS.sunday_school;
+        const selectedWeekKey = document.getElementById('sunday-school-week-select').value;
+
+        sundaySchool.groups.forEach((group, groupIndex) => {
+            const container = document.getElementById(`sunday-school-group-${groupIndex + 1}`);
+            container.innerHTML = '';
+
+            let doneCount = 0;
+            const groupCard = document.createElement('div');
+            groupCard.className = 'group-card';
+            groupCard.setAttribute('data-group', 'sunday');
+
+            // 그룹 헤더
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'group-card-hdr';
+            headerDiv.innerHTML = `
+                <div class="group-card-title">${group.name}</div>
+                <div class="group-card-count" id="count-sunday-${groupIndex}">${doneCount}/${group.items.length}</div>
+            `;
+            groupCard.appendChild(headerDiv);
+
+            // 그룹 바디
+            const bodyDiv = document.createElement('div');
+            bodyDiv.className = 'group-card-body';
+
+            group.items.forEach(item => {
+                const itemName = item.name;
+                const status = getSubmissionStatus('sunday_school', itemName, 'sunday', selectedWeekKey);
+                if (status === 'submitted') doneCount++;
+
+                const btn = document.createElement('button');
+                btn.className = 'dept-btn';
+                btn.setAttribute('aria-label', `${itemName} - ${status === 'submitted' ? '제출 완료' : '미제출'}`);
+                btn.onclick = () => openSundaySchoolForm('sunday_school', item, selectedWeekKey);
+                btn.innerHTML = `
+                    <div class="dept-btn-inner">
+                        <div class="dept-dot ${status === 'submitted' ? 'submitted' : 'missing'}" role="img" aria-label="${status === 'submitted' ? '완료' : '미제출'}"></div>
+                        <div class="dept-name">${itemName}</div>
+                        <div class="dept-badge ${status === 'submitted' ? 'done' : 'miss'}" aria-hidden="true">
+                            ${status === 'submitted' ? '완료' : '대기'}
+                        </div>
+                    </div>
+                `;
+                bodyDiv.appendChild(btn);
+            });
+
+            groupCard.appendChild(bodyDiv);
+            container.appendChild(groupCard);
+
+            // 그룹 카운트 업데이트
+            document.getElementById(`count-sunday-${groupIndex}`).textContent = `${doneCount}/${group.items.length}`;
+        });
+    }
+
+    let currentSundaySchoolContext = { groupKey: null, deptItem: null, weekKey: null };
+
+    function shiftSundaySchoolWeek(direction) {
+        if (!currentSundaySchoolContext) return;
+        const select = document.getElementById('sunday-school-form-week-select');
+        if (!select) return;
+        const idx = select.selectedIndex;
+        const newIdx = idx - direction; // 최신순이므로 반전
+        if (newIdx >= 0 && newIdx < select.options.length) {
+            const newWeekKey = select.options[newIdx].value;
+            document.getElementById('sunday-school-week-select').value = newWeekKey;
+            openSundaySchoolForm(
+                currentSundaySchoolContext.groupKey,
+                currentSundaySchoolContext.deptItem,
+                newWeekKey
+            );
+        }
+    }
+
+    function onSundaySchoolFormWeekChange() {
+        if (!currentSundaySchoolContext) return;
+        const newWeekKey = document.getElementById('sunday-school-form-week-select').value;
+        document.getElementById('sunday-school-week-select').value = newWeekKey;
+        openSundaySchoolForm(
+            currentSundaySchoolContext.groupKey,
+            currentSundaySchoolContext.deptItem,
+            newWeekKey
+        );
+    }
+
+    function openSundaySchoolForm(groupKey, deptItem, weekKey) {
+        const screenSelect = document.getElementById('screen-sunday-school-select');
+        const screenForm = document.getElementById('screen-sunday-school-form');
+        const screenDone = document.getElementById('screen-sunday-school-done');
+
+        if (screenSelect) screenSelect.style.display = 'none';
+        if (screenForm) screenForm.style.display = 'block';
+        if (screenDone) screenDone.style.display = 'none';
+
+        currentSundaySchoolContext = { groupKey, deptItem, weekKey };
+
+        const deptName = deptItem.name;
+        const [year, month, day] = weekKey.split('-').map(Number);
+        const sundayDate = new Date(year, month - 1, day);
+        const sundayDateStr = sundayDate.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' });
+
+        // 주차 옵션 생성
+        const allWeeks = getPreviousWeeks();
+        if (!allWeeks.includes(weekKey)) allWeeks.push(weekKey);
+        allWeeks.sort().reverse();
+        const weekOptions = allWeeks.map(wk => {
+            const [y, m, d] = wk.split('-').map(Number);
+            return `<option value="${wk}" ${wk === weekKey ? 'selected' : ''}>${m}월 ${d}일(주일)</option>`;
+        }).join('');
+
+        // 폼 헤더 작성
+        let formHTML = `
+            <div class="page-hdr">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--s4)">
+                    <h2 style="margin:0">${deptName}</h2>
+                    <div style="display:flex;gap:var(--s1);align-items:center;flex-shrink:0">
+                        <button onclick="shiftSundaySchoolWeek(-1)" style="width:30px;height:30px;border:1px solid rgba(255,255,255,0.4);background:var(--color-accent);color:#fff;border-radius:8px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">‹</button>
+                        <select id="sunday-school-form-week-select" onchange="onSundaySchoolFormWeekChange()" style="padding:5px 10px;background:var(--color-accent);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;outline:none">${weekOptions}</select>
+                        <button onclick="shiftSundaySchoolWeek(1)" style="width:30px;height:30px;border:1px solid rgba(255,255,255,0.4);background:var(--color-accent);color:#fff;border-radius:8px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">›</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="form-alert-area-sunday"></div>
+
+            <div class="form-card">
+                <div class="form-card-title">입력 항목</div>
+        `;
+
+        // 입력 필드 생성
+        const fields = deptItem.fields || [{label: '인원', key: 'count'}];
+        fields.forEach(field => {
+            const inputId = `sunday-field-${field.key}`;
+            formHTML += `
+                <div class="form-row">
+                    <label for="${inputId}" class="form-label">${field.label}</label>
+                    <div style="text-align:right;width:100px">
+                        <input type="number" class="form-input" data-field="${field.key}" id="${inputId}" placeholder="0" aria-label="${field.label}">
+                    </div>
+                </div>
+            `;
+        });
+
+        formHTML += `
+            </div>
+
+            <div style="display:flex;gap:var(--s4);margin-top:var(--s6)">
+                <button class="btn-primary" onclick="saveSundaySchoolForm()" style="flex:1">제출하기</button>
+                <button class="btn-secondary" onclick="goSundaySchoolSelect()" style="flex:1">취소</button>
+            </div>
+        `;
+
+        screenForm.innerHTML = `<div class="form-wrap">${formHTML}</div>`;
+
+        // 기존 데이터 채우기
+        const fullKey = `${weekKey}:${groupKey}:${deptName}`;
+        const submission = submissionStatus[weekKey]?.[fullKey];
+        if (submission && submission.data) {
+            fields.forEach(field => {
+                const input = document.getElementById(`sunday-field-${field.key}`);
+                if (input && submission.data[field.key] !== undefined) {
+                    input.value = submission.data[field.key];
+                }
+            });
+
+            // 수정 모드 알림
+            const alertArea = document.getElementById('form-alert-area-sunday');
+            if (alertArea) {
+                alertArea.innerHTML = `
+                    <div style="padding:var(--s3) var(--s4);background:var(--color-accent-light);border:1px solid var(--color-accent);border-radius:var(--r);color:var(--color-accent-dark);font-size:13px;margin-bottom:var(--s5)">
+                        ✏️ 수정 모드 · 기존 데이터를 불러왔습니다
+                    </div>
+                `;
+            }
+        }
+    }
+
+    function saveSundaySchoolForm() {
+        const { groupKey, deptItem, weekKey } = currentSundaySchoolContext;
+        const deptName = deptItem.name;
+        const fields = deptItem.fields || [{label: '인원', key: 'count'}];
+
+        // 입력 데이터 수집
+        const formData = {};
+        let allEmpty = true;
+        fields.forEach(field => {
+            const input = document.getElementById(`sunday-field-${field.key}`);
+            const value = input ? (input.value || 0) : 0;
+            formData[field.key] = parseInt(value) || 0;
+            if (parseInt(value) > 0) allEmpty = false;
+        });
+
+        if (allEmpty) {
+            alert('최소 하나의 항목에 데이터를 입력해주세요');
+            return;
+        }
+
+        // 제출 표시 (폼에서 선택한 주차 기준)
+        const selectedWeekKey = document.getElementById('sunday-school-form-week-select')?.value || weekKey;
+        markSubmitted(groupKey, deptName, 'sunday', formData, selectedWeekKey);
+
+        // Google Apps Script로 데이터 전송
+        const labelMap = {};
+        fields.forEach(f => { labelMap[f.key] = f.label; });
+        const formDataKorean = {};
+        Object.entries(formData).forEach(([k, v]) => { formDataKorean[labelMap[k] || k] = v; });
+        const gasUrl = 'https://script.google.com/macros/s/AKfycbza1cBnU7PLac5_upzq8EbX-poTIx3l56iQ3HUL9cz9dJfmu1Bl45bUJdByRQKvEjoT/exec';
+        fetch(gasUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ weekKey: selectedWeekKey, groupKey: '주일학교', itemName: deptName, formData: formDataKorean })
+        })
+        .then(res => res.json())
+        .then(data => console.log('GAS 응답(주일학교):', data))
+        .catch(error => console.error('GAS 전송 오류(주일학교):', error));
+
+        // 완료 화면으로 이동
+        const screenSelect = document.getElementById('screen-sunday-school-select');
+        const screenForm = document.getElementById('screen-sunday-school-form');
+        const screenDone = document.getElementById('screen-sunday-school-done');
+
+        if (screenSelect) screenSelect.style.display = 'none';
+        if (screenForm) screenForm.style.display = 'none';
+        if (screenDone) screenDone.style.display = 'block';
+
+        // 완료 화면 콘텐츠
+        screenDone.innerHTML = `
+            <div class="form-wrap">
+                <div style="text-align:center;padding:var(--s10) 0 var(--s6)">
+                    <div style="font-size:48px;margin-bottom:var(--s4)">✅</div>
+                    <h2 style="font-size:20px;font-weight:700;color:var(--color-text-primary);margin-bottom:var(--s2)">제출 완료</h2>
+                    <p style="font-size:14px;color:var(--color-text-secondary);margin-bottom:var(--s8)">${deptName} 데이터가 정상적으로 제출되었습니다</p>
+                </div>
+                <div style="display:flex;gap:var(--s3)">
+                    <button class="btn-secondary" onclick="openSundaySchoolForm('${groupKey}', currentSundaySchoolContext.deptItem, currentSundaySchoolContext.weekKey)" style="flex:1">✏️ 수정하기</button>
+                    <button class="btn-primary" onclick="goSundaySchoolSelect()" style="flex:1">부서 선택으로</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function goSundaySchoolSelect() {
+        const screenSelect = document.getElementById('screen-sunday-school-select');
+        const screenForm = document.getElementById('screen-sunday-school-form');
+        const screenDone = document.getElementById('screen-sunday-school-done');
+
+        if (screenSelect) screenSelect.style.display = 'block';
+        if (screenForm) screenForm.style.display = 'none';
+        if (screenDone) screenDone.style.display = 'none';
+
+        // 주차 선택 초기화
+        if (document.getElementById('sunday-school-week-select').options.length === 0) {
+            initSundaySchoolWeekSelect();
+        }
+
+        renderSundaySchoolDeptList();
+    }
+
     function renderAdminData() {
         const weekKey = document.getElementById('admin-week-select').value;
         const container = document.getElementById('admin-data-container');
@@ -3016,12 +3825,20 @@
 
         // 주차별 데이터 수집
         let html = '';
-        Object.entries(DEPARTMENTS).forEach(([groupKey, group]) => {
-            // 새벽기도 별도 처리
+        const deptOrder = ['sunday', 'weekday', 'cell', 'leader', 'youth', 'newfam'];
+
+        deptOrder.forEach(groupKey => {
+            const group = DEPARTMENTS[groupKey];
+            if (!group) return;
+            // 새벽기도 / 온라인예배 별도 처리
             if (groupKey === 'weekday') {
-                // 새벽기도 항목 필터링
-                const dawnItem = group.items.find(item => (item.name || item).includes('새벽'));
-                const otherItems = group.items.filter(item => !(item.name || item).includes('새벽'));
+                // 특수 구조 항목 분리 (새벽기도, 온라인예배는 고유 필드 구조)
+                const dawnItem = group.items.find(item => (item.name || item) === '새벽기도');
+                const onlineItem = group.items.find(item => (item.name || item) === '온라인예배');
+                const otherItems = group.items.filter(item => {
+                    const n = item.name || item;
+                    return n !== '새벽기도' && n !== '온라인예배';
+                });
 
                 // 다른 주중예배 항목들 처리
                 if (otherItems.length > 0) {
@@ -3042,7 +3859,7 @@
                         const isSubmitted = submission?.submitted || false;
                         const submittedAt = submission?.submittedAt ? new Date(submission.submittedAt) : null;
                         const submitTimeStr = submittedAt
-                            ? submittedAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                            ? submittedAt.toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
                             : '-';
 
                         const fields = item.fields || [{label: '인원', key: 'count'}];
@@ -3101,7 +3918,7 @@
                     const isSubmitted = submission?.submitted || false;
                     const submittedAt = submission?.submittedAt ? new Date(submission.submittedAt) : null;
                     const submitTimeStr = submittedAt
-                        ? submittedAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                        ? submittedAt.toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
                         : '-';
 
                     const fields = dawnItem.fields || [{label: '인원', key: 'count'}];
@@ -3125,6 +3942,50 @@
                                 </div>
                                 <div class="table-row">
                                     <div class="table-dept-name" onclick="viewSubmissionData('${groupKey}', '${itemName.replace(/'/g, "\\'")}', 'dawn')" style="cursor:pointer;${isSubmitted ? '' : 'opacity:0.6'}">
+                                        ${itemName}
+                                    </div>
+                                    ${fieldCells}
+                                    <div class="table-status">
+                                        <span class="table-status-badge ${isSubmitted ? 'submitted' : 'missing'}">
+                                            ${isSubmitted ? '✓' : '–'}
+                                        </span>
+                                    </div>
+                                    <div class="table-time">${submitTimeStr}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // 온라인예배 별도 테이블
+                if (onlineItem) {
+                    const itemName = onlineItem.name;
+                    const fullKey = `${weekKey}:${groupKey}:${itemName}`;
+                    const submission = submissionStatus[weekKey]?.[fullKey];
+                    const isSubmitted = submission?.submitted || false;
+                    const submittedAt = submission?.submittedAt ? new Date(submission.submittedAt) : null;
+                    const submitTimeStr = submittedAt
+                        ? submittedAt.toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+                        : '-';
+                    const fields = onlineItem.fields || [{label:'인원',key:'count'}];
+                    const fieldHeaders = fields.map(f => `<div>${f.label}</div>`).join('');
+                    const fieldCells = fields.map(field => {
+                        const fieldValue = isSubmitted ? (submission?.data?.[field.key] ?? '-') : '-';
+                        return `<div class="table-data">${fieldValue}</div>`;
+                    }).join('');
+                    const gridTemplate = `2fr ${fields.map(() => '1fr').join(' ')} 0.8fr 1fr`;
+                    html += `
+                        <div style="margin-bottom:var(--s8)">
+                            <h3 style="font-size:15px;font-weight:700;color:var(--color-text-primary);margin-bottom:var(--s4)">온라인예배</h3>
+                            <div class="data-table" style="grid-template-columns: ${gridTemplate}">
+                                <div class="table-header">
+                                    <div>부서</div>
+                                    ${fieldHeaders}
+                                    <div>상태</div>
+                                    <div>제출시간</div>
+                                </div>
+                                <div class="table-row">
+                                    <div class="table-dept-name" onclick="viewSubmissionData('${groupKey}', '${itemName}', 'sunday')" style="cursor:pointer;${isSubmitted ? '' : 'opacity:0.6'}">
                                         ${itemName}
                                     </div>
                                     ${fieldCells}
@@ -3166,7 +4027,7 @@
                     const isSubmitted = submission?.submitted || false;
                     const submittedAt = submission?.submittedAt ? new Date(submission.submittedAt) : null;
                     const submitTimeStr = submittedAt
-                        ? submittedAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                        ? submittedAt.toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
                         : '-';
 
                     const fields = item.fields || [{label: '인원', key: 'count'}];
@@ -3221,13 +4082,128 @@
             }
         });
 
+        // 주일학교 (groups 구조 별도 처리)
+        DEPARTMENTS.sunday_school.groups.forEach(group => {
+            const fields = [{label:'학생',key:'student'},{label:'교사',key:'teacher'},{label:'방문자',key:'visitor'},{label:'등반자',key:'attendee'},{label:'헌금',key:'offering'}];
+            const fieldHeaders = fields.map(f => `<div>${f.label}</div>`).join('');
+            const gridTemplate = `2fr ${fields.map(() => '1fr').join(' ')} 0.8fr 1fr`;
+
+            let tableRows = '';
+            group.items.forEach(item => {
+                const fullKey = `${weekKey}:sunday_school:${item.name}`;
+                const submission = submissionStatus[weekKey]?.[fullKey];
+                const isSubmitted = submission?.submitted || false;
+                const submittedAt = submission?.submittedAt ? new Date(submission.submittedAt) : null;
+                const submitTimeStr = submittedAt
+                    ? submittedAt.toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+                    : '-';
+                const fieldCells = fields.map(f => {
+                    const val = isSubmitted ? (submission?.data?.[f.key] ?? '-') : '-';
+                    return `<div class="table-data">${val}</div>`;
+                }).join('');
+
+                tableRows += `
+                    <div class="table-row">
+                        <div class="table-dept-name" style="${isSubmitted ? '' : 'opacity:0.6'}">${item.name}</div>
+                        ${fieldCells}
+                        <div class="table-status">
+                            <span class="table-status-badge ${isSubmitted ? 'submitted' : 'missing'}">${isSubmitted ? '✓' : '–'}</span>
+                        </div>
+                        <div class="table-time">${submitTimeStr}</div>
+                    </div>
+                `;
+            });
+
+            html += `
+                <div style="margin-bottom:var(--s8)">
+                    <h3 style="font-size:15px;font-weight:700;color:var(--color-text-primary);margin-bottom:var(--s4)">주일학교 · ${group.name}</h3>
+                    <div class="data-table" style="grid-template-columns: ${gridTemplate}">
+                        <div class="table-header">
+                            <div>부서</div>
+                            ${fieldHeaders}
+                            <div>상태</div>
+                            <div>제출시간</div>
+                        </div>
+                        ${tableRows}
+                    </div>
+                </div>
+            `;
+        });
+
         container.innerHTML = html || '<p style="text-align:center;padding:var(--s5);color:var(--color-text-tertiary)">조회 가능한 데이터가 없습니다</p>';
+    }
+
+    /* ══════════════════════════════════════════════════
+       엑셀 복사
+       ══════════════════════════════════════════════════ */
+    function copyToExcel() {
+        const weekKey = document.getElementById('admin-week-select').value;
+        const rows = [];
+
+        // 헤더 행: 주차 정보
+        rows.push([`분당우리교회 출석 데이터 - ${getWeekLabel(weekKey)}`]);
+        rows.push([]);
+
+        const addGroup = (groupLabel, items, groupKey) => {
+            // 항목마다 필드 구조가 다를 수 있으므로 (새벽기도 등) 항목별로 별도 테이블 출력
+            // 같은 필드 구조끼리 묶어서 헤더 한 번, 데이터 여러 줄
+            const fieldSig = item => JSON.stringify((item.fields || [{label:'인원',key:'count'}]).map(f=>f.key));
+            const groups = [];
+            items.forEach(item => {
+                const sig = fieldSig(item);
+                let g = groups.find(x => x.sig === sig);
+                if (!g) { g = { sig, items: [] }; groups.push(g); }
+                g.items.push(item);
+            });
+
+            rows.push([groupLabel]);
+            groups.forEach(g => {
+                const fields = g.items[0].fields || [{label:'인원',key:'count'}];
+                rows.push(['부서', ...fields.map(f => f.label), '제출시간']);
+                g.items.forEach(item => {
+                    const itemName = item.name || item;
+                    const fullKey = `${weekKey}:${groupKey}:${itemName}`;
+                    const submission = submissionStatus[weekKey]?.[fullKey];
+                    const isSubmitted = submission?.submitted || false;
+                    const fieldVals = fields.map(f => isSubmitted ? (submission?.data?.[f.key] ?? '') : '');
+                    const timeStr = isSubmitted && submission?.submittedAt
+                        ? new Date(submission.submittedAt).toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+                        : '';
+                    rows.push([itemName, ...fieldVals, timeStr]);
+                });
+            });
+            rows.push([]);
+        };
+
+        // 일반 그룹
+        const deptOrder = ['sunday', 'weekday', 'cell', 'leader', 'youth', 'newfam'];
+        deptOrder.forEach(key => {
+            const group = DEPARTMENTS[key];
+            if (!group) return;
+            addGroup(group.label, group.items, key);
+        });
+
+        // 주일학교
+        DEPARTMENTS.sunday_school.groups.forEach(group => {
+            addGroup(`주일학교 · ${group.name}`, group.items, 'sunday_school');
+        });
+
+        const tsv = rows.map(r => r.join('\t')).join('\n');
+        navigator.clipboard.writeText(tsv).then(() => {
+            alert('클립보드에 복사되었습니다.\nExcel에서 붙여넣기(Ctrl+V / Cmd+V) 하세요.');
+        }).catch(() => {
+            alert('복사 실패. 브라우저 권한을 확인해주세요.');
+        });
     }
 
     /* ══════════════════════════════════════════════════
        초기 렌더링
        ══════════════════════════════════════════════════ */
     loadSubmissionStatus();
+    initInputWeekSelect();
+    initStatusWeekSelect();
+    initAdminWeekSelect();
+    initSundaySchoolWeekSelect();
     renderDepartmentList();
     renderStatus();
     document.getElementById('search-dept').addEventListener('input', searchDepartments);
