@@ -612,21 +612,25 @@
         border-left: 3px solid var(--color-accent);
         display: block;
     }
-    #form-fields-area .form-card > div:not(.form-card-title):not(.form-row):not(.form-row-header) {
+    #form-fields-area .form-card > div:not(.form-card-title):not(.form-row):not(.form-row-header),
+    #screen-sunday-school-form .form-card > div:not(.form-card-title):not(.form-row):not(.form-row-header) {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: var(--s3);
     }
-    #form-fields-area .form-row {
+    #form-fields-area .form-row,
+    #screen-sunday-school-form .form-row {
         display: grid;
         grid-template-columns: 1fr 60px 60px 112px;
         align-items: center;
         gap: var(--s2);
     }
-    #form-fields-area .form-label {
+    #form-fields-area .form-label,
+    #screen-sunday-school-form .form-label {
         min-width: 0;
     }
-    #form-fields-area .form-input {
+    #form-fields-area .form-input,
+    #screen-sunday-school-form .form-input {
         width: 100%;
     }
     .form-row-header {
@@ -1263,6 +1267,7 @@
         .dept-btn { width: 100%; height: 60px; border: 2px solid var(--color-border-default); border-radius: 12px; }
         .dept-btn:hover { border-color: var(--color-accent); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
         #form-fields-area .form-row,
+        #screen-sunday-school-form .form-row,
         .form-row-header {
             grid-template-columns: 1fr 52px 52px 96px;
         }
@@ -2780,8 +2785,11 @@
         // 알림 영역 초기화
         document.getElementById('form-alert-area').innerHTML = '';
 
-        // 부서별 입력 필드 동적 생성
-        const fields = deptItem.fields || [{label: '인원', key: 'count'}];
+        // 부서별 입력 필드 동적 생성 (비고 필드 자동 추가)
+        let fields = deptItem.fields ? [...deptItem.fields] : [{label: '인원', key: 'count'}];
+        if (!fields.some(f => f.key === 'note')) {
+            fields.push({ label: '비고', key: 'note', type: 'text' });
+        }
 
         // 새벽기도: 주일 기준 이전 주 월~토 날짜 매핑
         const dawnDayOffset = { mon: -6, tue: -5, wed: -4, thu: -3, fri: -2, sat: -1 };
@@ -3689,18 +3697,61 @@
                 <div class="form-card-title">입력 항목</div>
         `;
 
-        // 입력 필드 생성
-        const fields = deptItem.fields || [{label: '인원', key: 'count'}];
+        // 입력 필드 생성 (비고 필드 자동 추가)
+        let fields = deptItem.fields ? [...deptItem.fields] : [{label: '인원', key: 'count'}];
+        if (!fields.some(f => f.key === 'note')) {
+            fields.push({ label: '비고', key: 'note', type: 'text' });
+        }
+
+        // 이전 2주 데이터 조회
+        const deptName0 = deptItem.name;
+        const toKey0 = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        const prev1D0 = new Date(sundayDate); prev1D0.setDate(prev1D0.getDate() - 7);
+        const prev2D0 = new Date(sundayDate); prev2D0.setDate(prev2D0.getDate() - 14);
+        const prev1Key0 = toKey0(prev1D0), prev2Key0 = toKey0(prev2D0);
+        const prev1Sub0 = submissionStatus[prev1Key0]?.[`${prev1Key0}:${groupKey}:${deptName0}`];
+        const prev2Sub0 = submissionStatus[prev2Key0]?.[`${prev2Key0}:${groupKey}:${deptName0}`];
+        const prev1Label0 = `${prev1D0.getMonth()+1}/${prev1D0.getDate()}`;
+        const prev2Label0 = `${prev2D0.getMonth()+1}/${prev2D0.getDate()}`;
+        const currLabel0  = `${sundayDate.getMonth()+1}/${sundayDate.getDate()}`;
+
+        formHTML += `
+            <div class="form-row-header">
+                <div></div>
+                <div>${prev2Label0}</div>
+                <div>${prev1Label0}</div>
+                <div class="fh-current">${currLabel0}</div>
+            </div>`;
+
         fields.forEach(field => {
             const inputId = `sunday-field-${field.key}`;
-            formHTML += `
-                <div class="form-row">
-                    <label for="${inputId}" class="form-label">${field.label}</label>
-                    <div style="text-align:right;width:100px">
-                        <input type="number" class="form-input" data-field="${field.key}" id="${inputId}" placeholder="0" aria-label="${field.label}">
-                    </div>
-                </div>
-            `;
+            const isText = field.type === 'text';
+
+            if (isText) {
+                const p2t = prev2Sub0?.data?.[field.key];
+                const p1t = prev1Sub0?.data?.[field.key];
+                const p2tCell = `<div class="form-prev-val${p2t ? '' : ' no-data'}" style="font-family:var(--font-body);font-size:11px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px">${p2t || '·'}</div>`;
+                const p1tCell = `<div class="form-prev-val${p1t ? '' : ' no-data'}" style="font-family:var(--font-body);font-size:11px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px">${p1t || '·'}</div>`;
+                formHTML += `
+                    <div class="form-row">
+                        <label for="${inputId}" class="form-label">${field.label}</label>
+                        ${p2tCell}
+                        ${p1tCell}
+                        <div><input type="text" class="form-input" data-field="${field.key}" id="${inputId}" placeholder="특별행사 메모" aria-label="${field.label}" style="font-size:12px;padding:0 8px"></div>
+                    </div>`;
+            } else {
+                const p2v = prev2Sub0?.data?.[field.key];
+                const p1v = prev1Sub0?.data?.[field.key];
+                const prev2Cell = `<div class="form-prev-val${p2v !== undefined ? '' : ' no-data'}">${p2v !== undefined ? p2v : '·'}</div>`;
+                const prev1Cell = `<div class="form-prev-val${p1v !== undefined ? '' : ' no-data'}">${p1v !== undefined ? p1v : '·'}</div>`;
+                formHTML += `
+                    <div class="form-row">
+                        <label for="${inputId}" class="form-label">${field.label}</label>
+                        ${prev2Cell}
+                        ${prev1Cell}
+                        <div><input type="number" class="form-input" data-field="${field.key}" id="${inputId}" placeholder="0" aria-label="${field.label}" style="text-align:center"></div>
+                    </div>`;
+            }
         });
 
         formHTML += `
@@ -3740,16 +3791,24 @@
     function saveSundaySchoolForm() {
         const { groupKey, deptItem, weekKey } = currentSundaySchoolContext;
         const deptName = deptItem.name;
-        const fields = deptItem.fields || [{label: '인원', key: 'count'}];
+        let fields = deptItem.fields ? [...deptItem.fields] : [{label: '인원', key: 'count'}];
+        if (!fields.some(f => f.key === 'note')) {
+            fields.push({ label: '비고', key: 'note', type: 'text' });
+        }
+        const textFieldKeys = new Set(fields.filter(f => f.type === 'text').map(f => f.key));
 
         // 입력 데이터 수집
         const formData = {};
         let allEmpty = true;
         fields.forEach(field => {
             const input = document.getElementById(`sunday-field-${field.key}`);
-            const value = input ? (input.value || 0) : 0;
-            formData[field.key] = parseInt(value) || 0;
-            if (parseInt(value) > 0) allEmpty = false;
+            if (textFieldKeys.has(field.key)) {
+                formData[field.key] = input ? input.value.trim() : '';
+            } else {
+                const value = input ? (input.value || 0) : 0;
+                formData[field.key] = parseInt(value) || 0;
+                if (parseInt(value) > 0) allEmpty = false;
+            }
         });
 
         if (allEmpty) {
@@ -3761,16 +3820,26 @@
         const selectedWeekKey = document.getElementById('sunday-school-form-week-select')?.value || weekKey;
         markSubmitted(groupKey, deptName, 'sunday', formData, selectedWeekKey);
 
-        // Google Apps Script로 데이터 전송
+        // Google Apps Script로 데이터 전송 (숫자/텍스트 필드 분리)
         const labelMap = {};
         fields.forEach(f => { labelMap[f.key] = f.label; });
         const formDataKorean = {};
-        Object.entries(formData).forEach(([k, v]) => { formDataKorean[labelMap[k] || k] = v; });
+        const notesKorean = {};
+        Object.entries(formData).forEach(([k, v]) => {
+            if (textFieldKeys.has(k)) {
+                if (v) notesKorean[labelMap[k] || k] = v;
+            } else {
+                formDataKorean[labelMap[k] || k] = v;
+            }
+        });
+        const gasPayload = { weekKey: selectedWeekKey, groupKey: '주일학교', itemName: deptName, formData: formDataKorean };
+        if (Object.keys(notesKorean).length > 0) gasPayload.notes = notesKorean;
+
         const gasUrl = 'https://script.google.com/macros/s/AKfycbza1cBnU7PLac5_upzq8EbX-poTIx3l56iQ3HUL9cz9dJfmu1Bl45bUJdByRQKvEjoT/exec';
         fetch(gasUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ weekKey: selectedWeekKey, groupKey: '주일학교', itemName: deptName, formData: formDataKorean })
+            body: JSON.stringify(gasPayload)
         })
         .then(res => res.json())
         .then(data => console.log('GAS 응답(주일학교):', data))
