@@ -667,9 +667,9 @@
     }
     .form-row {
         display: grid;
-        grid-template-columns: 1fr auto auto;
+        grid-template-columns: 1fr 60px 60px 112px;
         align-items: center;
-        gap: var(--s3);
+        gap: var(--s2);
         padding: var(--s3) var(--s3);
         border-bottom: 1px solid var(--color-border-default);
         border-radius: 6px;
@@ -2133,7 +2133,10 @@
         },
         newfam: {
             label: '새가족',
-            items: ['장년 새가족', '청년 새가족']
+            items: [
+                { name: '장년 새가족', fields: [{label: '인원', key: 'count'}] },
+                { name: '청년 새가족', fields: [{label: '인원', key: 'count'}] }
+            ]
         }
     };
 
@@ -3244,7 +3247,9 @@
             const fieldKey = input.getAttribute('data-field');
             const value = input.value;
             if (input.type === 'text') {
-                formData[fieldKey] = value.trim();
+                const trimmed = value.trim();
+                formData[fieldKey] = trimmed;
+                if (trimmed !== '') allEmpty = false;
             } else {
                 if (value && value.trim() !== '') allEmpty = false;
                 formData[fieldKey] = value && value.trim() !== '' ? parseInt(value) : 0;
@@ -3803,7 +3808,9 @@
         fields.forEach(field => {
             const input = document.getElementById(`sunday-field-${field.key}`);
             if (textFieldKeys.has(field.key)) {
-                formData[field.key] = input ? input.value.trim() : '';
+                const trimmed = input ? input.value.trim() : '';
+                formData[field.key] = trimmed;
+                if (trimmed !== '') allEmpty = false;
             } else {
                 const value = input ? (input.value || 0) : 0;
                 formData[field.key] = parseInt(value) || 0;
@@ -3944,7 +3951,7 @@
 
                         tableRows += `
                             <div class="table-row">
-                                <div class="table-dept-name" onclick="viewSubmissionData('${groupKey}', '${itemName.replace(/'/g, "\\'")}', '${itemDeptType}')" style="cursor:pointer;${isSubmitted ? '' : 'opacity:0.6'}">
+                                <div class="table-dept-name" onclick="viewSubmissionData('${groupKey}', '${itemName.replace(/'/g, "\\'")}', '${itemDeptType}', '${weekKey}')" style="cursor:pointer;${isSubmitted ? '' : 'opacity:0.6'}">
                                     ${itemName}
                                 </div>
                                 ${fieldCells}
@@ -4010,7 +4017,7 @@
                                     <div>제출시간</div>
                                 </div>
                                 <div class="table-row">
-                                    <div class="table-dept-name" onclick="viewSubmissionData('${groupKey}', '${itemName.replace(/'/g, "\\'")}', 'dawn')" style="cursor:pointer;${isSubmitted ? '' : 'opacity:0.6'}">
+                                    <div class="table-dept-name" onclick="viewSubmissionData('${groupKey}', '${itemName.replace(/'/g, "\\'")}', 'dawn', '${weekKey}')" style="cursor:pointer;${isSubmitted ? '' : 'opacity:0.6'}">
                                         ${itemName}
                                     </div>
                                     ${fieldCells}
@@ -4054,7 +4061,7 @@
                                     <div>제출시간</div>
                                 </div>
                                 <div class="table-row">
-                                    <div class="table-dept-name" onclick="viewSubmissionData('${groupKey}', '${itemName}', 'sunday')" style="cursor:pointer;${isSubmitted ? '' : 'opacity:0.6'}">
+                                    <div class="table-dept-name" onclick="viewSubmissionData('${groupKey}', '${itemName}', 'sunday', '${weekKey}')" style="cursor:pointer;${isSubmitted ? '' : 'opacity:0.6'}">
                                         ${itemName}
                                     </div>
                                     ${fieldCells}
@@ -4115,7 +4122,7 @@
 
                     tableRows += `
                         <div class="table-row">
-                            <div class="table-dept-name" onclick="viewSubmissionData('${groupKey}', '${itemName.replace(/'/g, "\\'")}', '${itemDeptType}')" style="cursor:pointer;${isSubmitted ? '' : 'opacity:0.6'}">
+                            <div class="table-dept-name" onclick="viewSubmissionData('${groupKey}', '${itemName.replace(/'/g, "\\'")}', '${itemDeptType}', '${weekKey}')" style="cursor:pointer;${isSubmitted ? '' : 'opacity:0.6'}">
                                 ${itemName}
                             </div>
                             ${fieldCells.join('')}
@@ -4216,7 +4223,13 @@
         const addGroup = (groupLabel, items, groupKey) => {
             // 항목마다 필드 구조가 다를 수 있으므로 (새벽기도 등) 항목별로 별도 테이블 출력
             // 같은 필드 구조끼리 묶어서 헤더 한 번, 데이터 여러 줄
-            const fieldSig = item => JSON.stringify((item.fields || [{label:'인원',key:'count'}]).map(f=>f.key));
+            // 비고(note) 필드를 포함한 전체 필드 목록 계산 (DEPARTMENTS에 없는 부서도 포함)
+            const getEffectiveFields = item => {
+                const base = item.fields ? [...item.fields] : [{label:'인원',key:'count'}];
+                if (!base.some(f => f.key === 'note')) base.push({label:'비고',key:'note',type:'text'});
+                return base;
+            };
+            const fieldSig = item => JSON.stringify(getEffectiveFields(item).map(f=>f.key));
             const groups = [];
             items.forEach(item => {
                 const sig = fieldSig(item);
@@ -4227,7 +4240,7 @@
 
             rows.push([groupLabel]);
             groups.forEach(g => {
-                const fields = g.items[0].fields || [{label:'인원',key:'count'}];
+                const fields = getEffectiveFields(g.items[0]);
                 rows.push(['부서', ...fields.map(f => f.label), '제출시간']);
                 g.items.forEach(item => {
                     const itemName = item.name || item;
