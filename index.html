@@ -324,6 +324,12 @@
         .select-layout {
             gap: var(--s4);
         }
+        .form-row,
+        #form-fields-area .form-row,
+        #screen-sunday-school-form .form-row,
+        .form-row-header {
+            grid-template-columns: 1fr 44px 44px 88px;
+        }
     }
     .group-card {
         background: var(--color-bg-surface);
@@ -648,7 +654,7 @@
         text-align: center;
         letter-spacing: -0.1px;
     }
-    .form-row-header > div:first-child { text-align: left; color: transparent; }
+    .form-row-header > div:first-child { text-align: left; visibility: hidden; }
     .form-row-header .fh-current {
         color: var(--color-accent);
     }
@@ -660,10 +666,19 @@
         color: var(--color-text-tertiary);
         user-select: none;
         padding: 0 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
     .form-prev-val.no-data {
         color: var(--color-text-disabled);
         font-weight: 300;
+    }
+    .form-prev-val.prev-text {
+        font-family: var(--font-body);
+        font-size: 11px;
+        font-style: italic;
+        font-weight: 400;
     }
     .form-row {
         display: grid;
@@ -2301,7 +2316,6 @@
         const groupMap = {
             sunday: 'grp-sunday',
             youth: 'grp-youth',
-            school: 'grp-school',
             weekday: 'grp-weekday',
             leader: 'grp-leader',
             cell: 'grp-cell',
@@ -2524,7 +2538,7 @@
                             : '-';
                         return `
                             <div class="table-row">
-                                <div class="table-dept-name">${item.name}</div>
+                                <div class="table-dept-name" onclick="viewSundaySchoolFromStatus('${item.name}', '${selectedWeekKey}')" style="cursor:pointer">${item.name}</div>
                                 <div class="table-status">
                                     <span class="table-status-badge ${st}">${st === 'submitted' ? '✓' : '–'}</span>
                                 </div>
@@ -2690,7 +2704,7 @@
                                 : '-';
                             return `
                                 <div class="table-row">
-                                    <div class="table-dept-name">${item.name}</div>
+                                    <div class="table-dept-name" onclick="viewSundaySchoolFromStatus('${item.name}', '${selectedWeekKey}')" style="cursor:pointer">${item.name}</div>
                                     <div class="table-status">
                                         <span class="table-status-badge ${st}">${st === 'submitted' ? '✓' : '–'}</span>
                                     </div>
@@ -2860,8 +2874,8 @@
                 // 비고 등 텍스트 필드: 이전값은 이탤릭 텍스트, 입력은 text input (full-width, 별도 행)
                 const p2text = prev2Sub?.data?.[field.key];
                 const p1text = prev1Sub?.data?.[field.key];
-                const p2tCell = `<div class="form-prev-val${p2text ? '' : ' no-data'}" style="font-family:var(--font-body);font-size:11px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px">${p2text || '·'}</div>`;
-                const p1tCell = `<div class="form-prev-val${p1text ? '' : ' no-data'}" style="font-family:var(--font-body);font-size:11px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px">${p1text || '·'}</div>`;
+                const p2tCell = `<div class="form-prev-val${p2text ? '' : ' no-data'} prev-text">${p2text || '·'}</div>`;
+                const p1tCell = `<div class="form-prev-val${p1text ? '' : ' no-data'} prev-text">${p1text || '·'}</div>`;
                 fieldsHTML += `
                     <div class="form-row">
                         <label for="${inputId}" class="form-label">${field.label}${dateSub}</label>
@@ -3043,9 +3057,10 @@
             }
         });
 
-        // 총계 필드 이벤트 연결 (editForm에서도 호출)
+        // 총계 필드 이벤트 연결 (중복 방지: remove 후 add)
         const inputs = document.querySelectorAll('#screen-form input.form-input[data-field]:not([disabled])');
         inputs.forEach(input => {
+            input.removeEventListener('input', updateTotalFields);
             input.addEventListener('input', updateTotalFields);
         });
 
@@ -3257,7 +3272,7 @@
         });
 
         // 총계 자동 계산 (주일예배 등에서)
-        if (groupKey === 'sunday' || groupKey === 'youth' || groupKey === 'school') {
+        if (groupKey === 'sunday' || groupKey === 'youth') {
             const fields = deptItem.fields || [];
             fields.forEach(field => {
                 if (field.isTotal) {
@@ -3330,8 +3345,11 @@
               body: JSON.stringify(gasPayload)
             })
             .then(res => res.json())
-            .then(data => console.log('GAS 응답:', data))
-            .catch(error => console.error('GAS 전송 오류:', error));
+            .then(data => { if (!data.success) console.warn('GAS 오류:', data); })
+            .catch(() => {
+                const a = document.getElementById('form-alert-area');
+                if (a) a.innerHTML += `<div style="margin-top:var(--s3);padding:var(--s3) var(--s4);background:var(--color-negative-bg);border:1px solid rgba(192,18,60,0.2);border-radius:var(--r);color:var(--color-negative);font-size:13px">⚠️ 서버 전송에 실패했습니다. 데이터는 기기에 저장됐으니 잠시 후 재제출해주세요.</div>`;
+            });
 
             // 완료 화면 표시
             document.getElementById('screen-form').style.display = 'none';
@@ -3573,6 +3591,15 @@
     /* ══════════════════════════════════════════════════
        주일학교 부서 선택 화면 렌더링
        ══════════════════════════════════════════════════ */
+    function viewSundaySchoolFromStatus(itemName, weekKey) {
+        // 제출현황에서 주일학교 항목 클릭 시 주일학교 탭으로 이동 후 폼 열기
+        switchTab('sunday-school');
+        const deptItem = DEPARTMENTS.sunday_school.groups.flatMap(g => g.items).find(i => i.name === itemName);
+        if (!deptItem) return;
+        document.getElementById('sunday-school-week-select').value = weekKey;
+        openSundaySchoolForm('sunday_school', deptItem, weekKey);
+    }
+
     function renderSundaySchoolDeptList() {
         const sundaySchool = DEPARTMENTS.sunday_school;
         const selectedWeekKey = document.getElementById('sunday-school-week-select').value;
@@ -3735,8 +3762,8 @@
             if (isText) {
                 const p2t = prev2Sub0?.data?.[field.key];
                 const p1t = prev1Sub0?.data?.[field.key];
-                const p2tCell = `<div class="form-prev-val${p2t ? '' : ' no-data'}" style="font-family:var(--font-body);font-size:11px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px">${p2t || '·'}</div>`;
-                const p1tCell = `<div class="form-prev-val${p1t ? '' : ' no-data'}" style="font-family:var(--font-body);font-size:11px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px">${p1t || '·'}</div>`;
+                const p2tCell = `<div class="form-prev-val${p2t ? '' : ' no-data'} prev-text">${p2t || '·'}</div>`;
+                const p1tCell = `<div class="form-prev-val${p1t ? '' : ' no-data'} prev-text">${p1t || '·'}</div>`;
                 formHTML += `
                     <div class="form-row">
                         <label for="${inputId}" class="form-label">${field.label}</label>
@@ -3849,8 +3876,11 @@
             body: JSON.stringify(gasPayload)
         })
         .then(res => res.json())
-        .then(data => console.log('GAS 응답(주일학교):', data))
-        .catch(error => console.error('GAS 전송 오류(주일학교):', error));
+        .then(data => { if (!data.success) console.warn('GAS 오류(주일학교):', data); })
+        .catch(() => {
+            const a = document.getElementById('form-alert-area-sunday');
+            if (a) a.innerHTML += `<div style="margin-top:var(--s3);padding:var(--s3) var(--s4);background:var(--color-negative-bg);border:1px solid rgba(192,18,60,0.2);border-radius:var(--r);color:var(--color-negative);font-size:13px">⚠️ 서버 전송에 실패했습니다. 데이터는 기기에 저장됐으니 잠시 후 재제출해주세요.</div>`;
+        });
 
         // 완료 화면으로 이동
         const screenSelect = document.getElementById('screen-sunday-school-select');
@@ -3870,7 +3900,7 @@
                     <p style="font-size:14px;color:var(--color-text-secondary);margin-bottom:var(--s8)">${deptName} 데이터가 정상적으로 제출되었습니다</p>
                 </div>
                 <div style="display:flex;gap:var(--s3)">
-                    <button class="btn-secondary" onclick="openSundaySchoolForm('${groupKey}', currentSundaySchoolContext.deptItem, currentSundaySchoolContext.weekKey)" style="flex:1">✏️ 수정하기</button>
+                    <button class="btn-secondary" onclick="openSundaySchoolForm('${groupKey}', DEPARTMENTS.sunday_school.groups.flatMap(g=>g.items).find(i=>i.name==='${deptName}'), '${selectedWeekKey}')" style="flex:1">✏️ 수정하기</button>
                     <button class="btn-primary" onclick="goSundaySchoolSelect()" style="flex:1">부서 선택으로</button>
                 </div>
             </div>
