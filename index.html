@@ -1816,7 +1816,7 @@
                 <div class="done-wrap">
                     <div class="done-icon">✓</div>
                     <h3 id="done-dept-name">제출 완료</h3>
-                    <p>이번 주 데이터가 성공적으로 제출되었습니다</p>
+                    <p>제출 완료 · 감사합니다</p>
                     <div class="done-time" id="done-time">2026.05.18 10:23</div>
                     <div id="done-data-area"></div>
                     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
@@ -2352,7 +2352,7 @@
                 const btn = document.createElement('button');
                 btn.className = 'dept-btn';
                 btn.setAttribute('aria-label', `${itemName} - ${status === 'submitted' ? '제출 완료' : '미제출'}`);
-                btn.onclick = () => openForm(key, item);
+                btn.onclick = () => status === 'submitted' ? openSubmittedDept(key, item) : openForm(key, item);
                 btn.innerHTML = `
                     <div class="dept-btn-inner">
                         <div class="dept-dot ${status === 'submitted' ? 'submitted' : 'missing'}" role="img" aria-label="${status === 'submitted' ? '완료' : '미제출'}"></div>
@@ -2905,6 +2905,54 @@
         inputs.forEach(input => {
             input.addEventListener('input', updateTotalFields);
         });
+    }
+
+    function openSubmittedDept(groupKey, deptItem) {
+        // 이미 제출된 부서 클릭 시 → 완료 화면 바로 표시
+        const deptName = deptItem.name || deptItem;
+        const weekKey = document.getElementById('input-week-select').value || getWeekKey(getDeptType(groupKey));
+        const fullKey = `${weekKey}:${groupKey}:${deptName}`;
+        const submission = submissionStatus[weekKey]?.[fullKey];
+
+        // currentFormContext 세팅 (수정하기 버튼 동작에 필요)
+        currentFormContext = { groupKey, deptItem };
+
+        // form-week-select 동기화
+        const formWeekSelect = document.getElementById('form-week-select');
+        if (formWeekSelect) formWeekSelect.value = weekKey;
+
+        // 화면 전환
+        document.getElementById('screen-select').style.display = 'none';
+        document.getElementById('screen-form').style.display = 'none';
+        document.getElementById('screen-done').style.display = 'block';
+
+        // 완료 화면 채우기
+        document.getElementById('done-dept-name').textContent = deptName + ' 제출 완료';
+
+        const submittedAt = submission?.submittedAt ? new Date(submission.submittedAt) : null;
+        document.getElementById('done-time').textContent = submittedAt
+            ? `${submittedAt.getFullYear()}.${String(submittedAt.getMonth()+1).padStart(2,'0')}.${String(submittedAt.getDate()).padStart(2,'0')} ${String(submittedAt.getHours()).padStart(2,'0')}:${String(submittedAt.getMinutes()).padStart(2,'0')}`
+            : '';
+
+        const doneDataArea = document.getElementById('done-data-area');
+        if (doneDataArea && submission?.data) {
+            let fields = deptItem.fields ? [...deptItem.fields] : [{label: '인원', key: 'count'}];
+            if (!fields.some(f => f.key === 'note')) fields.push({label: '비고', key: 'note', type: 'text'});
+            let html = '<div style="margin-top:var(--s4);padding:var(--s3);background:var(--color-bg-subtle);border-radius:var(--r);font-size:13px">';
+            fields.forEach(field => {
+                const val = submission.data[field.key];
+                if (val === undefined || val === '' || val === 0 && field.type === 'text') return;
+                html += `<div style="display:flex;justify-content:space-between;padding:var(--s2) 0;border-bottom:1px solid var(--color-border-default)">
+                    <span>${field.label}</span>
+                    <strong>${val !== '' ? val : '–'}</strong>
+                </div>`;
+            });
+            html += '</div>';
+            doneDataArea.innerHTML = html;
+        }
+
+        const deptType = getDeptType(groupKey);
+        updateEditButtonState(deptType);
     }
 
     function onFormWeekChange() {
@@ -3600,6 +3648,57 @@
         openSundaySchoolForm('sunday_school', deptItem, weekKey);
     }
 
+    function openSubmittedSundaySchool(groupKey, deptItem, weekKey) {
+        const deptName = deptItem.name;
+        const fullKey = `${weekKey}:${groupKey}:${deptName}`;
+        const submission = submissionStatus[weekKey]?.[fullKey];
+
+        currentSundaySchoolContext = { groupKey, deptItem, weekKey };
+
+        const screenSelect = document.getElementById('screen-sunday-school-select');
+        const screenForm   = document.getElementById('screen-sunday-school-form');
+        const screenDone   = document.getElementById('screen-sunday-school-done');
+        if (screenSelect) screenSelect.style.display = 'none';
+        if (screenForm)   screenForm.style.display   = 'none';
+        if (screenDone)   screenDone.style.display   = 'block';
+
+        // 제출 데이터 요약
+        let fields = deptItem.fields ? [...deptItem.fields] : [{label:'인원',key:'count'}];
+        if (!fields.some(f => f.key === 'note')) fields.push({label:'비고',key:'note',type:'text'});
+        let dataHtml = '';
+        if (submission?.data) {
+            dataHtml = '<div style="margin-top:var(--s4);padding:var(--s3);background:var(--color-bg-subtle);border-radius:var(--r);font-size:13px">';
+            fields.forEach(field => {
+                const val = submission.data[field.key];
+                if (val === undefined || val === '') return;
+                dataHtml += `<div style="display:flex;justify-content:space-between;padding:var(--s2) 0;border-bottom:1px solid var(--color-border-default)">
+                    <span>${field.label}</span><strong>${val}</strong></div>`;
+            });
+            dataHtml += '</div>';
+        }
+
+        const submittedAt = submission?.submittedAt ? new Date(submission.submittedAt) : null;
+        const timeStr = submittedAt
+            ? `${submittedAt.getFullYear()}.${String(submittedAt.getMonth()+1).padStart(2,'0')}.${String(submittedAt.getDate()).padStart(2,'0')} ${String(submittedAt.getHours()).padStart(2,'0')}:${String(submittedAt.getMinutes()).padStart(2,'0')}`
+            : '';
+
+        screenDone.innerHTML = `
+            <div class="form-wrap">
+                <div style="text-align:center;padding:var(--s10) 0 var(--s6)">
+                    <div style="font-size:48px;margin-bottom:var(--s4)">✅</div>
+                    <h2 style="font-size:20px;font-weight:700;color:var(--color-text-primary);margin-bottom:var(--s2)">제출 완료 · 감사합니다</h2>
+                    <p style="font-size:14px;color:var(--color-text-secondary);margin-bottom:var(--s2)">${deptName} 데이터가 제출되었습니다</p>
+                    <div style="font-size:12px;color:var(--color-text-tertiary);margin-bottom:var(--s8)">${timeStr}</div>
+                </div>
+                ${dataHtml}
+                <div style="display:flex;gap:var(--s3);margin-top:var(--s6)">
+                    <button class="btn-secondary" onclick="openSundaySchoolForm('${groupKey}', DEPARTMENTS.sunday_school.groups.flatMap(g=>g.items).find(i=>i.name==='${deptName}'), '${weekKey}')" style="flex:1">✏️ 수정하기</button>
+                    <button class="btn-primary" onclick="goSundaySchoolSelect()" style="flex:1">부서 선택으로</button>
+                </div>
+            </div>
+        `;
+    }
+
     function renderSundaySchoolDeptList() {
         const sundaySchool = DEPARTMENTS.sunday_school;
         const selectedWeekKey = document.getElementById('sunday-school-week-select').value;
@@ -3634,7 +3733,9 @@
                 const btn = document.createElement('button');
                 btn.className = 'dept-btn';
                 btn.setAttribute('aria-label', `${itemName} - ${status === 'submitted' ? '제출 완료' : '미제출'}`);
-                btn.onclick = () => openSundaySchoolForm('sunday_school', item, selectedWeekKey);
+                btn.onclick = () => status === 'submitted'
+                    ? openSubmittedSundaySchool('sunday_school', item, selectedWeekKey)
+                    : openSundaySchoolForm('sunday_school', item, selectedWeekKey);
                 btn.innerHTML = `
                     <div class="dept-btn-inner">
                         <div class="dept-dot ${status === 'submitted' ? 'submitted' : 'missing'}" role="img" aria-label="${status === 'submitted' ? '완료' : '미제출'}"></div>
