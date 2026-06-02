@@ -4454,7 +4454,8 @@
                 if (!groupKey) return;
                 Object.entries(depts).forEach(([deptName, fields]) => {
                     const fullKey = `${weekKey}:${groupKey}:${deptName}`;
-                    if (submissionStatus[weekKey][fullKey]?.submitted) return;
+                    // 앱에서 직접 제출한 데이터(fromSheet 없음)는 보존, 시트 캐시는 덮어씀
+                    if (submissionStatus[weekKey][fullKey]?.submitted && !submissionStatus[weekKey][fullKey]?.fromSheet) return;
                     const data = {};
                     Object.entries(fields).forEach(([fieldLabel, value]) => {
                         const fieldKey = fieldByLabel[groupKey]?.[deptName]?.[fieldLabel];
