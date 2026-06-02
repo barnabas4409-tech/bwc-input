@@ -1753,9 +1753,9 @@
                     <!-- 주차 선택 -->
                     <div class="form-card">
                         <div class="form-card-title">주차 선택</div>
-                        <div id="previous-weeks-list" style="display:flex;flex-direction:column;gap:var(--s2)">
+                        <select id="previous-weeks-list" class="form-input" onchange="showPreviousWeekData(this.value)" style="width:100%">
                             <!-- JS로 생성 -->
-                        </div>
+                        </select>
                     </div>
 
                     <!-- 선택된 주차의 데이터 -->
@@ -3193,22 +3193,23 @@
         document.getElementById('screen-previous').style.display = 'block';
 
         const weeks = getPreviousWeeks();
-        const listContainer = document.getElementById('previous-weeks-list');
-        listContainer.innerHTML = '';
+        const select = document.getElementById('previous-weeks-list');
+        select.innerHTML = '';
 
         if (weeks.length === 0) {
-            listContainer.innerHTML = '<p style="color:var(--color-text-tertiary);text-align:center;padding:var(--s5)">제출된 자료가 없습니다</p>';
+            select.innerHTML = '<option disabled>제출된 자료가 없습니다</option>';
             return;
         }
 
         weeks.forEach(weekKey => {
-            const btn = document.createElement('button');
-            btn.className = 'btn-secondary';
-            btn.style.cssText = 'text-align:left;padding:var(--s4);height:auto';
-            btn.textContent = getWeekLabel(weekKey);
-            btn.onclick = () => showPreviousWeekData(weekKey);
-            listContainer.appendChild(btn);
+            const opt = document.createElement('option');
+            opt.value = weekKey;
+            opt.textContent = getWeekLabel(weekKey);
+            select.appendChild(opt);
         });
+
+        // 첫 번째 주차 자동 표시
+        if (weeks.length > 0) showPreviousWeekData(weeks[0]);
     }
 
     function showPreviousWeekData(weekKey) {
