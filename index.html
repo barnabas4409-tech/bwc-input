@@ -2757,6 +2757,7 @@
         document.getElementById('screen-select').style.display = 'block';
         document.getElementById('screen-form').style.display = 'none';
         document.getElementById('screen-done').style.display = 'none';
+        document.getElementById('screen-previous').style.display = 'none';
 
         // 주차 선택 초기화
         if (document.getElementById('input-week-select').options.length === 0) {
@@ -2773,6 +2774,7 @@
         document.getElementById('screen-select').style.display = 'none';
         document.getElementById('screen-form').style.display = 'block';
         document.getElementById('screen-done').style.display = 'none';
+        document.getElementById('screen-previous').style.display = 'none';
 
         currentFormContext = { groupKey, deptItem };
 
@@ -2942,6 +2944,7 @@
         document.getElementById('screen-select').style.display = 'none';
         document.getElementById('screen-form').style.display = 'none';
         document.getElementById('screen-done').style.display = 'block';
+        document.getElementById('screen-previous').style.display = 'none';
 
         // 완료 화면 채우기
         document.getElementById('done-dept-name').textContent = deptName + ' 제출 완료';
