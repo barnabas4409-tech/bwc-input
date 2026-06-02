@@ -4430,7 +4430,7 @@
        시트 동기화 (Google Sheets → submissionStatus)
        ══════════════════════════════════════════════════ */
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbxJ1NDZxTpDsaVkb7GqlesBvlM_9lBBv2s4f53chZdqbHVnLZqOfVT1qzXVfsXW7qxA/exec';
-    const CACHE_WEEKS = 52; // localStorage 캐시 범위 (최근 1년)
+    const CACHE_WEEKS = 26; // localStorage 캐시 범위 (최근 6개월)
 
     function buildFieldLookup() {
         const groupByLabel = {};
