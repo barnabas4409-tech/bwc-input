@@ -1767,6 +1767,17 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- 역대 날짜 직접 조회 -->
+                    <div class="form-card" style="margin-top:var(--s4)">
+                        <div class="form-card-title">역대 날짜 조회</div>
+                        <p style="font-size:12px;color:var(--color-text-tertiary);margin-bottom:var(--s3)">위 목록에 없는 과거 주차를 시트에서 직접 불러옵니다</p>
+                        <div style="display:flex;gap:var(--s3);align-items:center">
+                            <input type="date" id="sheet-query-date" style="flex:1;padding:8px 12px;border:1.5px solid var(--color-border-strong);border-radius:var(--r);font-size:13px;font-family:inherit;background:var(--color-bg-subtle);color:var(--color-text-primary)" />
+                            <button class="btn-secondary" onclick="querySheetByDate()" style="flex-shrink:0;padding:8px 16px">조회</button>
+                        </div>
+                        <div id="sheet-query-result" style="margin-top:var(--s4)"></div>
+                    </div>
                 </div>
             </div>
 
@@ -3384,7 +3395,7 @@
                 gasPayload.notes = notesKorean;
             }
 
-            const gasUrl = 'https://script.google.com/macros/s/AKfycbza1cBnU7PLac5_upzq8EbX-poTIx3l56iQ3HUL9cz9dJfmu1Bl45bUJdByRQKvEjoT/exec';
+            const gasUrl = 'https://script.google.com/macros/s/AKfycbxJ1NDZxTpDsaVkb7GqlesBvlM_9lBBv2s4f53chZdqbHVnLZqOfVT1qzXVfsXW7qxA/exec';
             fetch(gasUrl, {
               method: 'POST',
               headers: {
@@ -3970,7 +3981,7 @@
         const gasPayload = { weekKey: selectedWeekKey, groupKey: '주일학교', itemName: deptName, formData: formDataKorean };
         if (Object.keys(notesKorean).length > 0) gasPayload.notes = notesKorean;
 
-        const gasUrl = 'https://script.google.com/macros/s/AKfycbza1cBnU7PLac5_upzq8EbX-poTIx3l56iQ3HUL9cz9dJfmu1Bl45bUJdByRQKvEjoT/exec';
+        const gasUrl = 'https://script.google.com/macros/s/AKfycbxJ1NDZxTpDsaVkb7GqlesBvlM_9lBBv2s4f53chZdqbHVnLZqOfVT1qzXVfsXW7qxA/exec';
         fetch(gasUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -4410,6 +4421,119 @@
     }
 
     /* ══════════════════════════════════════════════════
+       시트 동기화 (Google Sheets → submissionStatus)
+       ══════════════════════════════════════════════════ */
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxJ1NDZxTpDsaVkb7GqlesBvlM_9lBBv2s4f53chZdqbHVnLZqOfVT1qzXVfsXW7qxA/exec';
+
+    function buildFieldLookup() {
+        const groupByLabel = {};
+        const fieldByLabel = {};
+        Object.entries(DEPARTMENTS).forEach(([groupKey, group]) => {
+            groupByLabel[group.label] = groupKey;
+            fieldByLabel[groupKey] = {};
+            const items = group.groups
+                ? group.groups.flatMap(g => g.items)
+                : (group.items || []);
+            items.forEach(item => {
+                fieldByLabel[groupKey][item.name] = {};
+                (item.fields || [{label: '인원', key: 'count'}]).forEach(f => {
+                    fieldByLabel[groupKey][item.name][f.label] = f.key;
+                });
+            });
+        });
+        return { groupByLabel, fieldByLabel };
+    }
+
+    function mergeSheetData(raw) {
+        const { groupByLabel, fieldByLabel } = buildFieldLookup();
+        Object.entries(raw).forEach(([weekKey, groups]) => {
+            if (!submissionStatus[weekKey]) submissionStatus[weekKey] = {};
+            Object.entries(groups).forEach(([groupLabel, depts]) => {
+                const groupKey = groupByLabel[groupLabel];
+                if (!groupKey) return;
+                Object.entries(depts).forEach(([deptName, fields]) => {
+                    const fullKey = `${weekKey}:${groupKey}:${deptName}`;
+                    if (submissionStatus[weekKey][fullKey]?.submitted) return;
+                    const data = {};
+                    Object.entries(fields).forEach(([fieldLabel, value]) => {
+                        const fieldKey = fieldByLabel[groupKey]?.[deptName]?.[fieldLabel];
+                        data[fieldKey || fieldLabel] = value;
+                    });
+                    submissionStatus[weekKey][fullKey] = {
+                        submitted: true, data, fromSheet: true,
+                        submittedAt: weekKey + 'T12:00:00.000Z'
+                    };
+                });
+            });
+        });
+    }
+
+    async function syncRecentWeeksFromSheet() {
+        try {
+            const base = (() => {
+                const [y, m, d] = getWeekKey('sunday').split('-').map(Number);
+                return new Date(y, m - 1, d);
+            })();
+            const weekKeys = Array.from({length: 8}, (_, i) => {
+                const dt = new Date(base);
+                dt.setDate(dt.getDate() - i * 7);
+                return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+            });
+            const res = await fetch(`${GAS_URL}?weekKeys=${weekKeys.join(',')}`);
+            const json = await res.json();
+            if (json.success) {
+                mergeSheetData(json.data);
+                saveSubmissionStatus();
+                renderDepartmentList();
+                renderStatus();
+            }
+        } catch(e) {
+            console.warn('시트 동기화 실패:', e);
+        }
+    }
+
+    async function querySheetByDate() {
+        const dateInput = document.getElementById('sheet-query-date');
+        const resultEl = document.getElementById('sheet-query-result');
+        const rawDate = dateInput.value;
+        if (!rawDate) return;
+
+        const d = new Date(rawDate + 'T00:00:00');
+        d.setDate(d.getDate() - d.getDay());
+        const weekKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+        resultEl.innerHTML = `<p style="color:var(--color-text-tertiary);font-size:13px">⏳ ${weekKey} 불러오는 중...</p>`;
+
+        try {
+            const res = await fetch(`${GAS_URL}?weekKeys=${weekKey}`);
+            const json = await res.json();
+            if (!json.success || !json.data[weekKey]) {
+                resultEl.innerHTML = `<p style="color:var(--color-text-tertiary);font-size:13px">해당 주차 데이터가 없습니다.</p>`;
+                return;
+            }
+            const groups = json.data[weekKey];
+            let html = `<div style="font-weight:700;font-size:14px;margin-bottom:var(--s4);color:var(--color-text-primary)">${getWeekLabel(weekKey)}</div>`;
+            Object.entries(groups).forEach(([groupLabel, depts]) => {
+                html += `<div style="margin-bottom:var(--s5)">
+                    <div style="font-size:11px;font-weight:700;color:var(--color-accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:var(--s2)">${groupLabel}</div>`;
+                Object.entries(depts).forEach(([deptName, fields]) => {
+                    const fieldParts = Object.entries(fields)
+                        .map(([fl, fv]) => `<span style="color:var(--color-text-tertiary);font-size:11px">${fl}</span>&nbsp;<strong style="font-size:12px;margin-right:8px">${fv}</strong>`)
+                        .join('');
+                    html += `<div style="font-size:12px;padding:var(--s2) 0;border-bottom:1px solid var(--color-border-default);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px">
+                        <span style="font-weight:600;min-width:80px">${deptName}</span>
+                        <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end">${fieldParts}</div>
+                    </div>`;
+                });
+                html += '</div>';
+            });
+            resultEl.innerHTML = html;
+        } catch(e) {
+            resultEl.innerHTML = `<p style="color:var(--color-negative);font-size:13px">⚠️ 조회 실패 — 네트워크 오류</p>`;
+        }
+    }
+
+    /* ══════════════════════════════════════════════════
        초기 렌더링
        ══════════════════════════════════════════════════ */
     loadSubmissionStatus();
@@ -4420,6 +4544,7 @@
     renderDepartmentList();
     renderStatus();
     document.getElementById('search-dept').addEventListener('input', searchDepartments);
+    syncRecentWeeksFromSheet();
     </script>
 
 </body>
