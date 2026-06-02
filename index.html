@@ -2247,9 +2247,15 @@
     /* ══════════════════════════════════════════════════
        주차별 제출 상태 (localStorage 기반)
        ══════════════════════════════════════════════════ */
+    const CACHE_VERSION = '2';
     let submissionStatus = {};
 
     function loadSubmissionStatus() {
+      const version = localStorage.getItem('bwc-cache-version');
+      if (version !== CACHE_VERSION) {
+        localStorage.removeItem('bwc-submission-data');
+        localStorage.setItem('bwc-cache-version', CACHE_VERSION);
+      }
       const stored = localStorage.getItem('bwc-submission-data');
       if (stored) {
         submissionStatus = JSON.parse(stored);
