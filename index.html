@@ -3148,12 +3148,12 @@
        이전 자료 보기
        ══════════════════════════════════════════════════ */
     function getPreviousWeeks() {
-        // 최근 2년(DROPDOWN_WEEKS) + 실제 제출 데이터가 있는 주차 합산, 최신순 정렬
+        // 최근 CACHE_WEEKS(1년) + 실제 제출 데이터가 있는 주차 합산, 최신순 정렬
         const weekSet = new Set();
         const currentWeekKey = getWeekKey('sunday');
         const [y, m, d] = currentWeekKey.split('-').map(Number);
         const base = new Date(y, m - 1, d);
-        for (let i = 0; i < DROPDOWN_WEEKS; i++) {
+        for (let i = 0; i < CACHE_WEEKS; i++) {
             const wk = new Date(base);
             wk.setDate(wk.getDate() - i * 7);
             const year = wk.getFullYear();
@@ -4424,8 +4424,7 @@
        시트 동기화 (Google Sheets → submissionStatus)
        ══════════════════════════════════════════════════ */
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbxJ1NDZxTpDsaVkb7GqlesBvlM_9lBBv2s4f53chZdqbHVnLZqOfVT1qzXVfsXW7qxA/exec';
-    const CACHE_WEEKS = 52;    // localStorage 캐시 범위 (최근 1년)
-    const DROPDOWN_WEEKS = 104; // 드롭다운에 표시할 주차 범위 (최근 2년)
+    const CACHE_WEEKS = 52; // localStorage 캐시 범위 (최근 1년)
 
     function buildFieldLookup() {
         const groupByLabel = {};
