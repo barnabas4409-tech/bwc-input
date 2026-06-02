@@ -2247,15 +2247,9 @@
     /* ══════════════════════════════════════════════════
        주차별 제출 상태 (localStorage 기반)
        ══════════════════════════════════════════════════ */
-    const CACHE_VERSION = '2';
     let submissionStatus = {};
 
     function loadSubmissionStatus() {
-      const version = localStorage.getItem('bwc-cache-version');
-      if (version !== CACHE_VERSION) {
-        localStorage.removeItem('bwc-submission-data');
-        localStorage.setItem('bwc-cache-version', CACHE_VERSION);
-      }
       const stored = localStorage.getItem('bwc-submission-data');
       if (stored) {
         submissionStatus = JSON.parse(stored);
@@ -4463,8 +4457,7 @@
                 if (!groupKey) return;
                 Object.entries(depts).forEach(([deptName, fields]) => {
                     const fullKey = `${weekKey}:${groupKey}:${deptName}`;
-                    // 앱에서 직접 제출한 데이터(fromSheet 없음)는 보존, 시트 캐시는 덮어씀
-                    if (submissionStatus[weekKey][fullKey]?.submitted && !submissionStatus[weekKey][fullKey]?.fromSheet) return;
+                    // GAS 시트 데이터가 항상 우선 (로컬 데이터 덮어씀)
                     const data = {};
                     Object.entries(fields).forEach(([fieldLabel, value]) => {
                         const fieldKey = fieldByLabel[groupKey]?.[deptName]?.[fieldLabel];
