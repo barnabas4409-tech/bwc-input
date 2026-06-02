@@ -1873,9 +1873,9 @@
             <!-- 주차 선택 및 그룹 필터 -->
             <div style="margin-bottom:var(--s5);display:flex;flex-wrap:wrap;gap:var(--s4);align-items:center">
                 <div style="display:flex;gap:var(--s2);align-items:center">
-                    <button onclick="shiftWeek('status-week-select', -1, renderStatus)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="이전 주">‹</button>
-                    <select id="status-week-select" class="form-input" style="max-width:300px" onchange="renderStatus()"></select>
-                    <button onclick="shiftWeek('status-week-select', 1, renderStatus)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="다음 주">›</button>
+                    <button onclick="shiftWeek('status-week-select', -1, onStatusWeekChange)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="이전 주">‹</button>
+                    <select id="status-week-select" class="form-input" style="max-width:300px" onchange="onStatusWeekChange()"></select>
+                    <button onclick="shiftWeek('status-week-select', 1, onStatusWeekChange)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="다음 주">›</button>
                 </div>
                 <div style="display:flex;gap:var(--s3);align-items:center">
                     <label for="status-group-filter" style="font-weight:600;color:var(--color-text-primary)">그룹별 보기:</label>
@@ -1923,11 +1923,11 @@
 
                 <!-- 주차 선택 필터 -->
                 <div style="margin-bottom:var(--s5);display:flex;gap:var(--s2);align-items:center">
-                    <button onclick="shiftWeek('admin-week-select', -1, renderAdminData)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="이전 주">‹</button>
-                    <select id="admin-week-select" class="form-input" style="flex:1;max-width:360px;text-align:center" onchange="renderAdminData()">
+                    <button onclick="shiftWeek('admin-week-select', -1, onAdminWeekChange)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="이전 주">‹</button>
+                    <select id="admin-week-select" class="form-input" style="flex:1;max-width:360px;text-align:center" onchange="onAdminWeekChange()">
                         <!-- JS로 생성 -->
                     </select>
-                    <button onclick="shiftWeek('admin-week-select', 1, renderAdminData)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="다음 주">›</button>
+                    <button onclick="shiftWeek('admin-week-select', 1, onAdminWeekChange)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="다음 주">›</button>
                 </div>
 
                 <!-- 엑셀 복사 버튼 -->
@@ -3148,12 +3148,12 @@
        이전 자료 보기
        ══════════════════════════════════════════════════ */
     function getPreviousWeeks() {
-        // 최근 52주(1년) + 실제 제출 데이터가 있는 주차 합산, 최신순 정렬
+        // 최근 2년(DROPDOWN_WEEKS) + 실제 제출 데이터가 있는 주차 합산, 최신순 정렬
         const weekSet = new Set();
         const currentWeekKey = getWeekKey('sunday');
         const [y, m, d] = currentWeekKey.split('-').map(Number);
         const base = new Date(y, m - 1, d);
-        for (let i = 0; i < CACHE_WEEKS; i++) {
+        for (let i = 0; i < DROPDOWN_WEEKS; i++) {
             const wk = new Date(base);
             wk.setDate(wk.getDate() - i * 7);
             const year = wk.getFullYear();
@@ -4424,7 +4424,8 @@
        시트 동기화 (Google Sheets → submissionStatus)
        ══════════════════════════════════════════════════ */
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbxJ1NDZxTpDsaVkb7GqlesBvlM_9lBBv2s4f53chZdqbHVnLZqOfVT1qzXVfsXW7qxA/exec';
-    const CACHE_WEEKS = 52; // 캐시할 주차 수 (최근 1년)
+    const CACHE_WEEKS = 52;    // localStorage 캐시 범위 (최근 1년)
+    const DROPDOWN_WEEKS = 104; // 드롭다운에 표시할 주차 범위 (최근 2년)
 
     function buildFieldLookup() {
         const groupByLabel = {};
@@ -4484,12 +4485,55 @@
             const json = await res.json();
             if (json.success) {
                 mergeSheetData(json.data);
+                trimOldLocalStorage();
                 saveSubmissionStatus();
                 renderDepartmentList();
                 renderStatus();
             }
         } catch(e) {
             console.warn('시트 동기화 실패:', e);
+        }
+    }
+
+    function trimOldLocalStorage() {
+        const [y, m, d] = getWeekKey('sunday').split('-').map(Number);
+        const cutoff = new Date(y, m - 1, d);
+        cutoff.setDate(cutoff.getDate() - CACHE_WEEKS * 7);
+        const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,'0')}-${String(cutoff.getDate()).padStart(2,'0')}`;
+        Object.keys(submissionStatus).forEach(wk => {
+            if (wk < cutoffStr) delete submissionStatus[wk];
+        });
+    }
+
+    async function fetchWeekOnDemand(weekKey, renderFn) {
+        try {
+            const res = await fetch(`${GAS_URL}?weekKeys=${weekKey}`);
+            const json = await res.json();
+            if (json.success && json.data[weekKey]) {
+                mergeSheetData(json.data);
+                // 오래된 데이터는 localStorage에 저장하지 않음
+            }
+        } catch(e) {
+            console.warn('온디맨드 조회 실패:', weekKey, e);
+        }
+        renderFn();
+    }
+
+    function onStatusWeekChange() {
+        const weekKey = document.getElementById('status-week-select').value;
+        if (!submissionStatus[weekKey]) {
+            fetchWeekOnDemand(weekKey, renderStatus);
+        } else {
+            renderStatus();
+        }
+    }
+
+    function onAdminWeekChange() {
+        const weekKey = document.getElementById('admin-week-select').value;
+        if (!submissionStatus[weekKey]) {
+            fetchWeekOnDemand(weekKey, renderAdminData);
+        } else {
+            renderAdminData();
         }
     }
 
