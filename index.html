@@ -4434,7 +4434,8 @@
         const groupByLabel = {};
         const fieldByLabel = {};
         Object.entries(DEPARTMENTS).forEach(([groupKey, group]) => {
-            groupByLabel[group.label] = groupKey;
+            groupByLabel[group.label] = groupKey;  // "주일예배" → "sunday"
+            groupByLabel[groupKey] = groupKey;      // "sunday" → "sunday"
             fieldByLabel[groupKey] = {};
             const items = group.groups
                 ? group.groups.flatMap(g => g.items)
