@@ -1055,6 +1055,17 @@
     /* ══════════════════════════════════════════════════
        부서 마스터 데이터
        ══════════════════════════════════════════════════ */
+    const SCHOOL_FIELDS = [
+        {label: '1부 현장', key: 'first_onsite'},
+        {label: '1부 교사', key: 'first_teachers'},
+        {label: '1부 헌금', key: 'first_offering'},
+        {label: '2부 현장', key: 'second_onsite'},
+        {label: '2부 교사', key: 'second_teachers'},
+        {label: '2부 헌금', key: 'second_offering'}
+    ];
+
+    const createSchoolItem = (name) => ({ name, fields: SCHOOL_FIELDS });
+
     const DEPARTMENTS = {
         sunday: {
             label: '주일예배',
@@ -1101,11 +1112,13 @@
         },
         school: {
             label: '주일학교',
-            items: ['사랑부', '영아부', '유아부', '유치부',
-                    '송림유년부', '서현유년부',
-                    '송림초등부', '서현초등부',
-                    '송림소년부', '서현소년부',
-                    '송림청소년부', '중등부', '고등부']
+            items: [
+                '사랑부', '영아부', '유아부', '유치부',
+                '송림유년부', '서현유년부',
+                '송림초등부', '서현초등부',
+                '송림소년부', '서현소년부',
+                '송림청소년부', '중등부', '고등부'
+            ].map(createSchoolItem)
         },
         weekday: {
             label: '주중·새벽',
@@ -1248,13 +1261,13 @@
       localStorage.setItem('bwc-submission-data', JSON.stringify(submissionStatus));
     }
 
-    function markSubmitted(groupKey, itemName, deptType) {
+    function markSubmitted(groupKey, itemName, deptType, data = {}) {
       const weekKey = getWeekKey(deptType);
       const fullKey = `${weekKey}:${groupKey}:${itemName}`;
       if (!submissionStatus[weekKey]) submissionStatus[weekKey] = {};
       submissionStatus[weekKey][fullKey] = {
         submitted: true,
-        data: {},
+        data,
         submittedAt: new Date().toISOString()
       };
       saveSubmissionStatus();
@@ -1551,7 +1564,7 @@
         });
 
         // 제출 상태 저장
-        markSubmitted(groupKey, deptName, deptType);
+        markSubmitted(groupKey, deptName, deptType, formData);
 
         // 완료 화면 표시
         document.getElementById('screen-form').style.display = 'none';
