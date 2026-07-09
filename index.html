@@ -1730,11 +1730,11 @@
 
                 <!-- 주차 선택 필터 -->
                 <div style="margin-bottom:var(--s5);display:flex;gap:var(--s2);align-items:center">
-                    <button onclick="shiftWeek('input-week-select', -1, renderDepartmentList)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="이전 주">‹</button>
-                    <select id="input-week-select" class="form-input" style="flex:1;max-width:360px;text-align:center" onchange="renderDepartmentList()">
+                    <button onclick="shiftWeek('input-week-select', -1, onInputWeekChange)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="이전 주">‹</button>
+                    <select id="input-week-select" class="form-input" style="flex:1;max-width:360px;text-align:center" onchange="onInputWeekChange()">
                         <!-- JS로 생성 -->
                     </select>
-                    <button onclick="shiftWeek('input-week-select', 1, renderDepartmentList)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="다음 주">›</button>
+                    <button onclick="shiftWeek('input-week-select', 1, onInputWeekChange)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="다음 주">›</button>
                 </div>
 
                 <!-- 부서 검색 -->
@@ -2040,10 +2040,10 @@
 
                 <!-- 주차 선택 필터 -->
                 <div style="margin-bottom:var(--s5);display:flex;gap:var(--s2);align-items:center">
-                    <button onclick="shiftWeek('sunday-school-week-select', -1, renderSundaySchoolDeptList)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="이전 주">‹</button>
-                    <select id="sunday-school-week-select" class="form-input" style="flex:1;max-width:360px;text-align:center" onchange="renderSundaySchoolDeptList()">
+                    <button onclick="shiftWeek('sunday-school-week-select', -1, onSundaySchoolWeekChange)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="이전 주">‹</button>
+                    <select id="sunday-school-week-select" class="form-input" style="flex:1;max-width:360px;text-align:center" onchange="onSundaySchoolWeekChange()">
                     </select>
-                    <button onclick="shiftWeek('sunday-school-week-select', 1, renderSundaySchoolDeptList)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="다음 주">›</button>
+                    <button onclick="shiftWeek('sunday-school-week-select', 1, onSundaySchoolWeekChange)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="다음 주">›</button>
                 </div>
 
                 <!-- 벤다이어그램 스타일 부서 선택 -->
@@ -3055,8 +3055,7 @@
         const newWeekKey = document.getElementById('form-week-select').value;
         // 부서 선택 화면 드롭다운 동기화
         document.getElementById('input-week-select').value = newWeekKey;
-        // 폼 전체 재렌더링 (새벽기도 날짜 등 입력항목도 갱신)
-        openForm(groupKey, deptItem);
+        fetchWeekOnDemand(newWeekKey, () => openForm(groupKey, deptItem));
     }
 
     function renderPreviousWeeksData(groupKey, deptItem, currentWeekKey) {
@@ -3257,6 +3256,11 @@
             select.selectedIndex = newIdx;
             if (callback) callback();
         }
+    }
+
+    function getSelectedWeekKey(selectId) {
+        const select = document.getElementById(selectId);
+        return select?.value || getWeekKey('sunday');
     }
 
     function getWeekLabel(dateStr) {
@@ -3884,11 +3888,11 @@
         if (!currentSundaySchoolContext) return;
         const newWeekKey = document.getElementById('sunday-school-form-week-select').value;
         document.getElementById('sunday-school-week-select').value = newWeekKey;
-        openSundaySchoolForm(
+        fetchWeekOnDemand(newWeekKey, () => openSundaySchoolForm(
             currentSundaySchoolContext.groupKey,
             currentSundaySchoolContext.deptItem,
             newWeekKey
-        );
+        ));
     }
 
     function openSundaySchoolForm(groupKey, deptItem, weekKey) {
@@ -4667,9 +4671,12 @@
         try {
             const res = await fetch(`${GAS_URL}?weekKeys=${weekKey}`);
             const json = await res.json();
-            if (json.success && json.data[weekKey]) {
-                mergeSheetData(json.data);
-                // 오래된 데이터는 localStorage에 저장하지 않음
+            if (json.success) {
+                delete submissionStatus[weekKey];
+                if (json.data?.[weekKey]) {
+                    mergeSheetData({ [weekKey]: json.data[weekKey] });
+                }
+                saveSubmissionStatus();
             }
         } catch(e) {
             console.warn('온디맨드 조회 실패:', weekKey, e);
@@ -4677,13 +4684,23 @@
         renderFn();
     }
 
+    function onInputWeekChange() {
+        const weekKey = getSelectedWeekKey('input-week-select');
+        fetchWeekOnDemand(weekKey, renderDepartmentList);
+    }
+
+    function onSundaySchoolWeekChange() {
+        const weekKey = getSelectedWeekKey('sunday-school-week-select');
+        fetchWeekOnDemand(weekKey, renderSundaySchoolDeptList);
+    }
+
     function onStatusWeekChange() {
-        const weekKey = document.getElementById('status-week-select').value;
+        const weekKey = getSelectedWeekKey('status-week-select');
         fetchWeekOnDemand(weekKey, renderStatus);
     }
 
     function onAdminWeekChange() {
-        const weekKey = document.getElementById('admin-week-select').value;
+        const weekKey = getSelectedWeekKey('admin-week-select');
         fetchWeekOnDemand(weekKey, renderAdminData);
     }
 
