@@ -1827,7 +1827,7 @@
                 <div class="done-wrap">
                     <div class="done-icon">✓</div>
                     <h3 id="done-dept-name">제출 완료</h3>
-                    <p>제출 완료 · 감사합니다</p>
+                    <p id="done-subtitle">구글시트 저장 완료 · 감사합니다</p>
                     <div class="done-time" id="done-time">2026.05.18 10:23</div>
                     <div id="done-data-area"></div>
                     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
@@ -2247,14 +2247,15 @@
       localStorage.setItem('bwc-submission-data', JSON.stringify(submissionStatus));
     }
 
-    function markSubmitted(groupKey, itemName, deptType, formData = {}, weekKeyOverride = null) {
+    function markSubmitted(groupKey, itemName, deptType, formData = {}, weekKeyOverride = null, meta = {}) {
       const weekKey = weekKeyOverride || getWeekKey(deptType);
       const fullKey = `${weekKey}:${groupKey}:${itemName}`;
       if (!submissionStatus[weekKey]) submissionStatus[weekKey] = {};
       submissionStatus[weekKey][fullKey] = {
         submitted: true,
         data: formData,
-        submittedAt: new Date().toISOString()
+        submittedAt: meta.submittedAt || new Date().toISOString(),
+        fromSheet: !!meta.fromSheet
       };
       saveSubmissionStatus();
     }
@@ -2929,6 +2930,12 @@
 
         // 완료 화면 채우기
         document.getElementById('done-dept-name').textContent = deptName + ' 제출 완료';
+        const doneSubtitle = document.getElementById('done-subtitle');
+        if (doneSubtitle) {
+            doneSubtitle.textContent = submission?.fromSheet
+                ? '구글시트에서 확인된 제출 데이터입니다'
+                : '이 기기에 저장된 제출 기록입니다';
+        }
 
         const submittedAt = submission?.submittedAt ? new Date(submission.submittedAt) : null;
         document.getElementById('done-time').textContent = submittedAt
@@ -3351,14 +3358,12 @@
         const originalText = submitBtn.textContent;
         submitBtn.classList.add('btn-loading');
         submitBtn.disabled = true;
-        submitBtn.textContent = '제출 중...';
+        submitBtn.textContent = '구글시트 저장 중...';
 
         // 제출 처리 (비동기 시뮬레이션)
         const selectedWeekKey = document.getElementById('form-week-select')?.value || getWeekKey(deptType);
-        setTimeout(() => {
-            // 제출 상태 & 데이터 저장 (폼에서 선택한 주차 기준)
-            markSubmitted(groupKey, deptName, deptType, formData, selectedWeekKey);
-
+        setTimeout(async () => {
+            try {
             // Google Apps Script로 데이터 전송 (한글 라벨로 변환)
             const fields = deptItem.fields || [{label: '인원', key: 'count'}];
             const labelMap = {};
@@ -3387,26 +3392,31 @@
             }
 
             const gasUrl = 'https://script.google.com/macros/s/AKfycbxJ1NDZxTpDsaVkb7GqlesBvlM_9lBBv2s4f53chZdqbHVnLZqOfVT1qzXVfsXW7qxA/exec';
-            fetch(gasUrl, {
+            const res = await fetch(gasUrl, {
               method: 'POST',
               headers: {
                 'Content-Type': 'text/plain;charset=utf-8',
               },
               body: JSON.stringify(gasPayload)
-            })
-            .then(res => res.json())
-            .then(data => { if (!data.success) console.warn('GAS 오류:', data); })
-            .catch(() => {
-                const a = document.getElementById('form-alert-area');
-                if (a) a.innerHTML += `<div style="margin-top:var(--s3);padding:var(--s3) var(--s4);background:var(--color-negative-bg);border:1px solid rgba(192,18,60,0.2);border-radius:var(--r);color:var(--color-negative);font-size:13px">⚠️ 서버 전송에 실패했습니다. 데이터는 기기에 저장됐으니 잠시 후 재제출해주세요.</div>`;
             });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.message || 'Google Sheets write failed');
+            }
+
+            const savedAt = data.savedAt || data.timestamp || new Date().toISOString();
+
+            // 제출 상태 & 데이터 저장 (구글시트 반영 성공 후, 폼에서 선택한 주차 기준)
+            markSubmitted(groupKey, deptName, deptType, formData, selectedWeekKey, { submittedAt: savedAt, fromSheet: true });
 
             // 완료 화면 표시
             document.getElementById('screen-form').style.display = 'none';
             document.getElementById('screen-done').style.display = 'block';
             document.getElementById('done-dept-name').textContent = deptName + ' 제출 완료';
+            const doneSubtitle = document.getElementById('done-subtitle');
+            if (doneSubtitle) doneSubtitle.textContent = '구글시트 저장 완료 · 감사합니다';
 
-            const now = new Date();
+            const now = new Date(savedAt);
             document.getElementById('done-time').textContent =
                 `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 
@@ -3427,11 +3437,18 @@
 
             // 마감 여부 확인 후 수정하기 버튼 표시
             updateEditButtonState(deptType);
-
-            // 버튼 상태 복원
+            } catch (error) {
+                console.error('GAS 전송 오류:', error);
+                const a = document.getElementById('form-alert-area');
+                if (a) {
+                    a.innerHTML = `<div style="margin-top:var(--s3);padding:var(--s3) var(--s4);background:var(--color-negative-bg);border:1px solid rgba(192,18,60,0.2);border-radius:var(--r);color:var(--color-negative);font-size:13px">⚠️ 구글시트 전송에 실패했습니다. 잠시 후 다시 제출해주세요.</div>`;
+                }
+            } finally {
+                // 버튼 상태 복원
             submitBtn.classList.remove('btn-loading');
             submitBtn.disabled = false;
             submitBtn.textContent = originalText;
+            }
         }, 400);
     }
 
@@ -3953,9 +3970,8 @@
             return;
         }
 
-        // 제출 표시 (폼에서 선택한 주차 기준)
+        // 제출 주차 결정 (폼에서 선택한 주차 기준)
         const selectedWeekKey = document.getElementById('sunday-school-form-week-select')?.value || weekKey;
-        markSubmitted(groupKey, deptName, 'sunday', formData, selectedWeekKey);
 
         // Google Apps Script로 데이터 전송 (숫자/텍스트 필드 분리)
         const labelMap = {};
@@ -3978,36 +3994,44 @@
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(gasPayload)
         })
-        .then(res => res.json())
-        .then(data => { if (!data.success) console.warn('GAS 오류(주일학교):', data); })
-        .catch(() => {
+        .then(res => res.json().then(data => ({ ok: res.ok, data })))
+        .then(({ ok, data }) => {
+            if (!ok || !data.success) throw new Error(data.message || 'Google Sheets write failed');
+
+            const savedAt = data.savedAt || data.timestamp || new Date().toISOString();
+
+            // 제출 표시 (구글시트 반영 성공 후, 폼에서 선택한 주차 기준)
+            markSubmitted(groupKey, deptName, 'sunday', formData, selectedWeekKey, { submittedAt: savedAt, fromSheet: true });
+
+            // 완료 화면으로 이동
+            const screenSelect = document.getElementById('screen-sunday-school-select');
+            const screenForm = document.getElementById('screen-sunday-school-form');
+            const screenDone = document.getElementById('screen-sunday-school-done');
+
+            if (screenSelect) screenSelect.style.display = 'none';
+            if (screenForm) screenForm.style.display = 'none';
+            if (screenDone) screenDone.style.display = 'block';
+
+            // 완료 화면 콘텐츠
+            screenDone.innerHTML = `
+                <div class="form-wrap">
+                    <div style="text-align:center;padding:var(--s10) 0 var(--s6)">
+                        <div style="font-size:48px;margin-bottom:var(--s4)">✅</div>
+                        <h2 style="font-size:20px;font-weight:700;color:var(--color-text-primary);margin-bottom:var(--s2)">제출 완료</h2>
+                        <p style="font-size:14px;color:var(--color-text-secondary);margin-bottom:var(--s8)">${deptName} 데이터가 구글시트에 저장되었습니다</p>
+                    </div>
+                    <div style="display:flex;gap:var(--s3)">
+                        <button class="btn-secondary" onclick="openSundaySchoolForm('${groupKey}', DEPARTMENTS.sunday_school.groups.flatMap(g=>g.items).find(i=>i.name==='${deptName}'), '${selectedWeekKey}')" style="flex:1">✏️ 수정하기</button>
+                        <button class="btn-primary" onclick="goSundaySchoolSelect()" style="flex:1">부서 선택으로</button>
+                    </div>
+                </div>
+            `;
+        })
+        .catch((error) => {
+            console.error('GAS 전송 오류(주일학교):', error);
             const a = document.getElementById('form-alert-area-sunday');
-            if (a) a.innerHTML += `<div style="margin-top:var(--s3);padding:var(--s3) var(--s4);background:var(--color-negative-bg);border:1px solid rgba(192,18,60,0.2);border-radius:var(--r);color:var(--color-negative);font-size:13px">⚠️ 서버 전송에 실패했습니다. 데이터는 기기에 저장됐으니 잠시 후 재제출해주세요.</div>`;
+            if (a) a.innerHTML = `<div style="margin-top:var(--s3);padding:var(--s3) var(--s4);background:var(--color-negative-bg);border:1px solid rgba(192,18,60,0.2);border-radius:var(--r);color:var(--color-negative);font-size:13px">⚠️ 구글시트 전송에 실패했습니다. 잠시 후 다시 제출해주세요.</div>`;
         });
-
-        // 완료 화면으로 이동
-        const screenSelect = document.getElementById('screen-sunday-school-select');
-        const screenForm = document.getElementById('screen-sunday-school-form');
-        const screenDone = document.getElementById('screen-sunday-school-done');
-
-        if (screenSelect) screenSelect.style.display = 'none';
-        if (screenForm) screenForm.style.display = 'none';
-        if (screenDone) screenDone.style.display = 'block';
-
-        // 완료 화면 콘텐츠
-        screenDone.innerHTML = `
-            <div class="form-wrap">
-                <div style="text-align:center;padding:var(--s10) 0 var(--s6)">
-                    <div style="font-size:48px;margin-bottom:var(--s4)">✅</div>
-                    <h2 style="font-size:20px;font-weight:700;color:var(--color-text-primary);margin-bottom:var(--s2)">제출 완료</h2>
-                    <p style="font-size:14px;color:var(--color-text-secondary);margin-bottom:var(--s8)">${deptName} 데이터가 정상적으로 제출되었습니다</p>
-                </div>
-                <div style="display:flex;gap:var(--s3)">
-                    <button class="btn-secondary" onclick="openSundaySchoolForm('${groupKey}', DEPARTMENTS.sunday_school.groups.flatMap(g=>g.items).find(i=>i.name==='${deptName}'), '${selectedWeekKey}')" style="flex:1">✏️ 수정하기</button>
-                    <button class="btn-primary" onclick="goSundaySchoolSelect()" style="flex:1">부서 선택으로</button>
-                </div>
-            </div>
-        `;
     }
 
     function goSundaySchoolSelect() {
@@ -4214,13 +4238,22 @@
                 // 먼저 그룹 내 모든 항목의 최대 필드 개수 찾기
                 let maxFields = 0;
                 let allFields = null;
-                group.items.forEach(item => {
-                    const fields = item.fields || [{label: '인원', key: 'count'}];
-                    if (fields.length > maxFields) {
-                        maxFields = fields.length;
-                        allFields = fields;
-                    }
-                });
+                if (groupKey === 'youth') {
+                    allFields = [
+                        {label: '예배인원', key: 'worship', keys: ['worship']},
+                        {label: '팀모임', key: 'team', keys: ['team_members', 'team']},
+                        {label: '순모임인원', key: 'order', keys: ['order']},
+                    ];
+                    maxFields = allFields.length;
+                } else {
+                    group.items.forEach(item => {
+                        const fields = item.fields || [{label: '인원', key: 'count'}];
+                        if (fields.length > maxFields) {
+                            maxFields = fields.length;
+                            allFields = fields;
+                        }
+                    });
+                }
 
                 let tableRows = '';
 
@@ -4243,13 +4276,22 @@
 
                     // 각 항목의 필드를 최대 필드 개수만큼 채우기
                     const fieldCells = [];
-                    for (let i = 0; i < maxFields; i++) {
-                        if (i < fields.length) {
-                            const field = fields[i];
-                            const fieldValue = isSubmitted ? (submission?.data?.[field.key] ?? '-') : '-';
+                    if (groupKey === 'youth') {
+                        allFields.forEach(field => {
+                            const fieldValue = isSubmitted
+                                ? (field.keys.map(k => submission?.data?.[k]).find(v => v !== undefined && v !== null) ?? '-')
+                                : '-';
                             fieldCells.push(`<div class="table-data">${fieldValue}</div>`);
-                        } else {
-                            fieldCells.push(`<div class="table-data">-</div>`);
+                        });
+                    } else {
+                        for (let i = 0; i < maxFields; i++) {
+                            if (i < fields.length) {
+                                const field = fields[i];
+                                const fieldValue = isSubmitted ? (submission?.data?.[field.key] ?? '-') : '-';
+                                fieldCells.push(`<div class="table-data">${fieldValue}</div>`);
+                            } else {
+                                fieldCells.push(`<div class="table-data">-</div>`);
+                            }
                         }
                     }
 
@@ -4452,9 +4494,10 @@
                         const fieldKey = fieldByLabel[groupKey]?.[deptName]?.[fieldLabel];
                         data[fieldKey || fieldLabel] = value;
                     });
+                    const previous = submissionStatus[weekKey][fullKey];
                     submissionStatus[weekKey][fullKey] = {
                         submitted: true, data, fromSheet: true,
-                        submittedAt: weekKey + 'T12:00:00.000Z'
+                        submittedAt: previous?.submittedAt || new Date().toISOString()
                     };
                 });
             });
@@ -4517,20 +4560,12 @@
 
     function onStatusWeekChange() {
         const weekKey = document.getElementById('status-week-select').value;
-        if (!submissionStatus[weekKey]) {
-            fetchWeekOnDemand(weekKey, renderStatus);
-        } else {
-            renderStatus();
-        }
+        fetchWeekOnDemand(weekKey, renderStatus);
     }
 
     function onAdminWeekChange() {
         const weekKey = document.getElementById('admin-week-select').value;
-        if (!submissionStatus[weekKey]) {
-            fetchWeekOnDemand(weekKey, renderAdminData);
-        } else {
-            renderAdminData();
-        }
+        fetchWeekOnDemand(weekKey, renderAdminData);
     }
 
     async function querySheetByDate() {
