@@ -1190,6 +1190,52 @@
         margin-bottom: var(--s5);
     }
 
+    .school-matrix {
+        width: 100%;
+        border: 1px solid var(--color-border-default);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--color-bg-surface);
+    }
+    .school-matrix-row {
+        display: grid;
+        grid-template-columns: 82px repeat(5, minmax(72px, 1fr));
+        align-items: center;
+    }
+    .school-matrix-row + .school-matrix-row {
+        border-top: 1px solid var(--color-border-default);
+    }
+    .school-matrix-head {
+        background: var(--color-bg-subtle);
+        color: var(--color-text-secondary);
+        font-size: 11px;
+        font-weight: 700;
+    }
+    .school-matrix-cell {
+        min-height: 44px;
+        padding: var(--s2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-left: 1px solid var(--color-border-default);
+    }
+    .school-matrix-cell:first-child {
+        border-left: 0;
+        font-weight: 700;
+        color: var(--color-text-primary);
+        background: rgba(99,91,255,0.03);
+    }
+    .school-matrix .form-input {
+        width: 100%;
+        max-width: 96px;
+        text-align: center;
+    }
+    .school-matrix-value {
+        font-size: 13px;
+        font-weight: 650;
+        color: var(--color-text-primary);
+    }
+
     /* ══════════════════════════════════════════════════
        이전 주차 데이터 참고
        ══════════════════════════════════════════════════ */
@@ -3867,44 +3913,53 @@
         const prev2Label0 = `${prev2D0.getMonth()+1}/${prev2D0.getDate()}`;
         const currLabel0  = `${sundayDate.getMonth()+1}/${sundayDate.getDate()}`;
 
+        const metricFields = [
+            {label: '학생', suffix: 'student'},
+            {label: '교사', suffix: 'teacher'},
+            {label: '방문자', suffix: 'visitor'},
+            {label: '등반자', suffix: 'attendee'},
+            {label: '헌금', suffix: 'offering'}
+        ];
+        const serviceRows = [
+            {label: '1부', prefix: 's1'},
+            {label: '2부', prefix: 's2'}
+        ];
+        const noteField = fields.find(field => field.key === 'note');
+
         formHTML += `
-            <div class="form-row-header">
-                <div></div>
-                <div>${prev2Label0}</div>
-                <div>${prev1Label0}</div>
-                <div class="fh-current">${currLabel0}</div>
-            </div>`;
+            <div style="overflow-x:auto">
+                <div class="school-matrix" style="min-width:560px">
+                    <div class="school-matrix-row school-matrix-head">
+                        <div class="school-matrix-cell">구분</div>
+                        ${metricFields.map(field => `<div class="school-matrix-cell">${field.label}</div>`).join('')}
+                    </div>
+                    ${serviceRows.map(row => `
+                        <div class="school-matrix-row">
+                            <div class="school-matrix-cell">${row.label}</div>
+                            ${metricFields.map(field => {
+                                const key = `${row.prefix}_${field.suffix}`;
+                                const inputId = `sunday-field-${key}`;
+                                const label = `${row.label} ${field.label}`;
+                                return `<div class="school-matrix-cell">
+                                    <input type="number" class="form-input" data-field="${key}" id="${inputId}" placeholder="0" aria-label="${label}">
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
 
-        fields.forEach(field => {
-            const inputId = `sunday-field-${field.key}`;
-            const isText = field.type === 'text';
-
-            if (isText) {
-                const p2t = prev2Sub0?.data?.[field.key];
-                const p1t = prev1Sub0?.data?.[field.key];
-                const p2tCell = `<div class="form-prev-val${p2t ? '' : ' no-data'} prev-text">${p2t || '·'}</div>`;
-                const p1tCell = `<div class="form-prev-val${p1t ? '' : ' no-data'} prev-text">${p1t || '·'}</div>`;
-                formHTML += `
-                    <div class="form-row">
-                        <label for="${inputId}" class="form-label">${field.label}</label>
-                        ${p2tCell}
-                        ${p1tCell}
-                        <div><input type="text" class="form-input" data-field="${field.key}" id="${inputId}" placeholder="특별행사 메모" aria-label="${field.label}" style="font-size:12px;padding:0 8px"></div>
-                    </div>`;
-            } else {
-                const p2v = prev2Sub0?.data?.[field.key];
-                const p1v = prev1Sub0?.data?.[field.key];
-                const prev2Cell = `<div class="form-prev-val${p2v !== undefined ? '' : ' no-data'}">${p2v !== undefined ? p2v : '·'}</div>`;
-                const prev1Cell = `<div class="form-prev-val${p1v !== undefined ? '' : ' no-data'}">${p1v !== undefined ? p1v : '·'}</div>`;
-                formHTML += `
-                    <div class="form-row">
-                        <label for="${inputId}" class="form-label">${field.label}</label>
-                        ${prev2Cell}
-                        ${prev1Cell}
-                        <div><input type="number" class="form-input" data-field="${field.key}" id="${inputId}" placeholder="0" aria-label="${field.label}" style="text-align:center"></div>
-                    </div>`;
-            }
-        });
+        if (noteField) {
+            const inputId = `sunday-field-${noteField.key}`;
+            formHTML += `
+                <div class="form-row" style="margin-top:var(--s4)">
+                    <label for="${inputId}" class="form-label">${noteField.label}</label>
+                    <div style="grid-column:span 3">
+                        <input type="text" class="form-input" data-field="${noteField.key}" id="${inputId}" placeholder="특별행사 메모" aria-label="${noteField.label}" style="font-size:12px;padding:0 8px;width:100%;max-width:none">
+                    </div>
+                </div>`;
+        }
 
         formHTML += `
             </div>
@@ -4336,19 +4391,14 @@
         // 주일학교 (groups 구조 별도 처리)
         DEPARTMENTS.sunday_school.groups.forEach(group => {
             const fields = [
-                {label:'1부 학생',key:'s1_student'},
-                {label:'1부 교사',key:'s1_teacher'},
-                {label:'1부 방문자',key:'s1_visitor'},
-                {label:'1부 등반자',key:'s1_attendee'},
-                {label:'1부 헌금',key:'s1_offering'},
-                {label:'2부 학생',key:'s2_student'},
-                {label:'2부 교사',key:'s2_teacher'},
-                {label:'2부 방문자',key:'s2_visitor'},
-                {label:'2부 등반자',key:'s2_attendee'},
-                {label:'2부 헌금',key:'s2_offering'}
+                {label:'학생',key:'student'},
+                {label:'교사',key:'teacher'},
+                {label:'방문자',key:'visitor'},
+                {label:'등반자',key:'attendee'},
+                {label:'헌금',key:'offering'}
             ];
             const fieldHeaders = fields.map(f => `<div>${f.label}</div>`).join('');
-            const gridTemplate = `2fr ${fields.map(() => '1fr').join(' ')} 0.8fr 1fr`;
+            const gridTemplate = `2fr 0.7fr ${fields.map(() => '1fr').join(' ')} 0.8fr 1fr`;
 
             let tableRows = '';
             group.items.forEach(item => {
@@ -4359,21 +4409,26 @@
                 const submitTimeStr = submittedAt
                     ? submittedAt.toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
                     : '-';
-                const fieldCells = fields.map(f => {
-                    const val = isSubmitted ? (submission?.data?.[f.key] ?? '-') : '-';
-                    return `<div class="table-data">${val}</div>`;
-                }).join('');
 
-                tableRows += `
+                ['1부', '2부'].forEach((serviceLabel, serviceIndex) => {
+                    const prefix = serviceIndex === 0 ? 's1' : 's2';
+                    const fieldCells = fields.map(f => {
+                        const val = isSubmitted ? (submission?.data?.[`${prefix}_${f.key}`] ?? '-') : '-';
+                        return `<div class="table-data">${val}</div>`;
+                    }).join('');
+
+                    tableRows += `
                     <div class="table-row">
-                        <div class="table-dept-name" style="${isSubmitted ? '' : 'opacity:0.6'}">${item.name}</div>
+                        <div class="table-dept-name" style="${isSubmitted ? '' : 'opacity:0.6'}">${serviceIndex === 0 ? item.name : ''}</div>
+                        <div class="table-data" style="font-weight:700;color:var(--color-text-primary)">${serviceLabel}</div>
                         ${fieldCells}
                         <div class="table-status">
                             <span class="table-status-badge ${isSubmitted ? 'submitted' : 'missing'}">${isSubmitted ? '✓' : '–'}</span>
                         </div>
                         <div class="table-time">${submitTimeStr}</div>
                     </div>
-                `;
+                    `;
+                });
             });
 
             html += `
@@ -4382,6 +4437,7 @@
                     <div class="data-table" style="grid-template-columns: ${gridTemplate}">
                         <div class="table-header">
                             <div>부서</div>
+                            <div>구분</div>
                             ${fieldHeaders}
                             <div>상태</div>
                             <div>제출시간</div>
