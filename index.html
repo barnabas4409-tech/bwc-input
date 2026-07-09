@@ -4335,7 +4335,18 @@
 
         // 주일학교 (groups 구조 별도 처리)
         DEPARTMENTS.sunday_school.groups.forEach(group => {
-            const fields = [{label:'학생',key:'student'},{label:'교사',key:'teacher'},{label:'방문자',key:'visitor'},{label:'등반자',key:'attendee'},{label:'헌금',key:'offering'}];
+            const fields = [
+                {label:'1부 학생',key:'s1_student'},
+                {label:'1부 교사',key:'s1_teacher'},
+                {label:'1부 방문자',key:'s1_visitor'},
+                {label:'1부 등반자',key:'s1_attendee'},
+                {label:'1부 헌금',key:'s1_offering'},
+                {label:'2부 학생',key:'s2_student'},
+                {label:'2부 교사',key:'s2_teacher'},
+                {label:'2부 방문자',key:'s2_visitor'},
+                {label:'2부 등반자',key:'s2_attendee'},
+                {label:'2부 헌금',key:'s2_offering'}
+            ];
             const fieldHeaders = fields.map(f => `<div>${f.label}</div>`).join('');
             const gridTemplate = `2fr ${fields.map(() => '1fr').join(' ')} 0.8fr 1fr`;
 
