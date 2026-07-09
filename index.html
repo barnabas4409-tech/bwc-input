@@ -2221,8 +2221,26 @@
         newfam: {
             label: '새가족',
             items: [
-                { name: '장년 새가족', fields: [{label: '인원', key: 'count'}] },
-                { name: '청년 새가족', fields: [{label: '인원', key: 'count'}] }
+                { name: '장년 새가족', fields: [
+                    {label: '등록 가능', key: 'reg_available'},
+                    {label: '등록 불가능', key: 'reg_unavailable'},
+                    {label: '냉담기', key: 'cold'},
+                    {label: '이사', key: 'move'},
+                    {label: '짝믿음', key: 'mixed_belief'},
+                    {label: '기타(이단 등)', key: 'other'},
+                    {label: '결혼(부부)', key: 'marriage'},
+                    {label: '초신자', key: 'new_believer'}
+                ] },
+                { name: '청년 새가족', fields: [
+                    {label: '등록 가능', key: 'reg_available'},
+                    {label: '등록 불가능', key: 'reg_unavailable'},
+                    {label: '냉담기', key: 'cold'},
+                    {label: '이사', key: 'move'},
+                    {label: '짝믿음', key: 'mixed_belief'},
+                    {label: '기타(이단 등)', key: 'other'},
+                    {label: '결혼(부부)', key: 'marriage'},
+                    {label: '초신자', key: 'new_believer'}
+                ] }
             ]
         }
     };
