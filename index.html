@@ -1968,12 +1968,25 @@
                 </div>
 
                 <!-- 주차 선택 필터 -->
-                <div style="margin-bottom:var(--s5);display:flex;gap:var(--s2);align-items:center">
-                    <button onclick="shiftWeek('admin-week-select', -1, onAdminWeekChange)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="이전 주">‹</button>
-                    <select id="admin-week-select" class="form-input" style="flex:1;max-width:360px;text-align:center" onchange="onAdminWeekChange()">
-                        <!-- JS로 생성 -->
-                    </select>
-                    <button onclick="shiftWeek('admin-week-select', 1, onAdminWeekChange)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="다음 주">›</button>
+                <div style="margin-bottom:var(--s5);display:flex;flex-wrap:wrap;gap:var(--s4);align-items:center">
+                    <div style="display:flex;gap:var(--s2);align-items:center">
+                        <button onclick="shiftWeek('admin-week-select', -1, onAdminWeekChange)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="이전 주">‹</button>
+                        <select id="admin-week-select" class="form-input" style="flex:1;max-width:360px;text-align:center" onchange="onAdminWeekChange()">
+                            <!-- JS로 생성 -->
+                        </select>
+                        <button onclick="shiftWeek('admin-week-select', 1, onAdminWeekChange)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" aria-label="다음 주">›</button>
+                    </div>
+                    <div style="display:flex;gap:var(--s3);align-items:center">
+                        <label for="admin-group-filter" style="font-weight:600;color:var(--color-text-primary)">분야별 보기:</label>
+                        <select id="admin-group-filter" class="form-input" style="max-width:220px" onchange="renderAdminData()">
+                            <option value="">전체</option>
+                            <option value="worship">예배</option>
+                            <option value="district">교구</option>
+                            <option value="youth">청년교구</option>
+                            <option value="school">주일학교</option>
+                            <option value="newfam">새가족</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- 엑셀 복사 버튼 -->
@@ -4108,14 +4121,27 @@
 
     function renderAdminData() {
         const weekKey = document.getElementById('admin-week-select').value;
+        const selectedFilter = document.getElementById('admin-group-filter')?.value || '';
         const container = document.getElementById('admin-data-container');
         container.innerHTML = '';
 
         // 주차별 데이터 수집
         let html = '';
         const deptOrder = ['sunday', 'weekday', 'cell', 'leader', 'youth', 'newfam'];
+        const adminFilterMap = {
+            worship: ['sunday', 'weekday'],
+            district: ['cell', 'leader'],
+            youth: ['youth'],
+            school: ['sunday_school'],
+            newfam: ['newfam']
+        };
+        const shouldShowGroup = groupKey => {
+            if (!selectedFilter) return true;
+            return (adminFilterMap[selectedFilter] || []).includes(groupKey);
+        };
 
         deptOrder.forEach(groupKey => {
+            if (!shouldShowGroup(groupKey)) return;
             const group = DEPARTMENTS[groupKey];
             if (!group) return;
             // 새벽기도 / 온라인예배 별도 처리
@@ -4389,7 +4415,7 @@
         });
 
         // 주일학교 (groups 구조 별도 처리)
-        DEPARTMENTS.sunday_school.groups.forEach(group => {
+        if (shouldShowGroup('sunday_school')) DEPARTMENTS.sunday_school.groups.forEach(group => {
             const fields = [
                 {label:'학생',key:'student'},
                 {label:'교사',key:'teacher'},
