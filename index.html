@@ -2061,6 +2061,16 @@
     /* ══════════════════════════════════════════════════
        부서 마스터 데이터
        ══════════════════════════════════════════════════ */
+    const CELL_FIELDS = [
+        {label: '여성', key: 'women'},
+        {label: '직장(남)', key: 'working_men'},
+        {label: '직장(여)', key: 'working_women'},
+        {label: '부부(신혼)', key: 'newlywed_couple'},
+        {label: '시니어(여)', key: 'senior_women'},
+        {label: '시니어(남)', key: 'senior_men'},
+        {label: '비고', key: 'note', type: 'text'}
+    ];
+
     const DEPARTMENTS = {
         sunday: {
             label: '주일예배',
@@ -2202,20 +2212,20 @@
         cell: {
             label: '교구 다락방',
             items: [
-                { name: '1교구', fields: [{label: '여성', key: 'women'}, {label: '남성', key: 'men'}, {label: '직장인', key: 'working'}, {label: '부부', key: 'couple'}] },
-                { name: '2교구', fields: [{label: '여성', key: 'women'}, {label: '남성', key: 'men'}, {label: '직장인', key: 'working'}, {label: '부부', key: 'couple'}] },
-                { name: '3교구', fields: [{label: '여성', key: 'women'}, {label: '남성', key: 'men'}, {label: '직장인', key: 'working'}, {label: '부부', key: 'couple'}] },
-                { name: '4교구', fields: [{label: '여성', key: 'women'}, {label: '남성', key: 'men'}, {label: '직장인', key: 'working'}, {label: '부부', key: 'couple'}] },
-                { name: '5교구', fields: [{label: '여성', key: 'women'}, {label: '남성', key: 'men'}, {label: '직장인', key: 'working'}, {label: '부부', key: 'couple'}] },
-                { name: '6교구', fields: [{label: '여성', key: 'women'}, {label: '남성', key: 'men'}, {label: '직장인', key: 'working'}, {label: '부부', key: 'couple'}] },
-                { name: '7교구', fields: [{label: '여성', key: 'women'}, {label: '남성', key: 'men'}, {label: '직장인', key: 'working'}, {label: '부부', key: 'couple'}] },
-                { name: '8교구', fields: [{label: '여성', key: 'women'}, {label: '남성', key: 'men'}, {label: '직장인', key: 'working'}, {label: '부부', key: 'couple'}] },
-                { name: '9교구', fields: [{label: '여성', key: 'women'}, {label: '남성', key: 'men'}, {label: '직장인', key: 'working'}, {label: '부부', key: 'couple'}] },
-                { name: '10교구', fields: [{label: '여성', key: 'women'}, {label: '남성', key: 'men'}, {label: '직장인', key: 'working'}, {label: '부부', key: 'couple'}] },
-                { name: '11교구', fields: [{label: '여성', key: 'women'}, {label: '남성', key: 'men'}, {label: '직장인', key: 'working'}, {label: '부부', key: 'couple'}] },
-                { name: '12교구', fields: [{label: '여성', key: 'women'}, {label: '남성', key: 'men'}, {label: '직장인', key: 'working'}, {label: '부부', key: 'couple'}] },
-                { name: '13교구', fields: [{label: '여성', key: 'women'}, {label: '남성', key: 'men'}, {label: '직장인', key: 'working'}, {label: '부부', key: 'couple'}] },
-                { name: '14교구', fields: [{label: '여성', key: 'women'}, {label: '남성', key: 'men'}, {label: '직장인', key: 'working'}, {label: '부부', key: 'couple'}] }
+                { name: '1교구', fields: CELL_FIELDS },
+                { name: '2교구', fields: CELL_FIELDS },
+                { name: '3교구', fields: CELL_FIELDS },
+                { name: '4교구', fields: CELL_FIELDS },
+                { name: '5교구', fields: CELL_FIELDS },
+                { name: '6교구', fields: CELL_FIELDS },
+                { name: '7교구', fields: CELL_FIELDS },
+                { name: '8교구', fields: CELL_FIELDS },
+                { name: '9교구', fields: CELL_FIELDS },
+                { name: '10교구', fields: CELL_FIELDS },
+                { name: '11교구', fields: CELL_FIELDS },
+                { name: '12교구', fields: CELL_FIELDS },
+                { name: '13교구', fields: CELL_FIELDS },
+                { name: '14교구', fields: CELL_FIELDS }
             ]
         },
         newfam: {
