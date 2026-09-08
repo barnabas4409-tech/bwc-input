@@ -1829,8 +1829,6 @@
                                 </div>
                             </button>
                         </div>
-                        <div class="group-card-body" id="grp-cell" hidden></div>
-                        <div class="group-card-body" id="grp-leader" hidden></div>
                     </div>
 
                     <!-- 그룹: 청년교구 -->
@@ -2474,19 +2472,19 @@
             sunday: 'grp-sunday',
             youth: 'grp-youth',
             weekday: 'grp-weekday',
-            leader: 'grp-leader',
-            cell: 'grp-cell',
             newfam: 'grp-newfam'
         };
 
-        // 표시 순서: 주일예배 > 주중예배 > 교구다락방 > 교구순장반 > 청년교구 > 새가족
-        const deptOrder = ['sunday', 'weekday', 'cell', 'leader', 'youth', 'newfam'];
+        // 표시 순서: 주일예배 > 주중예배 > 청년교구 > 새가족
+        // 교구(cell/leader)는 카드 안의 통합 표 버튼으로만 들어가므로 여기서 제외한다.
+        const deptOrder = ['sunday', 'weekday', 'youth', 'newfam'];
 
         deptOrder.forEach(key => {
             const group = DEPARTMENTS[key];
             if (!group) return;
 
             const container = document.getElementById(groupMap[key]);
+            if (!container) return;
             container.innerHTML = '';
 
             const deptType = getDeptType(key);
