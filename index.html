@@ -1682,6 +1682,54 @@
             padding: var(--s2) var(--s3);
         }
     }
+
+    /* ── 교구 일괄 입력 표 ── */
+    .grid-scroll {
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--color-border-default); border-radius: 10px;
+      background: var(--color-bg-surface);
+    }
+    .grid-table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 13px; }
+    .grid-table th, .grid-table td {
+      padding: 8px 6px; text-align: center; white-space: nowrap;
+      border-bottom: 1px solid var(--color-border-default);
+    }
+    .grid-table thead th {
+      position: sticky; top: 0; z-index: 2; background: var(--color-bg-subtle);
+      font-size: 11px; font-weight: 700; color: var(--color-text-secondary);
+    }
+    /* 교구 이름은 가로 스크롤에도 항상 보이게 고정 */
+    .grid-sticky {
+      position: sticky; left: 0; z-index: 1; background: var(--color-bg-surface);
+      text-align: left !important; font-size: 12px; font-weight: 700;
+      color: var(--color-text-primary); min-width: 62px;
+      box-shadow: 1px 0 0 var(--color-border-default);
+    }
+    .grid-table thead .grid-sticky { z-index: 3; background: var(--color-bg-subtle); }
+    .grid-input {
+      width: 58px; padding: 7px 4px; font-size: 14px; font-family: inherit; text-align: center;
+      color: var(--color-text-primary); border: 1px solid transparent; border-radius: 7px;
+      background: var(--color-bg-subtle); -moz-appearance: textfield;
+    }
+    .grid-input::-webkit-outer-spin-button,
+    .grid-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .grid-input:focus {
+      outline: none; border-color: var(--color-accent); background: var(--color-bg-surface);
+      box-shadow: 0 0 0 3px rgba(99,91,255,.12);
+    }
+    .grid-sum {
+      font-variant-numeric: tabular-nums; font-weight: 700; font-size: 12px;
+      color: var(--color-text-secondary); background: var(--color-bg-subtle);
+    }
+    .grid-table tfoot th, .grid-table tfoot td {
+      border-top: 2px solid var(--color-border-strong); border-bottom: 0; background: var(--color-bg-subtle);
+    }
+    .grid-total { color: var(--color-accent); font-size: 13px; }
+    .grid-hint { margin-top: 12px; font-size: 11.5px; color: var(--color-text-tertiary); line-height: 1.6; }
+    @media (max-width: 480px) {
+      .grid-input { width: 50px; font-size: 13px; }
+      .grid-table th, .grid-table td { padding: 6px 4px; }
+    }
     </style>
 </head>
 <body>
@@ -1759,22 +1807,30 @@
                         <div class="group-card-body" id="grp-weekday"></div>
                     </div>
 
-                    <!-- 그룹: 교구 다락방 -->
+                    <!-- 그룹: 교구 (다락방 · 순장반을 한 표에 일괄 입력) -->
                     <div class="group-card" data-group="cell">
                         <div class="group-card-hdr">
-                            <div class="group-card-title">교구 다락방</div>
-                            <div class="group-card-count" id="cnt-cell">0/14 제출</div>
+                            <div class="group-card-title">교구</div>
+                            <div class="group-card-count" id="cnt-district">0/2 제출</div>
                         </div>
-                        <div class="group-card-body" id="grp-cell"></div>
-                    </div>
-
-                    <!-- 그룹: 교구 순장반 -->
-                    <div class="group-card" data-group="leader">
-                        <div class="group-card-hdr">
-                            <div class="group-card-title">교구 순장반</div>
-                            <div class="group-card-count" id="cnt-leader">0/15 제출</div>
+                        <div class="group-card-body" id="grp-district">
+                            <button class="dept-btn" onclick="openDistrictGrid('cell')">
+                                <div class="dept-btn-inner">
+                                    <div class="dept-dot missing" id="dot-cell"></div>
+                                    <div class="dept-name">교구 다락방</div>
+                                    <div class="dept-badge miss" id="badge-cell">대기</div>
+                                </div>
+                            </button>
+                            <button class="dept-btn" onclick="openDistrictGrid('leader')">
+                                <div class="dept-btn-inner">
+                                    <div class="dept-dot missing" id="dot-leader"></div>
+                                    <div class="dept-name">교구 순장반</div>
+                                    <div class="dept-badge miss" id="badge-leader">대기</div>
+                                </div>
+                            </button>
                         </div>
-                        <div class="group-card-body" id="grp-leader"></div>
+                        <div class="group-card-body" id="grp-cell" hidden></div>
+                        <div class="group-card-body" id="grp-leader" hidden></div>
                     </div>
 
                     <!-- 그룹: 청년교구 -->
@@ -2662,6 +2718,7 @@
             container.appendChild(block);
         });
 
+        refreshDistrictBadges();
         document.getElementById('stat-done').textContent = totalDone;
         document.getElementById('stat-miss').textContent = totalAll - totalDone;
         document.getElementById('stat-total').textContent = totalAll;
@@ -2829,6 +2886,7 @@
             });
         }
 
+        refreshDistrictBadges();
         document.getElementById('stat-done').textContent = totalDone;
         document.getElementById('stat-miss').textContent = totalAll - totalDone;
         document.getElementById('stat-total').textContent = totalAll;
@@ -2855,6 +2913,11 @@
     let currentFormContext = { groupKey: null, deptItem: null };
 
     function openForm(groupKey, deptItem) {
+        districtGridContext = null;
+        const _sb = document.getElementById('form-submit-btn');
+        if (_sb) { _sb.setAttribute('onclick', 'submitForm()'); _sb.textContent = '제출하기'; }
+        const _ws = document.getElementById('form-week-select');
+        if (_ws) _ws.onchange = null;
         document.getElementById('screen-select').style.display = 'none';
         document.getElementById('screen-form').style.display = 'block';
         document.getElementById('screen-done').style.display = 'none';
@@ -3398,6 +3461,213 @@
 
         contentEl.innerHTML = html || '<p style="text-align:center;padding:var(--s5);color:var(--color-text-tertiary)">이 주차에는 제출된 데이터가 없습니다</p>';
         display.style.display = 'block';
+    }
+
+    /* ══════════════════════════════════════════════════
+       교구 일괄 입력 (다락방 · 순장반)
+       교구를 하나씩 15번 열지 않고 한 표에서 모두 입력한다.
+       구글시트(GAS)는 항목 하나씩 받으므로, 제출할 때 교구별로 나눠 보낸다.
+       ══════════════════════════════════════════════════ */
+    let districtGridContext = null;
+
+    function districtCols(groupKey) {
+        const first = DEPARTMENTS[groupKey].items[0];
+        return (first.fields || []).filter(f => f.type !== 'text');   // 비고는 표에서 제외
+    }
+
+    function openDistrictGrid(groupKey) {
+        document.getElementById('screen-select').style.display = 'none';
+        document.getElementById('screen-form').style.display = 'block';
+        document.getElementById('screen-done').style.display = 'none';
+        document.getElementById('screen-previous').style.display = 'none';
+
+        const label = DEPARTMENTS[groupKey].label;
+        districtGridContext = { groupKey };
+        currentFormContext = { groupKey, deptItem: DEPARTMENTS[groupKey].items[0] };
+
+        document.getElementById('form-dept-name').textContent = label;
+        document.getElementById('form-dept-meta').textContent = '교구별로 한 번에 입력합니다';
+        const alertArea = document.getElementById('form-alert-area');
+        if (alertArea) alertArea.innerHTML = '';
+        const prevArea = document.getElementById('form-previous-weeks-area');
+        if (prevArea) prevArea.style.display = 'none';
+
+        const formWeekSelect = document.getElementById('form-week-select');
+        const allWeeks = getPreviousWeeks();
+        const cur = getWeekKey('sunday');
+        if (!allWeeks.includes(cur)) allWeeks.unshift(cur);
+        formWeekSelect.innerHTML = '';
+        allWeeks.forEach(wk => {
+            const opt = document.createElement('option');
+            opt.value = wk;
+            const [, m, d] = wk.split('-').map(Number);
+            opt.textContent = `📅 ${m}월 ${d}일(주일)`;
+            formWeekSelect.appendChild(opt);
+        });
+        const selectEl = document.getElementById('input-week-select');
+        formWeekSelect.value = selectEl?.value || cur;
+
+        const rows = DEPARTMENTS[groupKey].items.map(i => i.name || i);
+        const cols = districtCols(groupKey);
+        document.getElementById('form-fields-area').innerHTML = `
+        <div class="form-card">
+            <div class="form-card-title">${label} · 교구별 인원</div>
+            <div class="grid-scroll">
+                <table class="grid-table">
+                    <thead>
+                        <tr>
+                            <th class="grid-sticky">교구</th>
+                            ${cols.map(c => `<th>${c.label}</th>`).join('')}
+                            <th class="grid-sum">계</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map(r => `
+                        <tr>
+                            <th class="grid-sticky">${r}</th>
+                            ${cols.map(c => `
+                            <td><input type="number" inputmode="numeric" min="0" class="grid-input"
+                                       data-row="${r}" data-key="${c.key}"
+                                       oninput="updateGridTotals()" placeholder="·"></td>`).join('')}
+                            <td class="grid-sum" data-rowsum="${r}">0</td>
+                        </tr>`).join('')}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th class="grid-sticky">합계</th>
+                            ${cols.map(c => `<td class="grid-sum" data-colsum="${c.key}">0</td>`).join('')}
+                            <td class="grid-sum grid-total" data-grandsum>0</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="grid-hint">빈 칸은 0으로 저장됩니다. 가로·세로 합계가 자동 계산되니 확인 후 제출하세요.
+                제출하면 교구별로 나뉘어 구글시트에 저장됩니다.</div>
+        </div>`;
+
+        restoreDistrictGrid(groupKey, formWeekSelect.value);
+        updateGridTotals();
+
+        const btn = document.getElementById('form-submit-btn');
+        btn.setAttribute('onclick', 'submitDistrictGrid()');
+        btn.textContent = '제출하기';
+        btn.disabled = false;
+        btn.classList.remove('btn-loading');
+
+        formWeekSelect.onchange = () => { restoreDistrictGrid(groupKey, formWeekSelect.value); updateGridTotals(); };
+    }
+
+    function restoreDistrictGrid(groupKey, weekKey) {
+        document.querySelectorAll('.grid-input').forEach(inp => {
+            const saved = submissionStatus[weekKey]?.[`${weekKey}:${groupKey}:${inp.dataset.row}`]?.data;
+            const v = saved?.[inp.dataset.key];
+            inp.value = (v === undefined || v === null || v === '') ? '' : v;
+        });
+    }
+
+    function updateGridTotals() {
+        const inputs = [...document.querySelectorAll('.grid-input')];
+        if (!inputs.length) return;
+        const rowSum = {}, colSum = {};
+        let grand = 0;
+        inputs.forEach(inp => {
+            const n = parseInt(inp.value) || 0;
+            rowSum[inp.dataset.row] = (rowSum[inp.dataset.row] || 0) + n;
+            colSum[inp.dataset.key] = (colSum[inp.dataset.key] || 0) + n;
+            grand += n;
+        });
+        document.querySelectorAll('[data-rowsum]').forEach(td => td.textContent = (rowSum[td.dataset.rowsum] || 0).toLocaleString());
+        document.querySelectorAll('[data-colsum]').forEach(td => td.textContent = (colSum[td.dataset.colsum] || 0).toLocaleString());
+        const g = document.querySelector('[data-grandsum]');
+        if (g) g.textContent = grand.toLocaleString();
+    }
+
+    async function submitDistrictGrid() {
+        const ctx = districtGridContext;
+        if (!ctx) return;
+        const groupKey = ctx.groupKey;
+        const label = DEPARTMENTS[groupKey].label;
+        const cols = districtCols(groupKey);
+        const weekKey = document.getElementById('form-week-select').value;
+        const alertArea = document.getElementById('form-alert-area');
+
+        const byRow = {};
+        document.querySelectorAll('.grid-input').forEach(inp => {
+            if (!byRow[inp.dataset.row]) byRow[inp.dataset.row] = {};
+            byRow[inp.dataset.row][inp.dataset.key] = inp.value.trim() === '' ? 0 : (parseInt(inp.value) || 0);
+        });
+        const rows = Object.keys(byRow);
+        const anyValue = rows.some(r => cols.some(c => byRow[r][c.key] > 0));
+        if (!anyValue) {
+            if (alertArea) alertArea.innerHTML = `<div style="padding:var(--s3) var(--s4);background:var(--color-negative-bg);border:1px solid rgba(192,18,60,0.2);border-radius:var(--r);color:var(--color-negative);font-size:13px">⚠️ 최소 한 개 이상 입력해주세요</div>`;
+            return;
+        }
+
+        const btn = document.getElementById('form-submit-btn');
+        btn.classList.add('btn-loading'); btn.disabled = true;
+        const gasUrl = 'https://script.google.com/macros/s/AKfycbxJ1NDZxTpDsaVkb7GqlesBvlM_9lBBv2s4f53chZdqbHVnLZqOfVT1qzXVfsXW7qxA/exec';
+
+        let done = 0; const failed = [];
+        for (const row of rows) {
+            btn.textContent = `저장 중… ${done}/${rows.length}`;
+            const formDataKorean = {};
+            cols.forEach(c => formDataKorean[c.label] = byRow[row][c.key]);
+            try {
+                const res = await fetch(gasUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ weekKey, groupKey: label, itemName: row, formData: formDataKorean }),
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.message || '저장 실패');
+                markSubmitted(groupKey, row, getDeptType(groupKey), byRow[row], weekKey,
+                              { submittedAt: data.savedAt || new Date().toISOString(), fromSheet: true });
+                done++;
+            } catch (e) {
+                failed.push(`${row}(${e.message})`);
+            }
+        }
+
+        btn.classList.remove('btn-loading'); btn.disabled = false; btn.textContent = '제출하기';
+
+        if (failed.length) {
+            if (alertArea) alertArea.innerHTML = `<div style="padding:var(--s3) var(--s4);background:var(--color-negative-bg);border:1px solid rgba(192,18,60,0.2);border-radius:var(--r);color:var(--color-negative);font-size:13px;line-height:1.6">
+                ${done}개 저장, <b>${failed.length}개 실패</b><br>${failed.join(', ')}<br>실패한 교구만 다시 제출해 주세요.</div>`;
+            renderDepartmentList(); renderStatus();
+            return;
+        }
+
+        document.getElementById('screen-form').style.display = 'none';
+        document.getElementById('screen-done').style.display = 'block';
+        document.getElementById('done-dept-name').textContent = `${label} 제출 완료`;
+        const sub = document.getElementById('done-subtitle');
+        if (sub) sub.textContent = `${done}개 교구 구글시트 저장 완료 · 감사합니다`;
+        const now = new Date();
+        document.getElementById('done-time').textContent =
+            `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        const area = document.getElementById('done-data-area');
+        if (area) area.innerHTML = '';
+        renderDepartmentList(); renderStatus();
+    }
+
+    /* 교구 카드의 두 버튼 상태 — 모든 교구가 제출됐을 때만 '완료' */
+    function refreshDistrictBadges() {
+        ['cell', 'leader'].forEach(groupKey => {
+            if (!DEPARTMENTS[groupKey]) return;
+            const items = DEPARTMENTS[groupKey].items.map(i => i.name || i);
+            const doneAll = items.every(n => getSubmissionStatus(groupKey, n, getDeptType(groupKey)) === 'submitted');
+            const dot = document.getElementById(`dot-${groupKey}`);
+            const badge = document.getElementById(`badge-${groupKey}`);
+            if (dot) dot.className = `dept-dot ${doneAll ? 'submitted' : 'missing'}`;
+            if (badge) { badge.className = `dept-badge ${doneAll ? 'done' : 'miss'}`; badge.textContent = doneAll ? '완료' : '대기'; }
+        });
+        const cnt = document.getElementById('cnt-district');
+        if (cnt) {
+            const n = ['cell', 'leader'].filter(g => DEPARTMENTS[g] &&
+                DEPARTMENTS[g].items.map(i => i.name || i)
+                    .every(nm => getSubmissionStatus(g, nm, getDeptType(g)) === 'submitted')).length;
+            cnt.textContent = `${n}/2 제출`;
+        }
     }
 
     function submitForm() {
