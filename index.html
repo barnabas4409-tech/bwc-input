@@ -762,6 +762,58 @@
         .form-input { width: 100%; }
         .form-prev { text-align: left; }
     }
+
+    /* ── 교구 표 입력 ── */
+    .grid-card { padding: var(--s4); }
+    .grid-scroll {
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--color-border-default); border-radius: 10px;
+      background: var(--color-bg-surface);
+    }
+    .grid-table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 13px; }
+    .grid-table th, .grid-table td {
+      padding: 8px 6px; text-align: center; white-space: nowrap;
+      border-bottom: 1px solid var(--color-border-default);
+    }
+    .grid-table thead th {
+      position: sticky; top: 0; z-index: 2;
+      background: var(--color-bg-subtle); font-size: 11px; font-weight: 700;
+      color: var(--color-text-secondary); letter-spacing: -0.2px;
+    }
+    /* 교구 이름은 가로 스크롤해도 항상 보이게 고정 */
+    .grid-sticky {
+      position: sticky; left: 0; z-index: 1;
+      background: var(--color-bg-surface); text-align: left !important;
+      font-size: 12px; font-weight: 700; color: var(--color-text-primary);
+      min-width: 62px; box-shadow: 1px 0 0 var(--color-border-default);
+    }
+    .grid-table thead .grid-sticky { z-index: 3; background: var(--color-bg-subtle); }
+    .grid-input {
+      width: 58px; padding: 7px 4px; font-size: 14px; font-family: inherit;
+      text-align: center; color: var(--color-text-primary);
+      border: 1px solid transparent; border-radius: 7px;
+      background: var(--color-bg-subtle); -moz-appearance: textfield;
+    }
+    .grid-input::-webkit-outer-spin-button,
+    .grid-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .grid-input:focus {
+      outline: none; border-color: var(--color-accent);
+      background: var(--color-bg-surface); box-shadow: 0 0 0 3px rgba(99,91,255,.12);
+    }
+    .grid-sum {
+      font-variant-numeric: tabular-nums; font-weight: 700; font-size: 12px;
+      color: var(--color-text-secondary); background: var(--color-bg-subtle);
+    }
+    .grid-table tfoot th, .grid-table tfoot td {
+      border-top: 2px solid var(--color-border-strong); border-bottom: 0;
+      background: var(--color-bg-subtle);
+    }
+    .grid-total { color: var(--color-accent); font-size: 13px; }
+    .grid-hint { margin-top: var(--s3); font-size: 11.5px; color: var(--color-text-tertiary); line-height: 1.6; }
+    @media (max-width: 480px) {
+      .grid-input { width: 50px; font-size: 13px; }
+      .grid-table th, .grid-table td { padding: 6px 4px; }
+    }
     </style>
 </head>
 <body>
@@ -859,22 +911,13 @@
                         <div class="group-card-body" id="grp-weekday"></div>
                     </div>
 
-                    <!-- 그룹: 리더십 (순장반) -->
+                    <!-- 그룹: 교구 (다락방 · 순장반) -->
                     <div class="group-card">
                         <div class="group-card-hdr">
-                            <div class="group-card-title">리더십 (순장반)</div>
-                            <div class="group-card-count" id="cnt-leader">0/15 제출</div>
+                            <div class="group-card-title">교구</div>
+                            <div class="group-card-count" id="cnt-district">0/2 제출</div>
                         </div>
-                        <div class="group-card-body" id="grp-leader"></div>
-                    </div>
-
-                    <!-- 그룹: 소그룹 (다락방) -->
-                    <div class="group-card">
-                        <div class="group-card-hdr">
-                            <div class="group-card-title">소그룹 (다락방)</div>
-                            <div class="group-card-count" id="cnt-cell">0/14 제출</div>
-                        </div>
-                        <div class="group-card-body" id="grp-cell"></div>
+                        <div class="group-card-body" id="grp-district"></div>
                     </div>
 
                     <!-- 그룹: 새가족 -->
@@ -947,8 +990,9 @@
                     <div class="form-card">
                         <div class="form-card-title">입력 기준일</div>
                         <div class="form-date-row">
-                            <label style="font-size:13px;color:var(--color-text-secondary)">주일 날짜</label>
-                            <input type="date" class="form-date-input" id="form-date">
+                            <label style="font-size:13px;color:var(--color-text-secondary)">기준 주일</label>
+                            <input type="date" class="form-date-input" id="form-date" readonly
+                                   title="마감 규칙에 따라 자동으로 정해집니다">
                             <span style="font-size:11px;color:var(--color-text-tertiary)" id="form-week-label">2026년 5월 3주차</span>
                         </div>
                     </div>
@@ -1066,6 +1110,8 @@
 
     const createSchoolItem = (name) => ({ name, fields: SCHOOL_FIELDS });
 
+    const DISTRICTS = Array.from({ length: 14 }, (_, i) => `${i + 1}교구`);
+
     const DEPARTMENTS = {
         sunday: {
             label: '주일예배',
@@ -1124,16 +1170,27 @@
             label: '주중·새벽',
             items: ['수요예배', '금요기도회', '새벽기도']
         },
-        leader: {
-            label: '리더십 (순장반)',
-            items: ['1교구', '2교구', '3교구', '4교구', '5교구', '6교구', '7교구',
-                    '8교구', '9교구', '10교구', '11교구', '12교구', '13교구', '14교구',
-                    '시니어']
-        },
-        cell: {
-            label: '소그룹 (다락방)',
-            items: ['1교구', '2교구', '3교구', '4교구', '5교구', '6교구', '7교구',
-                    '8교구', '9교구', '10교구', '11교구', '12교구', '13교구', '14교구']
+        district: {
+            label: '교구',
+            items: [
+                {
+                    name: '교구 다락방',
+                    desc: '교구별 영역 인원을 한 번에 입력합니다',
+                    grid: {
+                        rows: DISTRICTS,
+                        // 대시보드가 그대로 읽는 항목명이므로 바꾸지 말 것
+                        cols: ['여성', '직장(남)', '직장(여)', '부부(신혼)', '시니어(여)', '시니어(남)']
+                    }
+                },
+                {
+                    name: '교구 순장반',
+                    desc: '교구별 순장반 인원을 한 번에 입력합니다',
+                    grid: {
+                        rows: [...DISTRICTS, '시니어'],
+                        cols: ['화요순장반', '직장인순장반']
+                    }
+                }
+            ]
         },
         newfam: {
             label: '새가족',
@@ -1207,8 +1264,7 @@
           if (itemName.includes('새벽')) return 'dawn';
           return 'sunday';
         },
-        leader: 'sunday',
-        cell: 'sunday',
+        district: 'sunday',
         newfam: 'sunday'
       };
       return map[groupKey];
@@ -1302,8 +1358,7 @@
             youth: 'grp-youth',
             school: 'grp-school',
             weekday: 'grp-weekday',
-            leader: 'grp-leader',
-            cell: 'grp-cell',
+            district: 'grp-district',
             newfam: 'grp-newfam'
         };
 
@@ -1433,11 +1488,20 @@
         currentFormContext = { groupKey, deptItem };
 
         const deptName = deptItem.name || deptItem;
+        const dt = getDeptType(groupKey);
+        refreshWeekLabels(typeof dt === 'function' ? dt(deptName) : dt);
         document.getElementById('form-dept-name').textContent = deptName;
         document.getElementById('form-dept-meta').textContent =
             DEPARTMENTS[groupKey].label + ' · 이번 주 데이터를 입력해주세요';
 
-        // 부서별 입력 필드 동적 생성
+        // 표 입력(교구처럼 여러 대상을 한 번에) vs 단일 항목 입력
+        if (deptItem.grid) {
+            document.getElementById('form-fields-area').innerHTML = buildGridHTML(deptItem);
+            restoreGridValues(groupKey, deptName, deptItem);
+            updateGridTotals();
+            return;
+        }
+
         const fields = deptItem.fields || [{label: '인원', key: 'count'}];
         let fieldsHTML = '<div class="form-card"><div class="form-card-title">입력 항목</div>';
 
@@ -1456,6 +1520,77 @@
         document.getElementById('form-fields-area').innerHTML = fieldsHTML;
     }
 
+    /* ── 교구처럼 여러 대상을 한 표에 입력하는 화면 ── */
+    function buildGridHTML(item) {
+        const { rows, cols } = item.grid;
+        return `
+        <div class="form-card grid-card">
+            <div class="form-card-title">${item.desc || '표에 인원을 입력하세요'}</div>
+            <div class="grid-scroll">
+                <table class="grid-table">
+                    <thead>
+                        <tr>
+                            <th class="grid-sticky">교구</th>
+                            ${cols.map(c => `<th>${c}</th>`).join('')}
+                            <th class="grid-sum">계</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map(r => `
+                        <tr data-row="${r}">
+                            <th class="grid-sticky">${r}</th>
+                            ${cols.map(c => `
+                            <td><input type="number" inputmode="numeric" min="0"
+                                       class="grid-input" data-row="${r}" data-col="${c}"
+                                       oninput="updateGridTotals()" placeholder="·"></td>`).join('')}
+                            <td class="grid-sum" data-rowsum="${r}">0</td>
+                        </tr>`).join('')}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th class="grid-sticky">합계</th>
+                            ${cols.map(c => `<td class="grid-sum" data-colsum="${c}">0</td>`).join('')}
+                            <td class="grid-sum grid-total" data-grandsum>0</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="grid-hint">빈 칸은 0으로 저장됩니다. 가로·세로 합계가 자동으로 계산되니 확인 후 제출하세요.</div>
+        </div>`;
+    }
+
+    function updateGridTotals() {
+        const inputs = [...document.querySelectorAll('.grid-input')];
+        if (!inputs.length) return;
+        const rowSum = {}, colSum = {};
+        let grand = 0;
+        inputs.forEach(inp => {
+            const n = parseInt(inp.value) || 0;
+            rowSum[inp.dataset.row] = (rowSum[inp.dataset.row] || 0) + n;
+            colSum[inp.dataset.col] = (colSum[inp.dataset.col] || 0) + n;
+            grand += n;
+        });
+        document.querySelectorAll('[data-rowsum]').forEach(td => {
+            td.textContent = (rowSum[td.dataset.rowsum] || 0).toLocaleString();
+        });
+        document.querySelectorAll('[data-colsum]').forEach(td => {
+            td.textContent = (colSum[td.dataset.colsum] || 0).toLocaleString();
+        });
+        const g = document.querySelector('[data-grandsum]');
+        if (g) g.textContent = grand.toLocaleString();
+    }
+
+    /* 이미 제출한 주차면 입력값을 되살려 이어서 고칠 수 있게 한다 */
+    function restoreGridValues(groupKey, itemName, item) {
+        const weekKey = getWeekKey(getDeptType(groupKey));
+        const saved = submissionStatus[weekKey]?.[`${weekKey}:${groupKey}:${itemName}`]?.data;
+        if (!saved) return;
+        document.querySelectorAll('.grid-input').forEach(inp => {
+            const v = saved[inp.dataset.row]?.[inp.dataset.col];
+            if (v !== undefined && v !== null && v !== '') inp.value = v;
+        });
+    }
+
     function goBack() {
         goSelect();
     }
@@ -1471,6 +1606,28 @@
             });
         });
         return Array.from(weeks).sort().reverse(); // 역순 정렬
+    }
+
+    /* 헤더·폼에 쓰는 짧은 주차 표기 */
+    function getWeekLabelShort(dateStr) {
+        const [year, month, day] = dateStr.split('-');
+        const weekNum = Math.ceil(parseInt(day) / 7);
+        return `${year}년 ${parseInt(month)}월 ${weekNum}주차`;
+    }
+
+    /* 화면 곳곳의 주차 표시를 실제 기준일로 맞춘다.
+       예전에는 '2026년 5월 3주차'가 하드코딩돼 있어, 실제로는 다른 주차로 저장되는데도
+       입력하는 사람은 5월로 알고 있었다. */
+    function refreshWeekLabels(deptType = 'sunday') {
+        const wk = getWeekKey(deptType);
+        const label = getWeekLabelShort(wk);
+        const badge = document.getElementById('week-badge');
+        if (badge) badge.textContent = label;
+        const formLabel = document.getElementById('form-week-label');
+        if (formLabel) formLabel.textContent = label;
+        const dateInput = document.getElementById('form-date');
+        if (dateInput) { dateInput.value = wk; dateInput.readOnly = true; }
+        return wk;
     }
 
     function getWeekLabel(dateStr) {
@@ -1554,14 +1711,21 @@
         };
         const deptType = getDeptTypeForSubmit();
 
-        // 입력 데이터 수집
-        const formInputs = document.querySelectorAll('.form-input');
+        // 입력 데이터 수집 — 표 입력은 { 교구: { 영역: 값 } } 형태로 모은다
         const formData = {};
-        formInputs.forEach(input => {
-            const fieldKey = input.getAttribute('data-field');
-            const value = input.value;
-            formData[fieldKey] = value ? parseInt(value) : 0;
-        });
+        const gridInputs = document.querySelectorAll('.grid-input');
+        if (gridInputs.length) {
+            gridInputs.forEach(input => {
+                const { row, col } = input.dataset;
+                if (!formData[row]) formData[row] = {};
+                formData[row][col] = input.value ? parseInt(input.value) : 0;
+            });
+        } else {
+            document.querySelectorAll('.form-input').forEach(input => {
+                const fieldKey = input.getAttribute('data-field');
+                formData[fieldKey] = input.value ? parseInt(input.value) : 0;
+            });
+        }
 
         // 제출 상태 저장
         markSubmitted(groupKey, deptName, deptType, formData);
@@ -1602,6 +1766,7 @@
        초기 렌더링
        ══════════════════════════════════════════════════ */
     loadSubmissionStatus();
+    refreshWeekLabels();
     renderDepartmentList();
     renderStatus();
     </script>
