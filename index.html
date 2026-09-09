@@ -5560,7 +5560,9 @@
             // GAS 12주 제한으로 배치 처리
             for (let i = 0; i < allWeekKeys.length; i += GAS_BATCH_SIZE) {
                 const batch = allWeekKeys.slice(i, i + GAS_BATCH_SIZE);
-                const json = await gasGet(batch.join(','));
+                // 페이지 열 때마다 도는 자리라 키가 없으면 조용히 넘어간다
+                const json = await gasGet(batch.join(','), false);
+                if (!json) break;
                 if (json && json.success) mergeSheetData(json.data);
             }
 
