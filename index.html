@@ -5480,6 +5480,41 @@
                 String(d.getDate()).padStart(2, '0')].join('-');
     }
 
+    /* 키가 없으면 '어느 부서가 냈는지'만 받아 온다. 값(숫자·헌금)은 오지 않는다.
+       제출 현황은 시트를 봐야 알 수 있는데, 여기까지 막으면 키 없는 기기에서
+       전부 미제출로 보인다. */
+    async function gasGetStatus(weekKeys) {
+        try {
+            return await fetch(`${GAS_URL}?mode=status&weekKeys=${weekKeys}`).then(r => r.json());
+        } catch (e) {
+            console.warn('제출 현황 조회 실패:', e);
+            return null;
+        }
+    }
+
+    /* 값 없이 제출 여부만 표시한다. 이미 갖고 있던 값은 그대로 둔다 —
+       폼을 다시 열었을 때 채워 보여 주는 데 쓰인다. */
+    function mergeSheetStatus(raw) {
+        const { groupByLabel } = buildFieldLookup();
+        Object.entries(raw || {}).forEach(([weekKey, groups]) => {
+            if (!submissionStatus[weekKey]) submissionStatus[weekKey] = {};
+            Object.entries(groups).forEach(([groupLabel, depts]) => {
+                const groupKey = groupByLabel[groupLabel];
+                if (!groupKey) return;
+                (depts || []).forEach(deptName => {
+                    const fullKey = `${weekKey}:${groupKey}:${deptName}`;
+                    const prev = submissionStatus[weekKey][fullKey];
+                    submissionStatus[weekKey][fullKey] = {
+                        submitted: true,
+                        data: prev?.data || {},
+                        fromSheet: true,
+                        submittedAt: prev?.submittedAt || new Date().toISOString(),
+                    };
+                });
+            });
+        });
+    }
+
     async function gasGet(weekKeys, ask = true) {
         let key = getReadKey() || (ask ? askReadKey() : '');
         if (!key) {
@@ -5560,10 +5595,13 @@
             // GAS 12주 제한으로 배치 처리
             for (let i = 0; i < allWeekKeys.length; i += GAS_BATCH_SIZE) {
                 const batch = allWeekKeys.slice(i, i + GAS_BATCH_SIZE);
-                // 페이지 열 때마다 도는 자리라 키가 없으면 조용히 넘어간다
-                const json = await gasGet(batch.join(','), false);
-                if (!json) break;
-                if (json && json.success) mergeSheetData(json.data);
+                // 키가 있으면 값까지, 없으면 제출 여부만 받아 온다
+                const json = getReadKey()
+                    ? await gasGet(batch.join(','), false)
+                    : await gasGetStatus(batch.join(','));
+                if (!json || !json.success) break;
+                if (json.mode === 'status') mergeSheetStatus(json.data);
+                else mergeSheetData(json.data);
             }
 
             trimOldLocalStorage();
@@ -5587,11 +5625,17 @@
 
     async function fetchWeekOnDemand(weekKey, renderFn) {
         try {
-            const json = await gasGet(weekKey, false);
+            const json = getReadKey()
+                ? await gasGet(weekKey, false)
+                : await gasGetStatus(weekKey);
             if (json && json.success) {
-                delete submissionStatus[weekKey];
-                if (json.data?.[weekKey]) {
-                    mergeSheetData({ [weekKey]: json.data[weekKey] });
+                if (json.mode === 'status') {
+                    mergeSheetStatus(json.data);
+                } else {
+                    // 값까지 받았을 때만 옛 기록을 버린다. 제출 여부만 받은
+                    // 경우에 지우면 폼에 채워 줄 값이 통째로 사라진다.
+                    delete submissionStatus[weekKey];
+                    if (json.data?.[weekKey]) mergeSheetData({ [weekKey]: json.data[weekKey] });
                 }
                 saveSubmissionStatus();
             }
