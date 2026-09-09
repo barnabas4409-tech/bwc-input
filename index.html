@@ -1780,6 +1780,7 @@
     <nav role="tablist" aria-label="메인 네비게이션">
         <button class="nt on" onclick="switchTab('input')" id="tab-input" role="tab" aria-selected="true" aria-controls="sec-input">교구/청년교구</button>
         <button class="nt" onclick="switchTab('sunday-school')" id="tab-sunday-school" role="tab" aria-selected="false" aria-controls="sec-sunday-school">주일학교</button>
+        <button class="nt" onclick="switchTab('special')" id="tab-special" role="tab" aria-selected="false" aria-controls="sec-special">특별예배</button>
         <button class="nt" onclick="switchTab('status')" id="tab-status" role="tab" aria-selected="false" aria-controls="sec-status">제출 현황</button>
         <button class="nt" onclick="switchTab('admin')" id="tab-admin" role="tab" aria-selected="false" aria-controls="sec-admin">데이터 현황 🔒</button>
     </nav>
@@ -2102,6 +2103,35 @@
         </section>
 
         <!-- ─── 주일학교 탭 ─── -->
+        <section class="sec" id="sec-special" role="tabpanel" aria-labelledby="tab-special">
+            <div id="screen-special-select">
+                <div style="margin-bottom:var(--s5);display:flex;gap:var(--s2);align-items:center">
+                    <button onclick="shiftWeek('special-week-select', -1, renderSpecialList)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer" aria-label="이전 주">‹</button>
+                    <select id="special-week-select" class="form-input" style="flex:1;max-width:360px;text-align:center" onchange="renderSpecialList()"></select>
+                    <button onclick="shiftWeek('special-week-select', 1, renderSpecialList)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer" aria-label="다음 주">›</button>
+                </div>
+                <div style="font-size:12.5px;color:var(--color-text-tertiary);line-height:1.6;margin-bottom:var(--s5)">
+                    연 1회성 집회라 매주 화면에는 두지 않았습니다. 해당 주간을 고르고 집회를 선택하세요.
+                </div>
+                <div class="group-card">
+                    <div class="group-card-hdr"><div class="group-card-title">특별예배</div></div>
+                    <div class="group-card-body" id="special-list"></div>
+                </div>
+            </div>
+
+            <div id="screen-special-form" style="display:none">
+                <button class="btn-secondary" onclick="goSpecialSelect()" style="margin-bottom:var(--s4)">← 집회 선택으로</button>
+                <h2 id="special-form-title" style="font-size:20px;margin:0 0 4px"></h2>
+                <p id="special-form-meta" style="font-size:12.5px;color:var(--color-text-tertiary);margin:0 0 var(--s5)"></p>
+                <div id="special-alert-area" style="margin-bottom:var(--s4)"></div>
+                <div id="special-form-body"></div>
+                <div class="form-submit-area">
+                    <button class="btn-secondary" onclick="goSpecialSelect()">취소</button>
+                    <button class="btn-primary" id="special-submit-btn" onclick="submitSpecialForm()">제출하기</button>
+                </div>
+            </div>
+        </section>
+
         <section class="sec" id="sec-sunday-school" role="tabpanel" aria-labelledby="tab-sunday-school">
             <div id="screen-sunday-school-select">
                 <!-- 주차 선택 필터 -->
@@ -2465,6 +2495,9 @@
 
         // 입력 탭으로 돌아갈 때 부서 선택 화면으로
         if (tab === 'input') goSelect();
+
+        // 특별예배 탭
+        if (tab === 'special') goSpecialSelect();
 
         // 주일학교 탭으로 전환할 때
         if (tab === 'sunday-school') {
@@ -3486,6 +3519,246 @@
 
         contentEl.innerHTML = html || '<p style="text-align:center;padding:var(--s5);color:var(--color-text-tertiary)">이 주차에는 제출된 데이터가 없습니다</p>';
         display.style.display = 'block';
+    }
+
+    /* ══════════════════════════════════════════════════
+       특별예배 (연 1회성 집회)
+       매주 보일 필요가 없어 별도 탭으로 뺐다.
+       입력 방식은 주일예배와 같은 장소 × (요일|부) 표.
+       시트 컬럼은 대시보드가 읽는 '{요일}|{부}|{장소}|{호실}' 형식으로 쓴다.
+       ══════════════════════════════════════════════════ */
+    const SPECIAL_MEETINGS = [
+        { key: 'newyear',   name: '송구영신예배',      byDay: false, cols: ['1부', '2부'],
+          desc: '12월 31일 밤 · 부별로 입력' },
+        { key: 'dawn',      name: '가을특별새벽부흥회', byDay: true,
+          cols: ['월', '화', '수', '목', '금', '토'], desc: '한 주간 새벽 · 일자별로 입력' },
+        { key: 'holywk',    name: '고난주간특별부흥회', byDay: true,
+          cols: ['월', '화', '수', '목', '금'], desc: '고난주간 저녁 · 일자별로 입력' },
+        { key: 'christmas', name: '성탄예배',          byDay: false, cols: ['1부', '2부'],
+          desc: '성탄 예배 · 부별로 입력' },
+    ];
+    const SPECIAL_PLACES = ['송림', '서현'];
+
+    let specialCtx = null;
+
+    /* 대시보드가 파싱하는 키: 일자|부|장소|호실 (없는 축은 빈칸) */
+    const specialKey = (meeting, col, place, room) =>
+        meeting.byDay ? `${col}|1부|${place}|${room}` : `|${col}|${place}|${room}`;
+
+    function goSpecialSelect() {
+        document.getElementById('screen-special-select').style.display = 'block';
+        document.getElementById('screen-special-form').style.display = 'none';
+        if (document.getElementById('special-week-select').options.length === 0) {
+            fillWeekSelect('special-week-select');
+        }
+        renderSpecialList();
+    }
+
+    /* 주차 드롭다운은 다른 탭과 같은 목록을 쓴다 */
+    function fillWeekSelect(id) {
+        const sel = document.getElementById(id);
+        const weeks = getPreviousWeeks();
+        const cur = getWeekKey('sunday');
+        if (!weeks.includes(cur)) weeks.unshift(cur);
+        sel.innerHTML = weeks.map(wk => {
+            const [y, m, d] = wk.split('-').map(Number);
+            return `<option value="${wk}">📅 ${y}년 ${m}월 ${d}일(주일)</option>`;
+        }).join('');
+        sel.value = cur;
+    }
+
+    function renderSpecialList() {
+        const weekKey = document.getElementById('special-week-select').value;
+        document.getElementById('special-list').innerHTML = SPECIAL_MEETINGS.map(m => {
+            const done = submissionStatus[weekKey]?.[`${weekKey}:special:${m.name}`]?.submitted;
+            return `
+            <button class="dept-btn" onclick="openSpecialForm('${m.key}')">
+                <div class="dept-btn-inner">
+                    <div class="dept-dot ${done ? 'submitted' : 'missing'}"></div>
+                    <div class="dept-name">${m.name}</div>
+                    <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:2px">${m.desc}</div>
+                    <div class="dept-badge ${done ? 'done' : 'miss'}">${done ? '완료' : '대기'}</div>
+                </div>
+            </button>`;
+        }).join('');
+    }
+
+    function specialExtras(meeting, place, weekKey) {
+        const saved = submissionStatus[weekKey]?.[`${weekKey}:special:${meeting.name}`]?.data || {};
+        const base = new Set(WORSHIP_LOCATIONS[place] || []);
+        const found = new Set();
+        Object.keys(saved).forEach(k => {
+            const parts = k.split('|');
+            if (parts.length !== 4) return;
+            if (parts[2] !== place) return;
+            if (!base.has(parts[3])) found.add(parts[3]);
+        });
+        return [...found];
+    }
+
+    function openSpecialForm(key) {
+        const meeting = SPECIAL_MEETINGS.find(m => m.key === key);
+        if (!meeting) return;
+        const weekKey = document.getElementById('special-week-select').value;
+        specialCtx = { meeting, extras: {} };
+        SPECIAL_PLACES.forEach(p => specialCtx.extras[p] = specialExtras(meeting, p, weekKey));
+
+        document.getElementById('screen-special-select').style.display = 'none';
+        document.getElementById('screen-special-form').style.display = 'block';
+        document.getElementById('special-form-title').textContent = meeting.name;
+        document.getElementById('special-form-meta').textContent =
+            `${meeting.desc} · 송림과 서현을 함께 입력해 한 번에 제출합니다`;
+        renderSpecialForm();
+    }
+
+    function renderSpecialForm() {
+        const { meeting, extras } = specialCtx;
+        const weekKey = document.getElementById('special-week-select').value;
+        const saved = submissionStatus[weekKey]?.[`${weekKey}:special:${meeting.name}`]?.data || {};
+
+        document.getElementById('special-form-body').innerHTML = SPECIAL_PLACES.map(place => {
+            const rows = [...(WORSHIP_LOCATIONS[place] || []), ...extras[place]];
+            const cand = (WORSHIP_EXTRA_CANDIDATES[place] || []).filter(c => !rows.includes(c));
+            return `
+            <div class="form-card">
+                <div class="form-card-title">${place}</div>
+                <div class="grid-scroll">
+                    <table class="grid-table">
+                        <thead><tr>
+                            <th class="grid-sticky">장소</th>
+                            ${meeting.cols.map(c => `<th>${c}</th>`).join('')}
+                            <th class="grid-sum">계</th>
+                        </tr></thead>
+                        <tbody>
+                            ${rows.map(room => `
+                            <tr>
+                                <th class="grid-sticky">${room}${(WORSHIP_LOCATIONS[place] || []).includes(room) ? '' :
+                                    ` <button type="button" class="loc-del" onclick="removeSpecialRoom('${place}','${room.replace(/'/g, "\\'")}')">✕</button>`}</th>
+                                ${meeting.cols.map(c => `
+                                <td><input type="number" inputmode="numeric" min="0" class="sp-input"
+                                           data-place="${place}" data-room="${room}" data-col="${c}"
+                                           data-key="${specialKey(meeting, c, place, room)}"
+                                           oninput="updateSpecialTotals()" placeholder="·"></td>`).join('')}
+                                <td class="grid-sum" data-sprow="${place}|${room}">0</td>
+                            </tr>`).join('')}
+                        </tbody>
+                        <tfoot><tr>
+                            <th class="grid-sticky">${place} 계</th>
+                            ${meeting.cols.map(c => `<td class="grid-sum" data-spcol="${place}|${c}">0</td>`).join('')}
+                            <td class="grid-sum grid-total" data-spplace="${place}">0</td>
+                        </tr></tfoot>
+                    </table>
+                </div>
+                <div class="loc-add">
+                    <span class="loc-add-label">기타 장소 추가</span>
+                    <select id="sp-add-${place}" class="loc-add-select">
+                        ${cand.map(c => `<option value="${c}">${c}</option>`).join('')}
+                        <option value="__custom">직접 입력…</option>
+                    </select>
+                    <input type="text" id="sp-custom-${place}" class="loc-add-custom" placeholder="장소 이름" style="display:none">
+                    <button type="button" class="loc-add-btn" onclick="addSpecialRoom('${place}')">＋ 추가</button>
+                </div>
+            </div>`;
+        }).join('') + `
+        <div class="form-card">
+            <div class="form-card-title">전체 합계</div>
+            <div style="font-size:26px;font-weight:800;color:var(--color-accent);font-variant-numeric:tabular-nums" id="sp-grand">0</div>
+            <div class="grid-hint">송림 + 서현 · 빈 칸은 0으로 저장됩니다.</div>
+        </div>`;
+
+        document.querySelectorAll('.sp-input').forEach(inp => {
+            const v = saved[inp.dataset.key];
+            inp.value = (v === undefined || v === null || v === '') ? '' : v;
+        });
+        SPECIAL_PLACES.forEach(place => {
+            const sel = document.getElementById(`sp-add-${place}`);
+            if (sel) sel.onchange = () => {
+                document.getElementById(`sp-custom-${place}`).style.display = sel.value === '__custom' ? '' : 'none';
+            };
+        });
+        updateSpecialTotals();
+    }
+
+    function updateSpecialTotals() {
+        const rowSum = {}, colSum = {}, placeSum = {};
+        let grand = 0;
+        document.querySelectorAll('.sp-input').forEach(inp => {
+            const n = parseInt(inp.value) || 0;
+            const { place, room, col } = inp.dataset;
+            rowSum[`${place}|${room}`] = (rowSum[`${place}|${room}`] || 0) + n;
+            colSum[`${place}|${col}`] = (colSum[`${place}|${col}`] || 0) + n;
+            placeSum[place] = (placeSum[place] || 0) + n;
+            grand += n;
+        });
+        document.querySelectorAll('[data-sprow]').forEach(td => td.textContent = (rowSum[td.dataset.sprow] || 0).toLocaleString());
+        document.querySelectorAll('[data-spcol]').forEach(td => td.textContent = (colSum[td.dataset.spcol] || 0).toLocaleString());
+        document.querySelectorAll('[data-spplace]').forEach(td => td.textContent = (placeSum[td.dataset.spplace] || 0).toLocaleString());
+        const g = document.getElementById('sp-grand');
+        if (g) g.textContent = grand.toLocaleString() + '명';
+    }
+
+    function addSpecialRoom(place) {
+        const sel = document.getElementById(`sp-add-${place}`);
+        let name = sel.value;
+        if (name === '__custom') name = (document.getElementById(`sp-custom-${place}`).value || '').trim();
+        if (!name) return;
+        const rows = [...(WORSHIP_LOCATIONS[place] || []), ...specialCtx.extras[place]];
+        if (rows.includes(name)) return;
+        const keep = {};
+        document.querySelectorAll('.sp-input').forEach(i => { if (i.value !== '') keep[i.dataset.key] = i.value; });
+        specialCtx.extras[place].push(name);
+        renderSpecialForm();
+        document.querySelectorAll('.sp-input').forEach(i => { if (keep[i.dataset.key] !== undefined) i.value = keep[i.dataset.key]; });
+        updateSpecialTotals();
+    }
+
+    function removeSpecialRoom(place, name) {
+        const keep = {};
+        document.querySelectorAll('.sp-input').forEach(i => {
+            if (i.value !== '' && !(i.dataset.place === place && i.dataset.room === name)) keep[i.dataset.key] = i.value;
+        });
+        specialCtx.extras[place] = specialCtx.extras[place].filter(x => x !== name);
+        renderSpecialForm();
+        document.querySelectorAll('.sp-input').forEach(i => { if (keep[i.dataset.key] !== undefined) i.value = keep[i.dataset.key]; });
+        updateSpecialTotals();
+    }
+
+    async function submitSpecialForm() {
+        const { meeting } = specialCtx || {};
+        if (!meeting) return;
+        const weekKey = document.getElementById('special-week-select').value;
+        const alertArea = document.getElementById('special-alert-area');
+        const formData = {};
+        let grand = 0;
+        document.querySelectorAll('.sp-input').forEach(inp => {
+            const n = inp.value.trim() === '' ? 0 : (parseInt(inp.value) || 0);
+            formData[inp.dataset.key] = n;
+            grand += n;
+        });
+        if (grand === 0) {
+            alertArea.innerHTML = `<div style="padding:var(--s3) var(--s4);background:var(--color-negative-bg);border:1px solid rgba(192,18,60,0.2);border-radius:var(--r);color:var(--color-negative);font-size:13px">⚠️ 최소 한 곳 이상 입력해주세요</div>`;
+            return;
+        }
+        alertArea.innerHTML = '';
+        const btn = document.getElementById('special-submit-btn');
+        btn.disabled = true; btn.textContent = '구글시트 저장 중...';
+        try {
+            const gasUrl = 'https://script.google.com/macros/s/AKfycbxJ1NDZxTpDsaVkb7GqlesBvlM_9lBBv2s4f53chZdqbHVnLZqOfVT1qzXVfsXW7qxA/exec';
+            const res = await fetch(gasUrl, {
+                method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ weekKey, groupKey: '특별예배', itemName: meeting.name, formData }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) throw new Error(data.message || '저장 실패');
+            markSubmitted('special', meeting.name, 'sunday', formData, weekKey,
+                          { submittedAt: data.savedAt || new Date().toISOString(), fromSheet: true });
+            alertArea.innerHTML = `<div style="padding:var(--s3) var(--s4);background:var(--color-positive-bg);border:1px solid rgba(9,130,93,0.2);border-radius:var(--r);color:var(--color-positive);font-size:13px">✓ ${meeting.name} 저장 완료 · 총 ${grand.toLocaleString()}명</div>`;
+            setTimeout(() => goSpecialSelect(), 1200);
+        } catch (e) {
+            alertArea.innerHTML = `<div style="padding:var(--s3) var(--s4);background:var(--color-negative-bg);border:1px solid rgba(192,18,60,0.2);border-radius:var(--r);color:var(--color-negative);font-size:13px">저장 실패 — ${e.message}</div>`;
+        } finally {
+            btn.disabled = false; btn.textContent = '제출하기';
+        }
     }
 
     /* ══════════════════════════════════════════════════
