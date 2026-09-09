@@ -3233,6 +3233,11 @@
         // currentFormContext 세팅 (수정하기 버튼 동작에 필요)
         currentFormContext = { groupKey, deptItem };
 
+        // 낸 값은 제출 현황에 담겨 오지 않는다(이름만 온다). 이 부서 것만
+        // 따로 받아서 채운 뒤 다시 그린다.
+        setTimeout(() => ensureItemValues(weekKey, groupKey, deptName,
+            () => openSubmittedDept(groupKey, deptItem)), 0);
+
         // form-week-select 동기화
         const formWeekSelect = document.getElementById('form-week-select');
         if (formWeekSelect) formWeekSelect.value = weekKey;
