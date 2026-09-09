@@ -316,13 +316,19 @@
     /* ══════════════════════════════════════════════════
        INPUT TAB — 부서 선택 화면
        ══════════════════════════════════════════════════ */
+    /* 2열 그리드는 행 높이가 가장 큰 카드에 맞춰져 항목이 적은 카드
+       (주일예배·교구·새가족) 옆으로 큰 빈칸이 생겼다.
+       다단 흐름으로 바꾸면 카드가 높이에 맞춰 알아서 채워진다. */
     .select-layout {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--s5);
-        /* 카드 높이를 내용에 맞춘다. 예전에는 행 높이가 가장 큰 카드에 맞춰져
-           항목이 2개뿐인 주일예배·교구·새가족 카드에 빈 공간이 크게 남았다. */
-        align-items: start;
+        columns: 2;
+        column-gap: var(--s5);
+    }
+    .select-layout > * {
+        break-inside: avoid;
+        margin-bottom: var(--s5);
+    }
+    @media (max-width: 720px) {
+        .select-layout { columns: 1; }
     }
     @media (max-width: 480px) {
         .select-layout {
@@ -424,7 +430,9 @@
     .group-card-body {
         padding: var(--s4);
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+        /* auto-fill이면 항목이 적을 때 빈 칸이 남는다. auto-fit으로 남는 폭을
+           버튼이 나눠 갖게 해 카드 안쪽 여백을 없앤다. */
+        grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
         gap: var(--s3);
         align-content: start;
     }
@@ -1771,58 +1779,53 @@
     #special-list .dept-btn-inner { gap:6px; }
 
     /* ── 데이터 현황 ── */
+    .ad-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      padding:10px 14px; background:var(--color-bg-subtle);
+      border:1px solid var(--color-border-default); border-radius:10px; margin-bottom:var(--s4); }
+    .ad-bar-label { font-size:11.5px; font-weight:700; color:var(--color-text-secondary); }
+    .ad-bar-btns { display:flex; gap:3px; background:var(--color-bg-muted); border-radius:8px; padding:2px; }
+    .ad-bar-btns button { border:0; background:transparent; color:var(--color-text-secondary);
+      font-size:12px; font-weight:700; padding:6px 12px; border-radius:6px; cursor:pointer;
+      font-family:inherit; white-space:nowrap; }
+    .ad-bar-btns button.on { background:var(--color-bg-surface); color:var(--color-accent);
+      box-shadow:0 1px 2px rgba(0,0,0,.08); }
+    .ad-bar-note { font-size:11.5px; color:var(--color-text-tertiary); }
+
     .ad-group { background:var(--color-bg-surface); border:1px solid var(--color-border-default);
       border-radius:12px; overflow:hidden; margin-bottom:var(--s4); }
     .ad-group-hdr { display:flex; align-items:center; justify-content:space-between;
-      padding:11px 14px; background:var(--color-bg-subtle); border-bottom:1px solid var(--color-border-default); }
+      padding:10px 14px; background:var(--color-bg-subtle);
+      border-bottom:1px solid var(--color-border-default); }
     .ad-group-title { font-size:13px; font-weight:700; color:var(--color-text-primary); }
     .ad-group-count { font-size:11px; font-weight:700; color:var(--color-text-tertiary);
       background:var(--color-bg-surface); border-radius:20px; padding:2px 9px; }
     .ad-group-count.full { color:var(--color-positive); background:var(--color-positive-bg); }
-    .ad-rows { display:flex; flex-direction:column; }
-    .ad-row { display:grid; grid-template-columns:8px 1fr auto auto 14px; align-items:center; gap:10px;
-      padding:10px 14px; border-bottom:1px solid var(--color-border-default); cursor:pointer;
-      transition:background var(--t-fast); }
-    .ad-row:last-child { border-bottom:0; }
-    .ad-row:hover { background:var(--color-bg-subtle); }
-    .ad-row.open { background:var(--color-bg-subtle); }
-    .ad-dot { width:8px; height:8px; border-radius:50%; background:#e2e8f0; }
-    .ad-dot.on { background:var(--color-positive); }
-    .ad-name { font-size:13px; font-weight:600; color:var(--color-text-primary);
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .ad-total { font-size:14px; font-weight:800; font-variant-numeric:tabular-nums;
-      color:var(--color-text-primary); }
-    .ad-row.miss .ad-total { color:var(--color-text-disabled); font-weight:600; }
-    .ad-at { font-size:10.5px; color:var(--color-text-tertiary); white-space:nowrap; }
-    .ad-caret { font-size:10px; color:var(--color-text-tertiary); }
+    .ad-none { padding:14px; font-size:12px; color:var(--color-text-tertiary); }
     .ad-empty { padding:var(--s6); text-align:center; color:var(--color-text-tertiary); font-size:13px; }
 
-    .ad-range { padding:12px 14px 16px; background:var(--color-bg-base);
-      border-bottom:1px solid var(--color-border-default); cursor:default; }
-    .ad-range-hdr { display:flex; align-items:center; justify-content:space-between;
-      margin-bottom:9px; font-size:11.5px; font-weight:700; color:var(--color-text-secondary); }
-    .ad-range-btns { display:flex; gap:3px; }
-    .ad-range-btns button { border:0; background:var(--color-bg-muted); color:var(--color-text-secondary);
-      font-size:11px; font-weight:700; padding:4px 9px; border-radius:6px; cursor:pointer; font-family:inherit; }
-    .ad-range-btns button.on { background:var(--color-accent); color:#fff; }
-    .ad-range-empty { font-size:12px; color:var(--color-text-tertiary); padding:6px 0; }
-    .ad-scroll { overflow-x:auto; border:1px solid var(--color-border-default);
-      border-radius:9px; background:var(--color-bg-surface); }
+    .ad-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
     .ad-table { border-collapse:separate; border-spacing:0; width:100%; font-size:12px; }
-    .ad-table th, .ad-table td { padding:7px 9px; text-align:right; white-space:nowrap;
+    .ad-table th, .ad-table td { padding:7px 10px; text-align:right; white-space:nowrap;
       border-bottom:1px solid var(--color-border-default); font-variant-numeric:tabular-nums; }
-    .ad-table thead th { position:sticky; top:0; background:var(--color-bg-subtle); font-size:10.5px;
-      font-weight:700; color:var(--color-text-tertiary); }
-    .ad-table tbody th, .ad-table tfoot th { text-align:left; font-weight:700; color:var(--color-text-primary); }
-    .ad-table tbody tr.cur { background:var(--color-accent-light); }
-    .ad-table tbody tr.miss td, .ad-table tbody tr.miss th { color:var(--color-text-disabled); }
+    .ad-table thead th { position:sticky; top:0; z-index:2; background:var(--color-bg-subtle);
+      font-size:10.5px; font-weight:700; color:var(--color-text-tertiary); }
+    /* 항목 이름은 가로 스크롤에도 고정 */
+    .ad-first { position:sticky; left:0; z-index:1; background:var(--color-bg-surface);
+      text-align:left !important; font-weight:600; color:var(--color-text-primary);
+      min-width:96px; box-shadow:1px 0 0 var(--color-border-default); }
+    .ad-table thead .ad-first, .ad-table tfoot .ad-first { z-index:3; background:var(--color-bg-subtle); }
+    .ad-table tbody tr:hover td, .ad-table tbody tr:hover .ad-first { background:var(--color-bg-subtle); }
+    .ad-table tbody tr.miss td, .ad-table tbody tr.miss .ad-first { color:var(--color-text-disabled); }
+    .ad-table th.cur, .ad-table td.cur { background:var(--color-accent-light); }
     .ad-table tfoot th, .ad-table tfoot td { border-top:2px solid var(--color-border-strong);
       border-bottom:0; background:var(--color-bg-subtle); font-weight:700; }
     .ad-sum { font-weight:800; color:var(--color-accent); }
     @media (max-width:480px) {
-      .ad-row { grid-template-columns:8px 1fr auto 14px; }
-      .ad-at { display:none; }
+      .ad-table th, .ad-table td { padding:6px 8px; font-size:11.5px; }
+      .ad-first { min-width:84px; }
+      .ad-bar-note { display:none; }
     }
+
     </style>
 </head>
 <body>
@@ -5143,6 +5146,12 @@
        그 항목의 최근 몇 주 추이를 바로 아래에 펼친다.
        필드 구성이 부서마다 달라 고정 표 대신 실제 데이터의 키로 표를 만든다.
        ══════════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════════
+       데이터 현황
+       하나씩 눌러 펼치지 않고, 선택한 주의 모든 부서 값을 한 번에 보여준다.
+       기간을 늘리면 항목 × 주차 표로 바뀌어 추이를 함께 본다.
+       부서마다 필드 구성이 달라 고정 표 대신 실제 데이터의 키로 열을 만든다.
+       ══════════════════════════════════════════════════ */
     const ADMIN_FILTER_MAP = {
         worship:  ['sunday', 'weekday'],
         district: ['cell', 'leader'],
@@ -5151,10 +5160,8 @@
         special:  ['special'],
         newfam:   ['newfam'],
     };
-    let adminOpenRow = null;          // 펼쳐 둔 항목 (groupKey::itemName)
-    let adminRangeWeeks = 4;          // 기간 보기 주 수
+    let adminRangeWeeks = 1;   // 1 = 그 주 상세, 4/8/12 = 주차별 추이
 
-    /* 최신 주차부터 n개 (제출 여부와 무관하게 연속된 주일) */
     function adminRecentWeeks(endWeekKey, n) {
         const out = [];
         const [y, m, d] = endWeekKey.split('-').map(Number);
@@ -5172,25 +5179,42 @@
         return g.groups ? g.groups.flatMap(x => x.items) : (g.items || []);
     };
 
-    /* 숫자 필드만 (비고 같은 텍스트는 표에서 뺀다) */
+    const isTotalKey = (k) => k === '총계' || k === '합계' || String(k).endsWith('총계') || String(k).endsWith('합계');
+
+    /* 저장된 데이터는 내부 키(women, count …)를 쓰므로 표에는 한글 라벨로 되돌린다.
+       주일예배 장소별·특별예배처럼 키가 곧 라벨인 항목은 그대로 쓴다. */
+    let _adminLabelMap = null;
+    function adminLabelMap() {
+        if (_adminLabelMap) return _adminLabelMap;
+        const map = {};
+        Object.entries(DEPARTMENTS).forEach(([gk, g]) => {
+            map[gk] = {};
+            const items = g.groups ? g.groups.flatMap(x => x.items) : (g.items || []);
+            items.forEach(it => {
+                const name = it.name || it;
+                map[gk][name] = {};
+                (it.fields || []).forEach(f => { map[gk][name][f.key] = f.label; });
+            });
+        });
+        _adminLabelMap = map;
+        return map;
+    }
+    const adminLabel = (gk, item, key) => adminLabelMap()[gk]?.[item]?.[key] || key;
+
     function numericEntries(data) {
         return Object.entries(data || {}).filter(([k, v]) =>
             !k.startsWith('_') && k !== 'note' && !String(k).includes('비고') && typeof v !== 'string');
     }
-    const isTotalKey = (k) => k === '총계' || k === '합계' || String(k).endsWith('총계') || String(k).endsWith('합계');
-
     function itemTotal(data) {
+        if (!data) return null;
         const nums = numericEntries(data);
+        if (!nums.length) return null;
         const total = nums.find(([k]) => isTotalKey(k));
         if (total) return Number(total[1]) || 0;
         return nums.reduce((a, [, v]) => a + (Number(v) || 0), 0);
     }
+    const adminRec = (wk, groupKey, name) => submissionStatus[wk]?.[`${wk}:${groupKey}:${name}`];
 
-    function toggleAdminRow(groupKey, itemName) {
-        const id = `${groupKey}::${itemName}`;
-        adminOpenRow = (adminOpenRow === id) ? null : id;
-        renderAdminData();
-    }
     function setAdminRange(n) { adminRangeWeeks = n; renderAdminData(); }
 
     function renderAdminData() {
@@ -5202,99 +5226,133 @@
         const order = ['sunday', 'weekday', 'cell', 'leader', 'youth', 'sunday_school', 'special', 'newfam'];
         const show = k => !filter || (ADMIN_FILTER_MAP[filter] || []).includes(k);
 
-        let html = '';
+        const rangeBar = `
+        <div class="ad-bar">
+            <span class="ad-bar-label">보기</span>
+            <div class="ad-bar-btns">
+                ${[[1, '이번 주 상세'], [4, '4주'], [8, '8주'], [12, '12주']].map(([n, t]) =>
+                    `<button class="${n === adminRangeWeeks ? 'on' : ''}" onclick="setAdminRange(${n})">${t}</button>`).join('')}
+            </div>
+            <span class="ad-bar-note">${adminRangeWeeks === 1
+                ? '선택한 주의 모든 부서 입력값을 항목별로 보여줍니다'
+                : `최근 ${adminRangeWeeks}주 합계 추이 · 빈 칸은 미입력`}</span>
+        </div>`;
+
+        let html = rangeBar;
         order.forEach(groupKey => {
             if (!show(groupKey)) return;
-            const group = DEPARTMENTS[groupKey];
-            if (!group) return;
-            const items = adminItemsOf(groupKey);
-            if (!items.length) return;
-
-            const rows = items.map(item => {
-                const name = item.name || item;
-                const rec = submissionStatus[weekKey]?.[`${weekKey}:${groupKey}:${name}`];
-                return { name, data: rec?.data || null, at: rec?.submittedAt || null, done: !!rec?.submitted };
-            });
-            const doneCount = rows.filter(r => r.done).length;
-
-            html += `
-            <div class="ad-group">
-                <div class="ad-group-hdr">
-                    <div class="ad-group-title">${group.label}</div>
-                    <div class="ad-group-count ${doneCount === rows.length ? 'full' : ''}">${doneCount}/${rows.length}</div>
-                </div>
-                <div class="ad-rows">
-                    ${rows.map(r => {
-                        const id = `${groupKey}::${r.name}`;
-                        const open = adminOpenRow === id;
-                        const total = r.done ? itemTotal(r.data) : null;
-                        const at = r.at ? new Date(r.at).toLocaleString('ko-KR', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
-                        return `
-                        <div class="ad-row ${r.done ? '' : 'miss'} ${open ? 'open' : ''}"
-                             onclick="toggleAdminRow('${groupKey}', '${String(r.name).replace(/'/g, "\\'")}')">
-                            <span class="ad-dot ${r.done ? 'on' : ''}"></span>
-                            <span class="ad-name">${r.name}</span>
-                            <span class="ad-total">${total === null ? '–' : total.toLocaleString()}</span>
-                            <span class="ad-at">${at}</span>
-                            <span class="ad-caret">${open ? '▾' : '▸'}</span>
-                        </div>
-                        ${open ? adminRangeHTML(groupKey, r.name, weekKey) : ''}`;
-                    }).join('')}
-                </div>
-            </div>`;
+            if (!DEPARTMENTS[groupKey]) return;
+            html += adminRangeWeeks === 1
+                ? adminWeekTable(groupKey, weekKey)
+                : adminTrendTable(groupKey, weekKey);
         });
-
-        container.innerHTML = html || '<div class="ad-empty">표시할 항목이 없습니다.</div>';
+        container.innerHTML = html + (html === rangeBar ? '<div class="ad-empty">표시할 항목이 없습니다.</div>' : '');
     }
 
-    /* 항목을 펼쳤을 때: 최근 N주 × 필드 표 */
-    function adminRangeHTML(groupKey, itemName, endWeekKey) {
-        const weeks = adminRecentWeeks(endWeekKey, adminRangeWeeks);
-        const recs = weeks.map(wk => ({ wk, data: submissionStatus[wk]?.[`${wk}:${groupKey}:${itemName}`]?.data || null }));
+    /* ── 이번 주 상세: 항목(행) × 필드(열) ── */
+    function adminWeekTable(groupKey, weekKey) {
+        const group = DEPARTMENTS[groupKey];
+        const items = adminItemsOf(groupKey);
+        if (!items.length) return '';
 
-        // 실제로 들어온 필드만 모아 열을 만든다
-        // 총계 성격의 필드는 따로 빼둔다. 그대로 열에 두면 '계'에서 이중으로 더해진다.
-        const cols = [];
-        recs.forEach(r => numericEntries(r.data).forEach(([k]) => {
-            if (!isTotalKey(k) && !cols.includes(k)) cols.push(k);
-        }));
-        if (!cols.length) {
-            return `<div class="ad-range"><div class="ad-range-empty">최근 ${adminRangeWeeks}주 안에 입력된 자료가 없습니다.</div></div>`;
-        }
-
-        const avg = {};
-        cols.forEach(c => {
-            const vals = recs.map(r => r.data?.[c]).filter(v => typeof v === 'number');
-            avg[c] = vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null;
+        const rows = items.map(it => {
+            const name = it.name || it;
+            const rec = adminRec(weekKey, groupKey, name);
+            return { name, data: rec?.data || null, done: !!rec?.submitted };
         });
+        const doneCount = rows.filter(r => r.done).length;
 
-        return `
-        <div class="ad-range" onclick="event.stopPropagation()">
-            <div class="ad-range-hdr">
-                <span>${itemName} · 최근 ${adminRangeWeeks}주</span>
-                <span class="ad-range-btns">
-                    ${[4, 8, 12].map(n => `<button class="${n === adminRangeWeeks ? 'on' : ''}" onclick="setAdminRange(${n})">${n}주</button>`).join('')}
-                </span>
-            </div>
+        // 실제 들어온 필드로 열 구성 (총계류는 '계' 자리로)
+        const cols = [];
+        const colLabel = {};
+        rows.forEach(r => numericEntries(r.data).forEach(([k]) => {
+            if (isTotalKey(k)) return;
+            if (!cols.includes(k)) cols.push(k);
+            if (!colLabel[k]) colLabel[k] = adminLabel(groupKey, r.name, k);
+        }));
+
+        const body = cols.length ? `
             <div class="ad-scroll">
                 <table class="ad-table">
-                    <thead><tr><th>주차</th>${cols.map(c => `<th>${c}</th>`).join('')}<th class="ad-sum">계</th></tr></thead>
+                    <thead><tr><th class="ad-first">항목</th>${cols.map(c => `<th>${colLabel[c] || c}</th>`).join('')}<th class="ad-sum">계</th></tr></thead>
                     <tbody>
-                        ${recs.map(r => {
-                            const has = !!r.data;
-                            const sum = has ? itemTotal(r.data) : null;
-                            return `<tr class="${has ? '' : 'miss'} ${r.wk === endWeekKey ? 'cur' : ''}">
-                                <th>${Number(r.wk.slice(5,7))}/${Number(r.wk.slice(8,10))}</th>
-                                ${cols.map(c => `<td>${has && r.data[c] !== undefined ? Number(r.data[c]).toLocaleString() : '–'}</td>`).join('')}
-                                <td class="ad-sum">${sum === null ? '–' : sum.toLocaleString()}</td>
+                        ${rows.map(r => {
+                            const tot = itemTotal(r.data);
+                            return `<tr class="${r.done ? '' : 'miss'}">
+                                <th class="ad-first">${r.name}</th>
+                                ${cols.map(c => `<td>${r.data && r.data[c] !== undefined && r.data[c] !== null
+                                    ? Number(r.data[c]).toLocaleString() : '–'}</td>`).join('')}
+                                <td class="ad-sum">${tot === null ? '–' : tot.toLocaleString()}</td>
                             </tr>`;
                         }).join('')}
                     </tbody>
-                    <tfoot><tr><th>평균</th>${cols.map(c => `<td>${avg[c] === null ? '–' : avg[c].toLocaleString()}</td>`).join('')}
-                        <td class="ad-sum">${(() => {
-                            const t = recs.map(r => r.data ? itemTotal(r.data) : null).filter(v => v !== null);
-                            return t.length ? Math.round(t.reduce((a, b) => a + b, 0) / t.length).toLocaleString() : '–';
-                        })()}</td></tr></tfoot>
+                    <tfoot><tr><th class="ad-first">합계</th>
+                        ${cols.map(c => {
+                            const s = rows.reduce((a, r) => a + (Number(r.data?.[c]) || 0), 0);
+                            return `<td>${s ? s.toLocaleString() : '–'}</td>`;
+                        }).join('')}
+                        <td class="ad-sum">${rows.reduce((a, r) => a + (itemTotal(r.data) || 0), 0).toLocaleString()}</td>
+                    </tr></tfoot>
+                </table>
+            </div>`
+            : `<div class="ad-none">이 주차에 입력된 자료가 없습니다 · ${rows.length}개 항목 대기</div>`;
+
+        return `
+        <div class="ad-group">
+            <div class="ad-group-hdr">
+                <div class="ad-group-title">${group.label}</div>
+                <div class="ad-group-count ${doneCount === rows.length ? 'full' : ''}">${doneCount}/${rows.length}</div>
+            </div>
+            ${body}
+        </div>`;
+    }
+
+    /* ── 기간 보기: 항목(행) × 주차(열), 값은 합계 ── */
+    function adminTrendTable(groupKey, endWeekKey) {
+        const group = DEPARTMENTS[groupKey];
+        const items = adminItemsOf(groupKey);
+        if (!items.length) return '';
+        const weeks = adminRecentWeeks(endWeekKey, adminRangeWeeks);
+
+        const rows = items.map(it => {
+            const name = it.name || it;
+            const vals = weeks.map(wk => itemTotal(adminRec(wk, groupKey, name)?.data));
+            const got = vals.filter(v => v !== null);
+            return { name, vals, avg: got.length ? Math.round(got.reduce((a, b) => a + b, 0) / got.length) : null };
+        });
+        if (rows.every(r => r.avg === null)) {
+            return `
+            <div class="ad-group">
+                <div class="ad-group-hdr"><div class="ad-group-title">${group.label}</div></div>
+                <div class="ad-none">최근 ${adminRangeWeeks}주 안에 입력된 자료가 없습니다.</div>
+            </div>`;
+        }
+
+        return `
+        <div class="ad-group">
+            <div class="ad-group-hdr">
+                <div class="ad-group-title">${group.label}</div>
+                <div class="ad-group-count">최근 ${adminRangeWeeks}주</div>
+            </div>
+            <div class="ad-scroll">
+                <table class="ad-table">
+                    <thead><tr><th class="ad-first">항목</th>
+                        ${weeks.map((wk, i) => `<th class="${i === 0 ? 'cur' : ''}">${Number(wk.slice(5,7))}/${Number(wk.slice(8,10))}</th>`).join('')}
+                        <th class="ad-sum">평균</th></tr></thead>
+                    <tbody>
+                        ${rows.map(r => `<tr class="${r.avg === null ? 'miss' : ''}">
+                            <th class="ad-first">${r.name}</th>
+                            ${r.vals.map((v, i) => `<td class="${i === 0 ? 'cur' : ''}">${v === null ? '–' : v.toLocaleString()}</td>`).join('')}
+                            <td class="ad-sum">${r.avg === null ? '–' : r.avg.toLocaleString()}</td>
+                        </tr>`).join('')}
+                    </tbody>
+                    <tfoot><tr><th class="ad-first">합계</th>
+                        ${weeks.map((wk, i) => {
+                            const s = rows.reduce((a, r) => a + (r.vals[i] || 0), 0);
+                            return `<td class="${i === 0 ? 'cur' : ''}">${s ? s.toLocaleString() : '–'}</td>`;
+                        }).join('')}
+                        <td class="ad-sum">${rows.reduce((a, r) => a + (r.avg || 0), 0).toLocaleString()}</td>
+                    </tr></tfoot>
                 </table>
             </div>
         </div>`;
