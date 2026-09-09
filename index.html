@@ -1730,6 +1730,30 @@
       .grid-input { width: 50px; font-size: 13px; }
       .grid-table th, .grid-table td { padding: 6px 4px; }
     }
+
+    /* 주일예배 장소 추가 · 만석 시각 */
+    .loc-add { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:12px;
+               padding:10px 12px; background:var(--color-bg-subtle); border-radius:10px; }
+    .loc-add-label { font-size:11.5px; font-weight:700; color:var(--color-text-secondary); }
+    .loc-add-select, .loc-add-custom {
+      padding:7px 10px; font-size:13px; font-family:inherit; border-radius:8px;
+      border:1px solid var(--color-border-default); background:var(--color-bg-surface);
+      color:var(--color-text-primary);
+    }
+    .loc-add-custom { width:130px; }
+    .loc-add-btn { padding:7px 12px; font-size:12.5px; font-weight:700; font-family:inherit;
+      border:0; border-radius:8px; background:var(--color-accent); color:#fff; cursor:pointer; }
+    .loc-del { border:0; background:transparent; color:var(--color-text-tertiary);
+      font-size:11px; cursor:pointer; padding:0 2px; }
+    .loc-del:hover { color:var(--color-negative); }
+    .fh-card { margin-top:16px; padding-top:14px; border-top:1px solid var(--color-border-default); }
+    .fh-title { font-size:12.5px; font-weight:700; color:var(--color-text-secondary); margin-bottom:8px; }
+    .fh-title span { font-weight:400; font-size:11px; color:var(--color-text-tertiary); margin-left:6px; }
+    .fh-input { width:66px; padding:7px 4px; font-size:13px; font-family:inherit; text-align:center;
+      border:1px solid transparent; border-radius:7px; background:var(--color-bg-subtle);
+      color:var(--color-text-primary); }
+    .fh-input:focus { outline:none; border-color:var(--color-accent); background:var(--color-bg-surface);
+      box-shadow:0 0 0 3px rgba(99,91,255,.12); }
     </style>
 </head>
 <body>
@@ -2507,7 +2531,9 @@
                 const btn = document.createElement('button');
                 btn.className = 'dept-btn';
                 btn.setAttribute('aria-label', `${itemName} - ${status === 'submitted' ? '제출 완료' : '미제출'}`);
-                btn.onclick = () => status === 'submitted' ? openSubmittedDept(key, item) : openForm(key, item);
+                btn.onclick = () => (key === 'sunday' && WORSHIP_LOCATIONS[itemName])
+                    ? openWorshipGrid(itemName)
+                    : (status === 'submitted' ? openSubmittedDept(key, item) : openForm(key, item));
                 btn.innerHTML = `
                     <div class="dept-btn-inner">
                         <div class="dept-dot ${status === 'submitted' ? 'submitted' : 'missing'}" role="img" aria-label="${status === 'submitted' ? '완료' : '미제출'}"></div>
@@ -2912,6 +2938,7 @@
 
     function openForm(groupKey, deptItem) {
         districtGridContext = null;
+        worshipCtx = null;
         const _sb = document.getElementById('form-submit-btn');
         if (_sb) { _sb.setAttribute('onclick', 'submitForm()'); _sb.textContent = '제출하기'; }
         const _ws = document.getElementById('form-week-select');
@@ -3459,6 +3486,282 @@
 
         contentEl.innerHTML = html || '<p style="text-align:center;padding:var(--s5);color:var(--color-text-tertiary)">이 주차에는 제출된 데이터가 없습니다</p>';
         display.style.display = 'block';
+    }
+
+    /* ══════════════════════════════════════════════════
+       주일예배 장소별 입력
+       공식 주간예배 통계와 같은 구성으로, 장소 × 부 표에 입력한다.
+       시트에는 장소별 값을 '{부}|{장소}' 컬럼으로, 부별 총계는 기존 컬럼
+       ('1부','2부','3부','총계')에 그대로 써서 대시보드 호환을 유지한다.
+       ══════════════════════════════════════════════════ */
+    const WORSHIP_PARTS = ['1부', '2부', '3부'];
+
+    const WORSHIP_LOCATIONS = {
+        '송림': ['1층/1,2', '1층/3,4 찬양대', '2층', '자모실', '로비',
+                 '체육관 1층', '체육관 2층', '교육관', '교육관2층'],
+        '서현': ['영아부 301호', '302호', '304호', '자모실 305호', '602호',
+                 '701호', '702호', '703호', '자모실704호', '수유실 705호', '801호', '1101호'],
+    };
+
+    /* '기타'로 필요할 때 덧붙일 수 있는 후보. 목록에 없으면 직접 입력한다. */
+    const WORSHIP_EXTRA_CANDIDATES = {
+        '송림': ['3층', '로비 보조석', '소예배실', '친교실', '야외'],
+        '서현': ['7층 복도', '복도', '803호', '901호', '1102호', '야외'],
+    };
+
+    /* 본당 만석 시각을 남기는 자리 (공식 통계에서 셀 메모로 기록하던 항목) */
+    const FULL_HOUSE_ROWS = { '송림': ['본당 1층', '본당 2층'], '서현': [] };
+
+    let worshipCtx = null;
+
+    const worshipKey = (part, loc) => `${part}|${loc}`;
+    const fullHouseKey = (part, where) => `${part}|만석 ${where}`;
+
+    /* 저장된 값에서 기본 목록에 없는 장소(=기타로 추가했던 곳)를 찾아낸다 */
+    function savedExtraLocations(itemName, weekKey) {
+        const saved = submissionStatus[weekKey]?.[`${weekKey}:sunday:${itemName}`]?.data || {};
+        const base = new Set(WORSHIP_LOCATIONS[itemName] || []);
+        const found = new Set();
+        Object.keys(saved).forEach(k => {
+            const m = k.match(/^(\d부)\|(.+)$/);
+            if (!m) return;
+            const loc = m[2];
+            if (loc.startsWith('만석 ')) return;
+            if (!base.has(loc)) found.add(loc);
+        });
+        return [...found];
+    }
+
+    function openWorshipGrid(itemName) {
+        document.getElementById('screen-select').style.display = 'none';
+        document.getElementById('screen-form').style.display = 'block';
+        document.getElementById('screen-done').style.display = 'none';
+        document.getElementById('screen-previous').style.display = 'none';
+
+        districtGridContext = null;
+        currentFormContext = { groupKey: 'sunday', deptItem: DEPARTMENTS.sunday.items.find(i => i.name === itemName) };
+
+        document.getElementById('form-dept-name').textContent = `주일예배 · ${itemName}`;
+        document.getElementById('form-dept-meta').textContent = '장소별로 입력하면 부별 합계가 자동 계산됩니다';
+        const alertArea = document.getElementById('form-alert-area');
+        if (alertArea) alertArea.innerHTML = '';
+        const prevArea = document.getElementById('form-previous-weeks-area');
+        if (prevArea) prevArea.style.display = 'none';
+
+        const formWeekSelect = document.getElementById('form-week-select');
+        const allWeeks = getPreviousWeeks();
+        const cur = getWeekKey('sunday');
+        if (!allWeeks.includes(cur)) allWeeks.unshift(cur);
+        formWeekSelect.innerHTML = '';
+        allWeeks.forEach(wk => {
+            const opt = document.createElement('option');
+            opt.value = wk;
+            const [, m, d] = wk.split('-').map(Number);
+            opt.textContent = `📅 ${m}월 ${d}일(주일)`;
+            formWeekSelect.appendChild(opt);
+        });
+        const selectEl = document.getElementById('input-week-select');
+        formWeekSelect.value = selectEl?.value || cur;
+
+        worshipCtx = { itemName, extras: savedExtraLocations(itemName, formWeekSelect.value) };
+        renderWorshipGrid();
+
+        const btn = document.getElementById('form-submit-btn');
+        btn.setAttribute('onclick', 'submitWorshipGrid()');
+        btn.textContent = '제출하기';
+        btn.disabled = false;
+        btn.classList.remove('btn-loading');
+
+        formWeekSelect.onchange = () => {
+            worshipCtx.extras = savedExtraLocations(worshipCtx.itemName, formWeekSelect.value);
+            renderWorshipGrid();
+        };
+    }
+
+    function renderWorshipGrid() {
+        const { itemName, extras } = worshipCtx;
+        const weekKey = document.getElementById('form-week-select').value;
+        const rows = [...(WORSHIP_LOCATIONS[itemName] || []), ...extras];
+        const candidates = (WORSHIP_EXTRA_CANDIDATES[itemName] || []).filter(c => !rows.includes(c));
+        const fh = FULL_HOUSE_ROWS[itemName] || [];
+
+        document.getElementById('form-fields-area').innerHTML = `
+        <div class="form-card">
+            <div class="form-card-title">${itemName} · 장소별 인원</div>
+            <div class="grid-scroll">
+                <table class="grid-table">
+                    <thead><tr>
+                        <th class="grid-sticky">장소</th>
+                        ${WORSHIP_PARTS.map(p => `<th>${p}</th>`).join('')}
+                        <th class="grid-sum">계</th>
+                    </tr></thead>
+                    <tbody>
+                        ${rows.map(loc => `
+                        <tr>
+                            <th class="grid-sticky">${loc}${(WORSHIP_LOCATIONS[itemName] || []).includes(loc) ? '' :
+                                ` <button type="button" class="loc-del" title="이 장소 빼기" onclick="removeWorshipLocation('${loc.replace(/'/g, "\\'")}')">✕</button>`}</th>
+                            ${WORSHIP_PARTS.map(p => `
+                            <td><input type="number" inputmode="numeric" min="0" class="grid-input"
+                                       data-row="${loc}" data-key="${worshipKey(p, loc)}" data-part="${p}"
+                                       oninput="updateWorshipTotals()" placeholder="·"></td>`).join('')}
+                            <td class="grid-sum" data-rowsum="${loc}">0</td>
+                        </tr>`).join('')}
+                    </tbody>
+                    <tfoot><tr>
+                        <th class="grid-sticky">합계</th>
+                        ${WORSHIP_PARTS.map(p => `<td class="grid-sum" data-colsum="${p}">0</td>`).join('')}
+                        <td class="grid-sum grid-total" data-grandsum>0</td>
+                    </tr></tfoot>
+                </table>
+            </div>
+
+            <div class="loc-add">
+                <span class="loc-add-label">기타 장소 추가</span>
+                <select id="loc-add-select" class="loc-add-select">
+                    ${candidates.map(c => `<option value="${c}">${c}</option>`).join('')}
+                    <option value="__custom">직접 입력…</option>
+                </select>
+                <input type="text" id="loc-add-custom" class="loc-add-custom" placeholder="장소 이름" style="display:none">
+                <button type="button" class="loc-add-btn" onclick="addWorshipLocation()">＋ 추가</button>
+            </div>
+
+            ${fh.length ? `
+            <div class="fh-card">
+                <div class="fh-title">본당 만석 시각 <span>비어 있으면 만석이 아니었던 것으로 봅니다</span></div>
+                <div class="grid-scroll">
+                    <table class="grid-table">
+                        <thead><tr>
+                            <th class="grid-sticky">위치</th>
+                            ${WORSHIP_PARTS.map(p => `<th>${p}</th>`).join('')}
+                        </tr></thead>
+                        <tbody>
+                            ${fh.map(w => `
+                            <tr>
+                                <th class="grid-sticky">${w}</th>
+                                ${WORSHIP_PARTS.map(p => `
+                                <td><input type="text" class="fh-input" data-key="${fullHouseKey(p, w)}"
+                                           placeholder="7:05" inputmode="numeric"></td>`).join('')}
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>` : ''}
+
+            <div class="grid-hint">빈 칸은 0으로 저장됩니다. 부별 합계는 자동으로 계산되어 기존 '1부·2부·3부·총계'로도 함께 저장됩니다.</div>
+        </div>`;
+
+        // 저장값 복원
+        const saved = submissionStatus[weekKey]?.[`${weekKey}:sunday:${itemName}`]?.data || {};
+        document.querySelectorAll('.grid-input, .fh-input').forEach(inp => {
+            const v = saved[inp.dataset.key];
+            inp.value = (v === undefined || v === null || v === '') ? '' : v;
+        });
+        const sel = document.getElementById('loc-add-select');
+        if (sel) sel.onchange = () => {
+            document.getElementById('loc-add-custom').style.display = sel.value === '__custom' ? '' : 'none';
+        };
+        updateWorshipTotals();
+    }
+
+    function addWorshipLocation() {
+        const sel = document.getElementById('loc-add-select');
+        let name = sel.value;
+        if (name === '__custom') name = (document.getElementById('loc-add-custom').value || '').trim();
+        if (!name) return;
+        const { itemName, extras } = worshipCtx;
+        const all = [...(WORSHIP_LOCATIONS[itemName] || []), ...extras];
+        if (all.includes(name)) return;
+        // 지금까지 입력한 값을 잃지 않도록 보존했다가 다시 채운다
+        const keep = {};
+        document.querySelectorAll('.grid-input, .fh-input').forEach(i => { if (i.value !== '') keep[i.dataset.key] = i.value; });
+        worshipCtx.extras.push(name);
+        renderWorshipGrid();
+        document.querySelectorAll('.grid-input, .fh-input').forEach(i => { if (keep[i.dataset.key] !== undefined) i.value = keep[i.dataset.key]; });
+        updateWorshipTotals();
+    }
+
+    function removeWorshipLocation(name) {
+        const keep = {};
+        document.querySelectorAll('.grid-input, .fh-input').forEach(i => { if (i.value !== '' && i.dataset.row !== name) keep[i.dataset.key] = i.value; });
+        worshipCtx.extras = worshipCtx.extras.filter(x => x !== name);
+        renderWorshipGrid();
+        document.querySelectorAll('.grid-input, .fh-input').forEach(i => { if (keep[i.dataset.key] !== undefined) i.value = keep[i.dataset.key]; });
+        updateWorshipTotals();
+    }
+
+    function updateWorshipTotals() {
+        const inputs = [...document.querySelectorAll('.grid-input')];
+        const rowSum = {}, colSum = {};
+        let grand = 0;
+        inputs.forEach(inp => {
+            const n = parseInt(inp.value) || 0;
+            rowSum[inp.dataset.row] = (rowSum[inp.dataset.row] || 0) + n;
+            colSum[inp.dataset.part] = (colSum[inp.dataset.part] || 0) + n;
+            grand += n;
+        });
+        document.querySelectorAll('[data-rowsum]').forEach(td => td.textContent = (rowSum[td.dataset.rowsum] || 0).toLocaleString());
+        document.querySelectorAll('[data-colsum]').forEach(td => td.textContent = (colSum[td.dataset.colsum] || 0).toLocaleString());
+        const g = document.querySelector('[data-grandsum]');
+        if (g) g.textContent = grand.toLocaleString();
+    }
+
+    async function submitWorshipGrid() {
+        const { itemName } = worshipCtx || {};
+        if (!itemName) return;
+        const weekKey = document.getElementById('form-week-select').value;
+        const alertArea = document.getElementById('form-alert-area');
+
+        const formData = {};
+        const partTotal = {};
+        document.querySelectorAll('.grid-input').forEach(inp => {
+            const n = inp.value.trim() === '' ? 0 : (parseInt(inp.value) || 0);
+            formData[inp.dataset.key] = n;
+            partTotal[inp.dataset.part] = (partTotal[inp.dataset.part] || 0) + n;
+        });
+        document.querySelectorAll('.fh-input').forEach(inp => {
+            const v = inp.value.trim();
+            if (v) formData[inp.dataset.key] = v;
+        });
+
+        const grand = WORSHIP_PARTS.reduce((a, p) => a + (partTotal[p] || 0), 0);
+        if (grand === 0) {
+            if (alertArea) alertArea.innerHTML = `<div style="padding:var(--s3) var(--s4);background:var(--color-negative-bg);border:1px solid rgba(192,18,60,0.2);border-radius:var(--r);color:var(--color-negative);font-size:13px">⚠️ 최소 한 곳 이상 입력해주세요</div>`;
+            return;
+        }
+        // 기존 대시보드가 읽는 부별 총계도 함께 저장한다
+        WORSHIP_PARTS.forEach(p => { formData[p] = partTotal[p] || 0; });
+        formData['총계'] = grand;
+
+        const btn = document.getElementById('form-submit-btn');
+        btn.classList.add('btn-loading'); btn.disabled = true; btn.textContent = '구글시트 저장 중...';
+        try {
+            const gasUrl = 'https://script.google.com/macros/s/AKfycbxJ1NDZxTpDsaVkb7GqlesBvlM_9lBBv2s4f53chZdqbHVnLZqOfVT1qzXVfsXW7qxA/exec';
+            const res = await fetch(gasUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ weekKey, groupKey: '주일예배', itemName, formData }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) throw new Error(data.message || '저장 실패');
+            markSubmitted('sunday', itemName, 'sunday', formData, weekKey,
+                          { submittedAt: data.savedAt || new Date().toISOString(), fromSheet: true });
+
+            document.getElementById('screen-form').style.display = 'none';
+            document.getElementById('screen-done').style.display = 'block';
+            document.getElementById('done-dept-name').textContent = `주일예배 ${itemName} 제출 완료`;
+            const sub = document.getElementById('done-subtitle');
+            if (sub) sub.textContent = `1부 ${partTotal['1부']||0} · 2부 ${partTotal['2부']||0} · 3부 ${partTotal['3부']||0} · 총 ${grand}명`;
+            const now = new Date();
+            document.getElementById('done-time').textContent =
+                `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            const area = document.getElementById('done-data-area');
+            if (area) area.innerHTML = '';
+            renderDepartmentList(); renderStatus();
+        } catch (e) {
+            if (alertArea) alertArea.innerHTML = `<div style="padding:var(--s3) var(--s4);background:var(--color-negative-bg);border:1px solid rgba(192,18,60,0.2);border-radius:var(--r);color:var(--color-negative);font-size:13px">저장 실패 — ${e.message}</div>`;
+        } finally {
+            btn.classList.remove('btn-loading'); btn.disabled = false; btn.textContent = '제출하기';
+        }
     }
 
     /* ══════════════════════════════════════════════════
