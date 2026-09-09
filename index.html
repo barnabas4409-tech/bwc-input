@@ -3073,6 +3073,10 @@
 
         const deptName = deptItem.name || deptItem;
         document.getElementById('form-dept-name').textContent = deptName;
+        // 지난번 값을 뒤에서 받아 채운다 (있으면 그대로 다시 그린다)
+        setTimeout(() => ensureItemValues(
+            document.getElementById('form-week-select')?.value || getWeekKey('sunday'),
+            groupKey, deptName, () => openForm(groupKey, deptItem)), 0);
 
         // 폼 내 주차 드롭다운 채우기
         const formWeekSelect = document.getElementById('form-week-select');
@@ -4896,6 +4900,8 @@
         currentSundaySchoolContext = { groupKey, deptItem, weekKey };
 
         const deptName = deptItem.name;
+        setTimeout(() => ensureItemValues(weekKey, groupKey, deptName,
+            () => openSundaySchoolForm(groupKey, deptItem, weekKey)), 0);
         const [year, month, day] = weekKey.split('-').map(Number);
         const sundayDate = new Date(year, month - 1, day);
         const sundayDateStr = sundayDate.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' });
@@ -5474,19 +5480,29 @@
         }
     }
 
-    /* 폼을 열기 전에 그 부서가 지난번에 낸 값을 채워 둔다.
-       전체를 받아 오는 길은 키가 필요하지만 이건 한 부서짜리라 필요 없다. */
+    /* 폼에 지난번 값을 채워 준다.
+
+       제출 현황은 '냈다/안 냈다'만 받아 오므로 값이 없다. 폼을 열었을 때
+       그 부서 것만 따로 받아 채운다. 한 부서짜리라 키가 필요 없다.
+       같은 칸을 두 번 받지 않도록 한 번 받은 것은 기억해 둔다. */
+    const PREFILLED = new Set();
+    async function ensureItemValues(weekKey, groupKey, itemName, rerender) {
+        if (!weekKey || !itemName) return;
+        const fullKey = `${weekKey}:${groupKey}:${itemName}`;
+        if (PREFILLED.has(fullKey)) return;
+        PREFILLED.add(fullKey);
+        const cur = submissionStatus[weekKey]?.[fullKey];
+        if (cur?.data && Object.keys(cur.data).length) return;   // 이미 갖고 있다
+        const json = await gasGetItem(weekKey, '', itemName);
+        const got = json?.success ? json.data?.[weekKey] : null;
+        if (!got || !Object.keys(got).length) return;
+        mergeSheetData({ [weekKey]: got });
+        saveSubmissionStatus();
+        rerender();
+    }
+
     async function prefillItem(weekKey, itemName, renderFn) {
-        try {
-            const json = await gasGetItem(weekKey, '', itemName);
-            if (json && json.success && json.data?.[weekKey] &&
-                Object.keys(json.data[weekKey]).length) {
-                mergeSheetData({ [weekKey]: json.data[weekKey] });
-                saveSubmissionStatus();
-            }
-        } catch (e) {
-            console.warn('미리 채우기 실패:', itemName, e);
-        }
+        PREFILLED.delete(`${weekKey}:sunday:${itemName}`);
         renderFn();
     }
 
