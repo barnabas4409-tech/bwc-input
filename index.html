@@ -2015,16 +2015,6 @@
                         <div id="sheet-query-result" style="margin-top:var(--s4)"></div>
                     </div>
 
-                    <!-- 시트 조회 키 -->
-                    <div class="form-card" style="margin-top:var(--s4)">
-                        <div class="form-card-title">시트 조회 키</div>
-                        <p style="font-size:12px;color:var(--color-text-tertiary);margin-bottom:var(--s3)">이 기기에만 저장됩니다. 넣어 두면 데이터 현황과 입력 폼의 기존 값 표시가 됩니다.</p>
-                        <div style="display:flex;gap:var(--s3);align-items:center">
-                            <input type="password" id="read-key-input" placeholder="관리자에게 문의" autocomplete="off" style="flex:1;padding:8px 12px;border:1.5px solid var(--color-border-strong);border-radius:var(--r);font-size:13px;font-family:inherit;background:var(--color-bg-subtle);color:var(--color-text-primary)" />
-                            <button class="btn-secondary" onclick="saveReadKey()" style="flex-shrink:0;padding:8px 16px">저장</button>
-                        </div>
-                        <div id="read-key-msg" style="margin-top:var(--s2);font-size:12px"></div>
-                    </div>
                 </div>
             </div>
 
@@ -3290,7 +3280,7 @@
         const newWeekKey = document.getElementById('form-week-select').value;
         // 부서 선택 화면 드롭다운 동기화
         document.getElementById('input-week-select').value = newWeekKey;
-        fetchWeekOnDemand(newWeekKey, () => openForm(groupKey, deptItem));
+        prefillItem(newWeekKey, deptItem?.name, () => openForm(groupKey, deptItem));
     }
 
     function renderPreviousWeeksData(groupKey, deptItem, currentWeekKey) {
@@ -4626,8 +4616,10 @@
 
     async function adminLogin() {
         const input = document.getElementById('admin-pwd');
-        const ok = (await sha256Hex(input.value)) === ADMIN_PW_HASH;
+        const pw = input.value;
+        const ok = (await sha256Hex(pw)) === ADMIN_PW_HASH;
         if (ok) {
+            await unlockReadKey(pw);   // 전체 조회 키를 이 비밀번호로 푼다
             input.value = '';
             document.getElementById('admin-login-screen').style.display = 'none';
             document.getElementById('admin-dashboard').style.display = 'block';
@@ -4885,7 +4877,7 @@
         if (!currentSundaySchoolContext) return;
         const newWeekKey = document.getElementById('sunday-school-form-week-select').value;
         document.getElementById('sunday-school-week-select').value = newWeekKey;
-        fetchWeekOnDemand(newWeekKey, () => openSundaySchoolForm(
+        prefillItem(newWeekKey, currentSundaySchoolContext.deptItem?.name, () => openSundaySchoolForm(
             currentSundaySchoolContext.groupKey,
             currentSundaySchoolContext.deptItem,
             newWeekKey
@@ -5439,98 +5431,75 @@
        ══════════════════════════════════════════════════ */
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbxJ1NDZxTpDsaVkb7GqlesBvlM_9lBBv2s4f53chZdqbHVnLZqOfVT1qzXVfsXW7qxA/exec';
 
-    /* 시트 조회에는 키가 필요하다.
+    /* 시트 조회 키.
 
-       예전에는 키 없이 아무나 이 주소를 부를 수 있었다. 이 페이지 주소는
-       공개돼 있으므로, 그대로 두면 전 교인 출석·헌금 자료를 누구나 받아
-       갈 수 있었다. 키는 페이지에 박아 두지 않고 관리자가 한 번 넣으면
-       이 브라우저에만 남는다. 입력(저장)은 키 없이 그대로 된다. */
+       전체 자료를 받아 오는 길은 키로 막혀 있다(공개 주소라 열어 두면 누구나
+       전 교인 출석·헌금을 받아 갈 수 있다). 그렇다고 키를 따로 나눠 주면
+       그걸 들고 다녀야 한다. 그래서 키는 관리자 비밀번호로 잠가 페이지에
+       넣어 두고, 관리자가 로그인하면 그때 풀린다. 이 글자만으로는 못 푼다.
+
+       평소 입력에는 키가 필요 없다 — 폼을 열 때는 그 부서 하나만(mode=item),
+       제출 현황은 낸 곳 이름만(mode=status) 받아 오고 둘 다 키가 없다. */
     const READ_KEY_STORE = 'bwc-input-sheet-read-key';
-    const getReadKey = () => { try { return localStorage.getItem(READ_KEY_STORE) || ''; } catch { return ''; } };
-    function askReadKey() {
-        const k = (prompt('시트 조회 키를 넣어 주세요.\n(관리자에게 문의 · 이 브라우저에만 저장됩니다)') || '').trim();
-        if (k) { try { localStorage.setItem(READ_KEY_STORE, k); } catch {} }
-        return k;
-    }
-    /* ask=false 면 키가 없을 때 묻지 않고 조용히 비운다.
-       입력 폼을 열 때 기존 값을 미리 채우는 용도로도 쓰이는데, 거기서
-       키를 물으면 그냥 입력하러 온 교역자에게 난데없는 창이 뜬다. */
-    async function saveReadKey() {
-        const el = document.getElementById('read-key-input');
-        const msg = document.getElementById('read-key-msg');
-        const k = (el.value || '').trim();
-        if (!k) { msg.textContent = '키를 넣어 주세요'; msg.style.color = 'var(--color-text-tertiary)'; return; }
-        msg.textContent = '확인 중...'; msg.style.color = 'var(--color-text-tertiary)';
+    const READ_KEY_BLOB = '9g+u+zXmL9tDZC/EJ8BQNWeg6bK9TdKViTGv91LKXof0oRmAppEbPSo2nr/UTsi+oX2OR/5wLfXsa5FXv8bAFYW2dSusr47Wk2lUdg==';
+    const getReadKey = () => { try { return sessionStorage.getItem(READ_KEY_STORE) || ''; } catch { return ''; } };
+
+    async function unlockReadKey(password) {
         try {
-            const r = await fetch(`${GAS_URL}?weekKeys=${todayWeekKey()}&key=${encodeURIComponent(k)}`).then(x => x.json());
-            if (r && r.error === 'forbidden') {
-                msg.textContent = '키가 맞지 않습니다'; msg.style.color = 'var(--color-danger, #dc2626)'; return;
-            }
-            try { localStorage.setItem(READ_KEY_STORE, k); } catch {}
-            el.value = '';
-            msg.textContent = '저장했습니다'; msg.style.color = 'var(--color-success, #059669)';
+            const raw = Uint8Array.from(atob(READ_KEY_BLOB), ch => ch.charCodeAt(0));
+            const salt = raw.slice(0, 16), iv = raw.slice(16, 28), ct = raw.slice(28);
+            const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(password),
+                'PBKDF2', false, ['deriveKey']);
+            const k = await crypto.subtle.deriveKey(
+                { name: 'PBKDF2', salt, iterations: 200000, hash: 'SHA-256' },
+                base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+            const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, k, ct);
+            const key = new TextDecoder().decode(pt);
+            try { sessionStorage.setItem(READ_KEY_STORE, key); } catch {}
+            return key;
         } catch (e) {
-            msg.textContent = '확인 실패 — ' + e.message; msg.style.color = 'var(--color-danger, #dc2626)';
+            console.warn('조회 키 해제 실패:', e);
+            return '';
         }
     }
 
-    function todayWeekKey() {
-        const d = new Date(); d.setDate(d.getDate() - d.getDay());
-        return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'),
-                String(d.getDate()).padStart(2, '0')].join('-');
-    }
-
-    /* 키가 없으면 '어느 부서가 냈는지'만 받아 온다. 값(숫자·헌금)은 오지 않는다.
-       제출 현황은 시트를 봐야 알 수 있는데, 여기까지 막으면 키 없는 기기에서
-       전부 미제출로 보인다. */
-    async function gasGetStatus(weekKeys) {
+    async function gasGet(weekKeys) {
+        const key = getReadKey();
+        if (!key) return null;
         try {
-            return await fetch(`${GAS_URL}?mode=status&weekKeys=${weekKeys}`).then(r => r.json());
+            return await fetch(`${GAS_URL}?weekKeys=${weekKeys}&key=${encodeURIComponent(key)}`).then(r => r.json());
         } catch (e) {
-            console.warn('제출 현황 조회 실패:', e);
+            console.warn('시트 조회 실패:', e);
             return null;
         }
     }
 
-    /* 값 없이 제출 여부만 표시한다. 이미 갖고 있던 값은 그대로 둔다 —
-       폼을 다시 열었을 때 채워 보여 주는 데 쓰인다. */
-    function mergeSheetStatus(raw) {
-        const { groupByLabel } = buildFieldLookup();
-        Object.entries(raw || {}).forEach(([weekKey, groups]) => {
-            if (!submissionStatus[weekKey]) submissionStatus[weekKey] = {};
-            Object.entries(groups).forEach(([groupLabel, depts]) => {
-                const groupKey = groupByLabel[groupLabel];
-                if (!groupKey) return;
-                (depts || []).forEach(deptName => {
-                    const fullKey = `${weekKey}:${groupKey}:${deptName}`;
-                    const prev = submissionStatus[weekKey][fullKey];
-                    submissionStatus[weekKey][fullKey] = {
-                        submitted: true,
-                        data: prev?.data || {},
-                        fromSheet: true,
-                        submittedAt: prev?.submittedAt || new Date().toISOString(),
-                    };
-                });
-            });
-        });
+    /* 폼을 열기 전에 그 부서가 지난번에 낸 값을 채워 둔다.
+       전체를 받아 오는 길은 키가 필요하지만 이건 한 부서짜리라 필요 없다. */
+    async function prefillItem(weekKey, itemName, renderFn) {
+        try {
+            const json = await gasGetItem(weekKey, '', itemName);
+            if (json && json.success && json.data?.[weekKey] &&
+                Object.keys(json.data[weekKey]).length) {
+                mergeSheetData({ [weekKey]: json.data[weekKey] });
+                saveSubmissionStatus();
+            }
+        } catch (e) {
+            console.warn('미리 채우기 실패:', itemName, e);
+        }
+        renderFn();
     }
 
-    async function gasGet(weekKeys, ask = true) {
-        let key = getReadKey() || (ask ? askReadKey() : '');
-        if (!key) {
-            if (!ask) return null;
-            throw new Error('조회 키가 필요합니다');
+    /* 폼에 채워 줄 값 — 그 한 주 · 한 부서만. 키가 필요 없다. */
+    async function gasGetItem(weekKey, groupLabel, itemName) {
+        try {
+            const q = new URLSearchParams({ mode: 'item', weekKeys: weekKey, item: itemName });
+            if (groupLabel) q.set('group', groupLabel);
+            return await fetch(`${GAS_URL}?${q}`).then(r => r.json());
+        } catch (e) {
+            console.warn('부서 조회 실패:', itemName, e);
+            return null;
         }
-        const call = k => fetch(`${GAS_URL}?weekKeys=${weekKeys}&key=${encodeURIComponent(k)}`).then(r => r.json());
-        let json = await call(key);
-        if (json && json.error === 'forbidden') {          // 키가 틀렸다 — 다시 받는다
-            try { localStorage.removeItem(READ_KEY_STORE); } catch {}
-            if (!ask) return null;
-            key = askReadKey();
-            if (!key) throw new Error('조회 키가 필요합니다');
-            json = await call(key);
-        }
-        return json;
     }
     const CACHE_WEEKS = 26; // localStorage 캐시 범위 (최근 6개월)
 
@@ -5597,7 +5566,7 @@
                 const batch = allWeekKeys.slice(i, i + GAS_BATCH_SIZE);
                 // 키가 있으면 값까지, 없으면 제출 여부만 받아 온다
                 const json = getReadKey()
-                    ? await gasGet(batch.join(','), false)
+                    ? await gasGet(batch.join(','))
                     : await gasGetStatus(batch.join(','));
                 if (!json || !json.success) break;
                 if (json.mode === 'status') mergeSheetStatus(json.data);
@@ -5631,7 +5600,7 @@
     async function fetchWeekOnDemand(weekKey, renderFn) {
         try {
             const json = getReadKey()
-                ? await gasGet(weekKey, false)
+                ? await gasGet(weekKey)
                 : await gasGetStatus(weekKey);
             if (json && json.success) {
                 if (json.mode === 'status') {
