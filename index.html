@@ -5602,6 +5602,11 @@
                 if (!json || !json.success) break;
                 if (json.mode === 'status') mergeSheetStatus(json.data);
                 else mergeSheetData(json.data);
+                // 배치마다 바로 그린다. 26주를 다 받을 때까지 기다리면
+                // 최근 주차가 이미 왔는데도 1분 가까이 '대기'로 보인다.
+                saveSubmissionStatus();
+                renderDepartmentList();
+                renderStatus();
             }
 
             trimOldLocalStorage();
