@@ -255,6 +255,7 @@
     }
     #tab-input.on        { background: #6355ff; box-shadow: 0 2px 8px rgba(99,91,255,0.35); }
     #tab-sunday-school.on { background: #16a34a; box-shadow: 0 2px 8px rgba(22,163,74,0.35); }
+    #tab-special.on      { background: #9333ea; box-shadow: 0 2px 8px rgba(147,51,234,0.35); }
     #tab-status.on       { background: #ea580c; box-shadow: 0 2px 8px rgba(234,88,12,0.35); }
     #tab-admin.on        { background: #2563eb; box-shadow: 0 2px 8px rgba(37,99,235,0.35); }
     .nt-lock { font-size: 11px; opacity: 0.7; }
@@ -1754,6 +1755,18 @@
       color:var(--color-text-primary); }
     .fh-input:focus { outline:none; border-color:var(--color-accent); background:var(--color-bg-surface);
       box-shadow:0 0 0 3px rgba(99,91,255,.12); }
+
+    /* 특별예배 날짜 입력 */
+    .sp-date-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      padding:12px 14px; background:var(--color-bg-subtle); border-radius:10px; margin-bottom:var(--s5); }
+    .sp-date-row label { font-size:12.5px; font-weight:700; color:var(--color-text-secondary); }
+    .sp-date-row input[type=date] { padding:8px 11px; font-size:14px; font-family:inherit;
+      border:1px solid var(--color-border-default); border-radius:8px; background:var(--color-bg-surface);
+      color:var(--color-text-primary); }
+    .sp-date-row span { font-size:12px; color:var(--color-text-tertiary); }
+    .sp-date-row span.ok { color:var(--color-positive); font-weight:600; }
+    /* 집회 카드는 이름만 — 설명이 카드 밖으로 삐져나오던 문제 */
+    #special-list .dept-btn-inner { gap:6px; }
     </style>
 </head>
 <body>
@@ -2105,13 +2118,8 @@
         <!-- ─── 주일학교 탭 ─── -->
         <section class="sec" id="sec-special" role="tabpanel" aria-labelledby="tab-special">
             <div id="screen-special-select">
-                <div style="margin-bottom:var(--s5);display:flex;gap:var(--s2);align-items:center">
-                    <button onclick="shiftWeek('special-week-select', -1, renderSpecialList)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer" aria-label="이전 주">‹</button>
-                    <select id="special-week-select" class="form-input" style="flex:1;max-width:360px;text-align:center" onchange="renderSpecialList()"></select>
-                    <button onclick="shiftWeek('special-week-select', 1, renderSpecialList)" style="width:36px;height:36px;border:1px solid var(--color-border-default);background:var(--color-bg-surface);border-radius:8px;font-size:18px;cursor:pointer" aria-label="다음 주">›</button>
-                </div>
                 <div style="font-size:12.5px;color:var(--color-text-tertiary);line-height:1.6;margin-bottom:var(--s5)">
-                    연 1회성 집회라 매주 화면에는 두지 않았습니다. 해당 주간을 고르고 집회를 선택하세요.
+                    연 1회성 집회라 주차를 따로 고르지 않습니다. 집회를 선택한 뒤 안에서 날짜를 입력하세요.
                 </div>
                 <div class="group-card">
                     <div class="group-card-hdr"><div class="group-card-title">특별예배</div></div>
@@ -2122,7 +2130,12 @@
             <div id="screen-special-form" style="display:none">
                 <button class="btn-secondary" onclick="goSpecialSelect()" style="margin-bottom:var(--s4)">← 집회 선택으로</button>
                 <h2 id="special-form-title" style="font-size:20px;margin:0 0 4px"></h2>
-                <p id="special-form-meta" style="font-size:12.5px;color:var(--color-text-tertiary);margin:0 0 var(--s5)"></p>
+                <p id="special-form-meta" style="font-size:12.5px;color:var(--color-text-tertiary);margin:0 0 var(--s4)"></p>
+                <div class="sp-date-row">
+                    <label for="special-date" id="special-date-label">집회 날짜</label>
+                    <input type="date" id="special-date" onchange="onSpecialDateChange()">
+                    <span id="special-week-note"></span>
+                </div>
                 <div id="special-alert-area" style="margin-bottom:var(--s4)"></div>
                 <div id="special-form-body"></div>
                 <div class="form-submit-area">
@@ -2178,6 +2191,18 @@
         {label: '시니어(남)', key: 'senior_men'},
         {label: '비고', key: 'note', type: 'text'}
     ];
+
+    const SPECIAL_MEETINGS = [
+        { key: 'newyear',   name: '송구영신예배',      byDay: false, cols: ['1부', '2부'],
+          desc: '12월 31일 밤 · 부별로 입력' },
+        { key: 'dawn',      name: '가을특별새벽부흥회', byDay: true,
+          cols: ['월', '화', '수', '목', '금', '토'], desc: '한 주간 새벽 · 일자별로 입력' },
+        { key: 'holywk',    name: '고난주간특별부흥회', byDay: true,
+          cols: ['월', '화', '수', '목', '금'], desc: '고난주간 저녁 · 일자별로 입력' },
+        { key: 'christmas', name: '성탄예배',          byDay: false, cols: ['1부', '2부'],
+          desc: '성탄 예배 · 부별로 입력' },
+    ];
+    const SPECIAL_PLACES = ['송림', '서현'];
 
     const DEPARTMENTS = {
         sunday: {
@@ -2335,6 +2360,12 @@
                 { name: '13교구', fields: CELL_FIELDS },
                 { name: '14교구', fields: CELL_FIELDS }
             ]
+        },
+        special: {
+            label: '특별예배',
+            // 입력은 전용 탭에서 하고, 여기 정의는 시트 동기화와 현황 표시에 쓰인다.
+            // 장소·일자 조합이 가변이라 fields는 두지 않는다(컬럼명이 곧 키).
+            items: SPECIAL_MEETINGS.map(m => ({ name: m.name })),
         },
         newfam: {
             label: '새가족',
@@ -2599,7 +2630,7 @@
         let totalDone = 0, totalAll = 0;
 
         const groupsWithRanking = ['leader', 'cell', 'youth'];
-        const deptOrder = ['sunday', 'weekday', 'cell', 'leader', 'youth', 'newfam'];
+        const deptOrder = ['sunday', 'weekday', 'cell', 'leader', 'youth', 'special', 'newfam'];
 
         deptOrder.forEach(key => {
             const group = DEPARTMENTS[key];
@@ -2790,7 +2821,7 @@
 
         let totalDone = 0, totalAll = 0;
         const groupsWithRanking = ['leader', 'cell', 'youth'];
-        const deptOrder = ['sunday', 'weekday', 'cell', 'leader', 'youth', 'newfam'];
+        const deptOrder = ['sunday', 'weekday', 'cell', 'leader', 'youth', 'special', 'newfam'];
 
         deptOrder.forEach(key => {
             const group = DEPARTMENTS[key];
@@ -3527,17 +3558,6 @@
        입력 방식은 주일예배와 같은 장소 × (요일|부) 표.
        시트 컬럼은 대시보드가 읽는 '{요일}|{부}|{장소}|{호실}' 형식으로 쓴다.
        ══════════════════════════════════════════════════ */
-    const SPECIAL_MEETINGS = [
-        { key: 'newyear',   name: '송구영신예배',      byDay: false, cols: ['1부', '2부'],
-          desc: '12월 31일 밤 · 부별로 입력' },
-        { key: 'dawn',      name: '가을특별새벽부흥회', byDay: true,
-          cols: ['월', '화', '수', '목', '금', '토'], desc: '한 주간 새벽 · 일자별로 입력' },
-        { key: 'holywk',    name: '고난주간특별부흥회', byDay: true,
-          cols: ['월', '화', '수', '목', '금'], desc: '고난주간 저녁 · 일자별로 입력' },
-        { key: 'christmas', name: '성탄예배',          byDay: false, cols: ['1부', '2부'],
-          desc: '성탄 예배 · 부별로 입력' },
-    ];
-    const SPECIAL_PLACES = ['송림', '서현'];
 
     let specialCtx = null;
 
@@ -3548,36 +3568,39 @@
     function goSpecialSelect() {
         document.getElementById('screen-special-select').style.display = 'block';
         document.getElementById('screen-special-form').style.display = 'none';
-        if (document.getElementById('special-week-select').options.length === 0) {
-            fillWeekSelect('special-week-select');
-        }
         renderSpecialList();
     }
 
-    /* 주차 드롭다운은 다른 탭과 같은 목록을 쓴다 */
-    function fillWeekSelect(id) {
-        const sel = document.getElementById(id);
-        const weeks = getPreviousWeeks();
-        const cur = getWeekKey('sunday');
-        if (!weeks.includes(cur)) weeks.unshift(cur);
-        sel.innerHTML = weeks.map(wk => {
-            const [y, m, d] = wk.split('-').map(Number);
-            return `<option value="${wk}">📅 ${y}년 ${m}월 ${d}일(주일)</option>`;
-        }).join('');
-        sel.value = cur;
+    /* 집회 날짜가 속한 주의 일요일 = 저장 주차.
+       주간 집회(고난주간·특새)는 시작일을 넣으면 그 주의 일요일로 모인다. */
+    function sundayOfWeek(dateStr) {
+        if (!dateStr) return '';
+        const [y, m, d] = dateStr.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        const add = dt.getDay() === 0 ? 0 : 7 - dt.getDay();
+        dt.setDate(dt.getDate() + add);
+        return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+    }
+
+    /* 집회별로 가장 최근 제출 주차를 찾는다 (주차를 고르지 않으므로) */
+    function latestSpecialWeek(name) {
+        let best = '';
+        Object.keys(submissionStatus).forEach(wk => {
+            if (submissionStatus[wk][`${wk}:special:${name}`]?.submitted && wk > best) best = wk;
+        });
+        return best;
     }
 
     function renderSpecialList() {
-        const weekKey = document.getElementById('special-week-select').value;
         document.getElementById('special-list').innerHTML = SPECIAL_MEETINGS.map(m => {
-            const done = submissionStatus[weekKey]?.[`${weekKey}:special:${m.name}`]?.submitted;
+            const wk = latestSpecialWeek(m.name);
+            const sub = wk ? `${Number(wk.slice(5,7))}월 ${Number(wk.slice(8,10))}일 주차 제출됨` : '미입력';
             return `
             <button class="dept-btn" onclick="openSpecialForm('${m.key}')">
                 <div class="dept-btn-inner">
-                    <div class="dept-dot ${done ? 'submitted' : 'missing'}"></div>
+                    <div class="dept-dot ${wk ? 'submitted' : 'missing'}"></div>
                     <div class="dept-name">${m.name}</div>
-                    <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:2px">${m.desc}</div>
-                    <div class="dept-badge ${done ? 'done' : 'miss'}">${done ? '완료' : '대기'}</div>
+                    <div class="dept-badge ${wk ? 'done' : 'miss'}">${wk ? '완료' : '대기'}</div>
                 </div>
             </button>`;
         }).join('');
@@ -3599,21 +3622,50 @@
     function openSpecialForm(key) {
         const meeting = SPECIAL_MEETINGS.find(m => m.key === key);
         if (!meeting) return;
-        const weekKey = document.getElementById('special-week-select').value;
-        specialCtx = { meeting, extras: {} };
-        SPECIAL_PLACES.forEach(p => specialCtx.extras[p] = specialExtras(meeting, p, weekKey));
+        specialCtx = { meeting, extras: { '송림': [], '서현': [] } };
 
         document.getElementById('screen-special-select').style.display = 'none';
         document.getElementById('screen-special-form').style.display = 'block';
         document.getElementById('special-form-title').textContent = meeting.name;
         document.getElementById('special-form-meta').textContent =
             `${meeting.desc} · 송림과 서현을 함께 입력해 한 번에 제출합니다`;
+        document.getElementById('special-date-label').textContent =
+            meeting.byDay ? '집회 시작일 (월요일)' : '집회 날짜';
+        document.getElementById('special-alert-area').innerHTML = '';
+
+        // 마지막으로 입력했던 주차가 있으면 그 날짜를 되살린다
+        const last = latestSpecialWeek(meeting.name);
+        document.getElementById('special-date').value = last || '';
+        onSpecialDateChange();
+    }
+
+    function specialWeekKey() {
+        return sundayOfWeek(document.getElementById('special-date').value);
+    }
+
+    function onSpecialDateChange() {
+        const wk = specialWeekKey();
+        const note = document.getElementById('special-week-note');
+        const body = document.getElementById('special-form-body');
+        const btn = document.getElementById('special-submit-btn');
+        if (!wk) {
+            note.className = ''; note.textContent = '날짜를 먼저 선택하세요';
+            body.innerHTML = '';
+            btn.disabled = true;
+            return;
+        }
+        note.className = 'ok';
+        note.textContent = `→ ${wk} 주차로 저장됩니다`;
+        btn.disabled = false;
+        const { meeting } = specialCtx;
+        SPECIAL_PLACES.forEach(p => specialCtx.extras[p] = specialExtras(meeting, p, wk));
         renderSpecialForm();
     }
 
     function renderSpecialForm() {
         const { meeting, extras } = specialCtx;
-        const weekKey = document.getElementById('special-week-select').value;
+        const weekKey = specialWeekKey();
+        if (!weekKey) return;
         const saved = submissionStatus[weekKey]?.[`${weekKey}:special:${meeting.name}`]?.data || {};
 
         document.getElementById('special-form-body').innerHTML = SPECIAL_PLACES.map(place => {
@@ -3726,8 +3778,9 @@
     async function submitSpecialForm() {
         const { meeting } = specialCtx || {};
         if (!meeting) return;
-        const weekKey = document.getElementById('special-week-select').value;
+        const weekKey = specialWeekKey();
         const alertArea = document.getElementById('special-alert-area');
+        if (!weekKey) { alertArea.innerHTML = `<div style="padding:var(--s3) var(--s4);background:var(--color-negative-bg);border:1px solid rgba(192,18,60,0.2);border-radius:var(--r);color:var(--color-negative);font-size:13px">⚠️ 집회 날짜를 선택해주세요</div>`; return; }
         const formData = {};
         let grand = 0;
         document.querySelectorAll('.sp-input').forEach(inp => {
@@ -5019,7 +5072,7 @@
 
         // 주차별 데이터 수집
         let html = '';
-        const deptOrder = ['sunday', 'weekday', 'cell', 'leader', 'youth', 'newfam'];
+        const deptOrder = ['sunday', 'weekday', 'cell', 'leader', 'youth', 'special', 'newfam'];
         const adminFilterMap = {
             worship: ['sunday', 'weekday'],
             district: ['cell', 'leader'],
@@ -5417,7 +5470,7 @@
         };
 
         // 일반 그룹
-        const deptOrder = ['sunday', 'weekday', 'cell', 'leader', 'youth', 'newfam'];
+        const deptOrder = ['sunday', 'weekday', 'cell', 'leader', 'youth', 'special', 'newfam'];
         deptOrder.forEach(key => {
             const group = DEPARTMENTS[key];
             if (!group) return;
