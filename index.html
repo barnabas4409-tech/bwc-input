@@ -320,6 +320,9 @@
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: var(--s5);
+        /* 카드 높이를 내용에 맞춘다. 예전에는 행 높이가 가장 큰 카드에 맞춰져
+           항목이 2개뿐인 주일예배·교구·새가족 카드에 빈 공간이 크게 남았다. */
+        align-items: start;
     }
     @media (max-width: 480px) {
         .select-layout {
@@ -419,16 +422,15 @@
         font-family: var(--font-mono);
     }
     .group-card-body {
-        padding: var(--s5);
-        display: flex;
-        flex-wrap: wrap;
+        padding: var(--s4);
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
         gap: var(--s3);
-        justify-content: flex-start;
-        align-content: flex-start;
+        align-content: start;
     }
     .dept-btn {
-        width: 130px;
-        height: 72px;
+        width: 100%;
+        min-height: 64px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -1767,6 +1769,60 @@
     .sp-date-row span.ok { color:var(--color-positive); font-weight:600; }
     /* 집회 카드는 이름만 — 설명이 카드 밖으로 삐져나오던 문제 */
     #special-list .dept-btn-inner { gap:6px; }
+
+    /* ── 데이터 현황 ── */
+    .ad-group { background:var(--color-bg-surface); border:1px solid var(--color-border-default);
+      border-radius:12px; overflow:hidden; margin-bottom:var(--s4); }
+    .ad-group-hdr { display:flex; align-items:center; justify-content:space-between;
+      padding:11px 14px; background:var(--color-bg-subtle); border-bottom:1px solid var(--color-border-default); }
+    .ad-group-title { font-size:13px; font-weight:700; color:var(--color-text-primary); }
+    .ad-group-count { font-size:11px; font-weight:700; color:var(--color-text-tertiary);
+      background:var(--color-bg-surface); border-radius:20px; padding:2px 9px; }
+    .ad-group-count.full { color:var(--color-positive); background:var(--color-positive-bg); }
+    .ad-rows { display:flex; flex-direction:column; }
+    .ad-row { display:grid; grid-template-columns:8px 1fr auto auto 14px; align-items:center; gap:10px;
+      padding:10px 14px; border-bottom:1px solid var(--color-border-default); cursor:pointer;
+      transition:background var(--t-fast); }
+    .ad-row:last-child { border-bottom:0; }
+    .ad-row:hover { background:var(--color-bg-subtle); }
+    .ad-row.open { background:var(--color-bg-subtle); }
+    .ad-dot { width:8px; height:8px; border-radius:50%; background:#e2e8f0; }
+    .ad-dot.on { background:var(--color-positive); }
+    .ad-name { font-size:13px; font-weight:600; color:var(--color-text-primary);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .ad-total { font-size:14px; font-weight:800; font-variant-numeric:tabular-nums;
+      color:var(--color-text-primary); }
+    .ad-row.miss .ad-total { color:var(--color-text-disabled); font-weight:600; }
+    .ad-at { font-size:10.5px; color:var(--color-text-tertiary); white-space:nowrap; }
+    .ad-caret { font-size:10px; color:var(--color-text-tertiary); }
+    .ad-empty { padding:var(--s6); text-align:center; color:var(--color-text-tertiary); font-size:13px; }
+
+    .ad-range { padding:12px 14px 16px; background:var(--color-bg-base);
+      border-bottom:1px solid var(--color-border-default); cursor:default; }
+    .ad-range-hdr { display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:9px; font-size:11.5px; font-weight:700; color:var(--color-text-secondary); }
+    .ad-range-btns { display:flex; gap:3px; }
+    .ad-range-btns button { border:0; background:var(--color-bg-muted); color:var(--color-text-secondary);
+      font-size:11px; font-weight:700; padding:4px 9px; border-radius:6px; cursor:pointer; font-family:inherit; }
+    .ad-range-btns button.on { background:var(--color-accent); color:#fff; }
+    .ad-range-empty { font-size:12px; color:var(--color-text-tertiary); padding:6px 0; }
+    .ad-scroll { overflow-x:auto; border:1px solid var(--color-border-default);
+      border-radius:9px; background:var(--color-bg-surface); }
+    .ad-table { border-collapse:separate; border-spacing:0; width:100%; font-size:12px; }
+    .ad-table th, .ad-table td { padding:7px 9px; text-align:right; white-space:nowrap;
+      border-bottom:1px solid var(--color-border-default); font-variant-numeric:tabular-nums; }
+    .ad-table thead th { position:sticky; top:0; background:var(--color-bg-subtle); font-size:10.5px;
+      font-weight:700; color:var(--color-text-tertiary); }
+    .ad-table tbody th, .ad-table tfoot th { text-align:left; font-weight:700; color:var(--color-text-primary); }
+    .ad-table tbody tr.cur { background:var(--color-accent-light); }
+    .ad-table tbody tr.miss td, .ad-table tbody tr.miss th { color:var(--color-text-disabled); }
+    .ad-table tfoot th, .ad-table tfoot td { border-top:2px solid var(--color-border-strong);
+      border-bottom:0; background:var(--color-bg-subtle); font-weight:700; }
+    .ad-sum { font-weight:800; color:var(--color-accent); }
+    @media (max-width:480px) {
+      .ad-row { grid-template-columns:8px 1fr auto 14px; }
+      .ad-at { display:none; }
+    }
     </style>
 </head>
 <body>
@@ -2097,6 +2153,7 @@
                             <option value="district">교구</option>
                             <option value="youth">청년교구</option>
                             <option value="school">주일학교</option>
+                            <option value="special">특별예배</option>
                             <option value="newfam">새가족</option>
                         </select>
                     </div>
@@ -4543,9 +4600,25 @@
     /* ══════════════════════════════════════════════════
        관리자 로그인
        ══════════════════════════════════════════════════ */
-    function adminLogin() {
-        const pwd = document.getElementById('admin-pwd').value;
-        if (pwd === 'admin') {
+    /* 관리자 비밀번호는 소스에 평문으로 두지 않는다.
+       이 레포는 공개라 예전처럼 'admin'을 그대로 적어두면 누구나 볼 수 있었다.
+       (클라이언트 검증이라 우회 자체를 막지는 못한다. 실제 차단이 필요하면
+        대시보드처럼 서버 인증으로 옮겨야 한다.)
+       비밀번호를 바꾸려면 브라우저 콘솔에서 genAdminHash('새비밀번호')를 실행해
+       나온 값을 아래 ADMIN_PW_HASH 에 넣으면 된다. */
+    const ADMIN_PW_HASH = '8a7a720adc6790b888632245d87fbfa69c7f1f1f5519ff003d3dfcfa6cc5845a';
+
+    async function sha256Hex(text) {
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('bwc:' + text));
+        return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    window.genAdminHash = async (pw) => { const h = await sha256Hex(pw); console.log(h); return h; };
+
+    async function adminLogin() {
+        const input = document.getElementById('admin-pwd');
+        const ok = (await sha256Hex(input.value)) === ADMIN_PW_HASH;
+        if (ok) {
+            input.value = '';
             document.getElementById('admin-login-screen').style.display = 'none';
             document.getElementById('admin-dashboard').style.display = 'block';
             initAdminWeekSelect();
@@ -5064,361 +5137,167 @@
         renderSundaySchoolDeptList();
     }
 
+    /* ══════════════════════════════════════════════════
+       데이터 현황
+       주차별로 무엇이 들어왔는지 한눈에 보고, 항목을 누르면
+       그 항목의 최근 몇 주 추이를 바로 아래에 펼친다.
+       필드 구성이 부서마다 달라 고정 표 대신 실제 데이터의 키로 표를 만든다.
+       ══════════════════════════════════════════════════ */
+    const ADMIN_FILTER_MAP = {
+        worship:  ['sunday', 'weekday'],
+        district: ['cell', 'leader'],
+        youth:    ['youth'],
+        school:   ['sunday_school'],
+        special:  ['special'],
+        newfam:   ['newfam'],
+    };
+    let adminOpenRow = null;          // 펼쳐 둔 항목 (groupKey::itemName)
+    let adminRangeWeeks = 4;          // 기간 보기 주 수
+
+    /* 최신 주차부터 n개 (제출 여부와 무관하게 연속된 주일) */
+    function adminRecentWeeks(endWeekKey, n) {
+        const out = [];
+        const [y, m, d] = endWeekKey.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        for (let i = 0; i < n; i++) {
+            out.push(`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`);
+            dt.setDate(dt.getDate() - 7);
+        }
+        return out;
+    }
+
+    const adminItemsOf = (groupKey) => {
+        const g = DEPARTMENTS[groupKey];
+        if (!g) return [];
+        return g.groups ? g.groups.flatMap(x => x.items) : (g.items || []);
+    };
+
+    /* 숫자 필드만 (비고 같은 텍스트는 표에서 뺀다) */
+    function numericEntries(data) {
+        return Object.entries(data || {}).filter(([k, v]) =>
+            !k.startsWith('_') && k !== 'note' && !String(k).includes('비고') && typeof v !== 'string');
+    }
+    const isTotalKey = (k) => k === '총계' || k === '합계' || String(k).endsWith('총계') || String(k).endsWith('합계');
+
+    function itemTotal(data) {
+        const nums = numericEntries(data);
+        const total = nums.find(([k]) => isTotalKey(k));
+        if (total) return Number(total[1]) || 0;
+        return nums.reduce((a, [, v]) => a + (Number(v) || 0), 0);
+    }
+
+    function toggleAdminRow(groupKey, itemName) {
+        const id = `${groupKey}::${itemName}`;
+        adminOpenRow = (adminOpenRow === id) ? null : id;
+        renderAdminData();
+    }
+    function setAdminRange(n) { adminRangeWeeks = n; renderAdminData(); }
+
     function renderAdminData() {
         const weekKey = document.getElementById('admin-week-select').value;
-        const selectedFilter = document.getElementById('admin-group-filter')?.value || '';
+        const filter = document.getElementById('admin-group-filter')?.value || '';
         const container = document.getElementById('admin-data-container');
-        container.innerHTML = '';
+        if (!weekKey) { container.innerHTML = ''; return; }
 
-        // 주차별 데이터 수집
+        const order = ['sunday', 'weekday', 'cell', 'leader', 'youth', 'sunday_school', 'special', 'newfam'];
+        const show = k => !filter || (ADMIN_FILTER_MAP[filter] || []).includes(k);
+
         let html = '';
-        const deptOrder = ['sunday', 'weekday', 'cell', 'leader', 'youth', 'special', 'newfam'];
-        const adminFilterMap = {
-            worship: ['sunday', 'weekday'],
-            district: ['cell', 'leader'],
-            youth: ['youth'],
-            school: ['sunday_school'],
-            newfam: ['newfam']
-        };
-        const shouldShowGroup = groupKey => {
-            if (!selectedFilter) return true;
-            return (adminFilterMap[selectedFilter] || []).includes(groupKey);
-        };
-
-        deptOrder.forEach(groupKey => {
-            if (!shouldShowGroup(groupKey)) return;
+        order.forEach(groupKey => {
+            if (!show(groupKey)) return;
             const group = DEPARTMENTS[groupKey];
             if (!group) return;
-            // 새벽기도 / 온라인예배 별도 처리
-            if (groupKey === 'weekday') {
-                // 특수 구조 항목 분리 (새벽기도, 온라인예배는 고유 필드 구조)
-                const dawnItem = group.items.find(item => (item.name || item) === '새벽기도');
-                const onlineItem = group.items.find(item => (item.name || item) === '온라인예배');
-                const otherItems = group.items.filter(item => {
-                    const n = item.name || item;
-                    return n !== '새벽기도' && n !== '온라인예배';
-                });
+            const items = adminItemsOf(groupKey);
+            if (!items.length) return;
 
-                // 다른 주중예배 항목들 처리
-                if (otherItems.length > 0) {
-                    let tableRows = '';
-                    let allFields = null;
-
-                    otherItems.forEach(item => {
-                        const itemName = item.name || item;
-                        const getDeptTypeForItem = () => {
-                            if (itemName.includes('수요')) return 'wednesday';
-                            if (itemName.includes('금요')) return 'friday';
-                            return getDeptType(groupKey);
-                        };
-                        const itemDeptType = getDeptTypeForItem();
-                        const fullKey = `${weekKey}:${groupKey}:${itemName}`;
-
-                        const submission = submissionStatus[weekKey]?.[fullKey];
-                        const isSubmitted = submission?.submitted || false;
-                        const submittedAt = submission?.submittedAt ? new Date(submission.submittedAt) : null;
-                        const submitTimeStr = submittedAt
-                            ? submittedAt.toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
-                            : '-';
-
-                        const fields = item.fields || [{label: '인원', key: 'count'}];
-
-                        if (!allFields) {
-                            allFields = fields;
-                        }
-
-                        const fieldCells = fields.map(field => {
-                            const fieldValue = isSubmitted ? (submission?.data?.[field.key] ?? '-') : '-';
-                            return `<div class="table-data">${fieldValue}</div>`;
-                        }).join('');
-
-                        tableRows += `
-                            <div class="table-row">
-                                <div class="table-dept-name" onclick="viewSubmissionData('${groupKey}', '${itemName.replace(/'/g, "\\'")}', '${itemDeptType}', '${weekKey}')" style="cursor:pointer;${isSubmitted ? '' : 'opacity:0.6'}">
-                                    ${itemName}
-                                </div>
-                                ${fieldCells}
-                                <div class="table-status">
-                                    <span class="table-status-badge ${isSubmitted ? 'submitted' : 'missing'}">
-                                        ${isSubmitted ? '✓' : '–'}
-                                    </span>
-                                </div>
-                                <div class="table-time">${submitTimeStr}</div>
-                            </div>
-                        `;
-                    });
-
-                    if (tableRows && allFields) {
-                        const fieldHeaders = allFields.map(f => `<div>${f.label}</div>`).join('');
-                        const gridTemplate = `2fr ${allFields.map(() => '1fr').join(' ')} 0.8fr 1fr`;
-
-                        html += `
-                            <div style="margin-bottom:var(--s8)">
-                                <h3 style="font-size:15px;font-weight:700;color:var(--color-text-primary);margin-bottom:var(--s4)">${group.label}</h3>
-                                <div class="data-table" style="grid-template-columns: ${gridTemplate}">
-                                    <div class="table-header">
-                                        <div>부서</div>
-                                        ${fieldHeaders}
-                                        <div>상태</div>
-                                        <div>제출시간</div>
-                                    </div>
-                                    ${tableRows}
-                                </div>
-                            </div>
-                        `;
-                    }
-                }
-
-                // 새벽기도 별도 테이블
-                if (dawnItem) {
-                    const itemName = dawnItem.name || dawnItem;
-                    const fullKey = `${weekKey}:${groupKey}:${itemName}`;
-                    const submission = submissionStatus[weekKey]?.[fullKey];
-                    const isSubmitted = submission?.submitted || false;
-                    const submittedAt = submission?.submittedAt ? new Date(submission.submittedAt) : null;
-                    const submitTimeStr = submittedAt
-                        ? submittedAt.toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
-                        : '-';
-
-                    const fields = dawnItem.fields || [{label: '인원', key: 'count'}];
-                    const fieldHeaders = fields.map(f => `<div>${f.label}</div>`).join('');
-                    const fieldCells = fields.map(field => {
-                        const fieldValue = isSubmitted ? (submission?.data?.[field.key] ?? '-') : '-';
-                        return `<div class="table-data">${fieldValue}</div>`;
-                    }).join('');
-
-                    const gridTemplate = `2fr ${fields.map(() => '1fr').join(' ')} 0.8fr 1fr`;
-
-                    html += `
-                        <div style="margin-bottom:var(--s8)">
-                            <h3 style="font-size:15px;font-weight:700;color:var(--color-text-primary);margin-bottom:var(--s4)">새벽기도</h3>
-                            <div class="data-table" style="grid-template-columns: ${gridTemplate}">
-                                <div class="table-header">
-                                    <div>부서</div>
-                                    ${fieldHeaders}
-                                    <div>상태</div>
-                                    <div>제출시간</div>
-                                </div>
-                                <div class="table-row">
-                                    <div class="table-dept-name" onclick="viewSubmissionData('${groupKey}', '${itemName.replace(/'/g, "\\'")}', 'dawn', '${weekKey}')" style="cursor:pointer;${isSubmitted ? '' : 'opacity:0.6'}">
-                                        ${itemName}
-                                    </div>
-                                    ${fieldCells}
-                                    <div class="table-status">
-                                        <span class="table-status-badge ${isSubmitted ? 'submitted' : 'missing'}">
-                                            ${isSubmitted ? '✓' : '–'}
-                                        </span>
-                                    </div>
-                                    <div class="table-time">${submitTimeStr}</div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }
-
-                // 온라인예배 별도 테이블
-                if (onlineItem) {
-                    const itemName = onlineItem.name;
-                    const fullKey = `${weekKey}:${groupKey}:${itemName}`;
-                    const submission = submissionStatus[weekKey]?.[fullKey];
-                    const isSubmitted = submission?.submitted || false;
-                    const submittedAt = submission?.submittedAt ? new Date(submission.submittedAt) : null;
-                    const submitTimeStr = submittedAt
-                        ? submittedAt.toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
-                        : '-';
-                    const fields = onlineItem.fields || [{label:'인원',key:'count'}];
-                    const fieldHeaders = fields.map(f => `<div>${f.label}</div>`).join('');
-                    const fieldCells = fields.map(field => {
-                        const fieldValue = isSubmitted ? (submission?.data?.[field.key] ?? '-') : '-';
-                        return `<div class="table-data">${fieldValue}</div>`;
-                    }).join('');
-                    const gridTemplate = `2fr ${fields.map(() => '1fr').join(' ')} 0.8fr 1fr`;
-                    html += `
-                        <div style="margin-bottom:var(--s8)">
-                            <h3 style="font-size:15px;font-weight:700;color:var(--color-text-primary);margin-bottom:var(--s4)">온라인예배</h3>
-                            <div class="data-table" style="grid-template-columns: ${gridTemplate}">
-                                <div class="table-header">
-                                    <div>부서</div>
-                                    ${fieldHeaders}
-                                    <div>상태</div>
-                                    <div>제출시간</div>
-                                </div>
-                                <div class="table-row">
-                                    <div class="table-dept-name" onclick="viewSubmissionData('${groupKey}', '${itemName}', 'sunday', '${weekKey}')" style="cursor:pointer;${isSubmitted ? '' : 'opacity:0.6'}">
-                                        ${itemName}
-                                    </div>
-                                    ${fieldCells}
-                                    <div class="table-status">
-                                        <span class="table-status-badge ${isSubmitted ? 'submitted' : 'missing'}">
-                                            ${isSubmitted ? '✓' : '–'}
-                                        </span>
-                                    </div>
-                                    <div class="table-time">${submitTimeStr}</div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }
-            } else {
-                // 다른 그룹 (weekday 제외) 기존 로직
-                // 먼저 그룹 내 모든 항목의 최대 필드 개수 찾기
-                let maxFields = 0;
-                let allFields = null;
-                if (groupKey === 'youth') {
-                    allFields = [
-                        {label: '예배인원', key: 'worship', keys: ['worship']},
-                        {label: '팀모임', key: 'team', keys: ['team_members', 'team']},
-                        {label: '순모임인원', key: 'order', keys: ['order']},
-                    ];
-                    maxFields = allFields.length;
-                } else {
-                    group.items.forEach(item => {
-                        const fields = item.fields || [{label: '인원', key: 'count'}];
-                        if (fields.length > maxFields) {
-                            maxFields = fields.length;
-                            allFields = fields;
-                        }
-                    });
-                }
-
-                let tableRows = '';
-
-                group.items.forEach(item => {
-                    const itemName = item.name || item;
-                    const getDeptTypeForItem = () => {
-                        return getDeptType(groupKey);
-                    };
-                    const itemDeptType = getDeptTypeForItem();
-                    const fullKey = `${weekKey}:${groupKey}:${itemName}`;
-
-                    const submission = submissionStatus[weekKey]?.[fullKey];
-                    const isSubmitted = submission?.submitted || false;
-                    const submittedAt = submission?.submittedAt ? new Date(submission.submittedAt) : null;
-                    const submitTimeStr = submittedAt
-                        ? submittedAt.toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
-                        : '-';
-
-                    const fields = item.fields || [{label: '인원', key: 'count'}];
-
-                    // 각 항목의 필드를 최대 필드 개수만큼 채우기
-                    const fieldCells = [];
-                    if (groupKey === 'youth') {
-                        allFields.forEach(field => {
-                            const fieldValue = isSubmitted
-                                ? (field.keys.map(k => submission?.data?.[k]).find(v => v !== undefined && v !== null) ?? '-')
-                                : '-';
-                            fieldCells.push(`<div class="table-data">${fieldValue}</div>`);
-                        });
-                    } else {
-                        for (let i = 0; i < maxFields; i++) {
-                            if (i < fields.length) {
-                                const field = fields[i];
-                                const fieldValue = isSubmitted ? (submission?.data?.[field.key] ?? '-') : '-';
-                                fieldCells.push(`<div class="table-data">${fieldValue}</div>`);
-                            } else {
-                                fieldCells.push(`<div class="table-data">-</div>`);
-                            }
-                        }
-                    }
-
-                    tableRows += `
-                        <div class="table-row">
-                            <div class="table-dept-name" onclick="viewSubmissionData('${groupKey}', '${itemName.replace(/'/g, "\\'")}', '${itemDeptType}', '${weekKey}')" style="cursor:pointer;${isSubmitted ? '' : 'opacity:0.6'}">
-                                ${itemName}
-                            </div>
-                            ${fieldCells.join('')}
-                            <div class="table-status">
-                                <span class="table-status-badge ${isSubmitted ? 'submitted' : 'missing'}">
-                                    ${isSubmitted ? '✓' : '–'}
-                                </span>
-                            </div>
-                            <div class="table-time">${submitTimeStr}</div>
-                        </div>
-                    `;
-                });
-
-                if (tableRows && allFields) {
-                    const fieldHeaders = allFields.map(f => `<div>${f.label}</div>`).join('');
-                    const gridTemplate = `2fr ${allFields.map(() => '1fr').join(' ')} 0.8fr 1fr`;
-
-                    html += `
-                        <div style="margin-bottom:var(--s8)">
-                            <h3 style="font-size:15px;font-weight:700;color:var(--color-text-primary);margin-bottom:var(--s4)">${group.label}</h3>
-                            <div class="data-table" style="grid-template-columns: ${gridTemplate}">
-                                <div class="table-header">
-                                    <div>부서</div>
-                                    ${fieldHeaders}
-                                    <div>상태</div>
-                                    <div>제출시간</div>
-                                </div>
-                                ${tableRows}
-                            </div>
-                        </div>
-                    `;
-                }
-            }
-        });
-
-        // 주일학교 (groups 구조 별도 처리)
-        if (shouldShowGroup('sunday_school')) DEPARTMENTS.sunday_school.groups.forEach(group => {
-            const fields = [
-                {label:'학생',key:'student'},
-                {label:'교사',key:'teacher'},
-                {label:'방문자',key:'visitor'},
-                {label:'등반자',key:'attendee'},
-                {label:'헌금',key:'offering'}
-            ];
-            const fieldHeaders = fields.map(f => `<div>${f.label}</div>`).join('');
-            const gridTemplate = `minmax(140px,1.15fr) 54px ${fields.map(() => 'minmax(62px,0.62fr)').join(' ')} 58px 126px`;
-
-            let tableRows = '';
-            group.items.forEach(item => {
-                const fullKey = `${weekKey}:sunday_school:${item.name}`;
-                const submission = submissionStatus[weekKey]?.[fullKey];
-                const isSubmitted = submission?.submitted || false;
-                const submittedAt = submission?.submittedAt ? new Date(submission.submittedAt) : null;
-                const submitTimeStr = submittedAt
-                    ? submittedAt.toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
-                    : '-';
-
-                const serviceRowHtml = (serviceLabel, prefix) => fields.map(f => {
-                    const val = isSubmitted ? (submission?.data?.[`${prefix}_${f.key}`] ?? '-') : '-';
-                    return `<div class="table-data">${val}</div>`;
-                }).join('');
-
-                tableRows += `
-                    <div class="table-row">
-                        <div class="table-dept-name school-dept-span" style="${isSubmitted ? '' : 'opacity:0.6'}">${item.name}</div>
-                        <div class="table-data school-service-cell">1부</div>
-                        ${serviceRowHtml('1부', 's1')}
-                        <div class="table-status school-status-span">
-                            <span class="table-status-badge ${isSubmitted ? 'submitted' : 'missing'}">${isSubmitted ? '✓' : '–'}</span>
-                        </div>
-                        <div class="table-time school-time-span">${submitTimeStr}</div>
-                        <div class="table-data school-service-cell">2부</div>
-                        ${serviceRowHtml('2부', 's2')}
-                    </div>
-                `;
+            const rows = items.map(item => {
+                const name = item.name || item;
+                const rec = submissionStatus[weekKey]?.[`${weekKey}:${groupKey}:${name}`];
+                return { name, data: rec?.data || null, at: rec?.submittedAt || null, done: !!rec?.submitted };
             });
+            const doneCount = rows.filter(r => r.done).length;
 
             html += `
-                <div style="margin-bottom:var(--s8)">
-                    <h3 style="font-size:15px;font-weight:700;color:var(--color-text-primary);margin-bottom:var(--s4)">주일학교 · ${group.name}</h3>
-                    <div class="data-table school-admin-table" style="grid-template-columns: ${gridTemplate}">
-                        <div class="table-header">
-                            <div>부서</div>
-                            <div>구분</div>
-                            ${fieldHeaders}
-                            <div>상태</div>
-                            <div>제출시간</div>
-                        </div>
-                        ${tableRows}
-                    </div>
+            <div class="ad-group">
+                <div class="ad-group-hdr">
+                    <div class="ad-group-title">${group.label}</div>
+                    <div class="ad-group-count ${doneCount === rows.length ? 'full' : ''}">${doneCount}/${rows.length}</div>
                 </div>
-            `;
+                <div class="ad-rows">
+                    ${rows.map(r => {
+                        const id = `${groupKey}::${r.name}`;
+                        const open = adminOpenRow === id;
+                        const total = r.done ? itemTotal(r.data) : null;
+                        const at = r.at ? new Date(r.at).toLocaleString('ko-KR', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+                        return `
+                        <div class="ad-row ${r.done ? '' : 'miss'} ${open ? 'open' : ''}"
+                             onclick="toggleAdminRow('${groupKey}', '${String(r.name).replace(/'/g, "\\'")}')">
+                            <span class="ad-dot ${r.done ? 'on' : ''}"></span>
+                            <span class="ad-name">${r.name}</span>
+                            <span class="ad-total">${total === null ? '–' : total.toLocaleString()}</span>
+                            <span class="ad-at">${at}</span>
+                            <span class="ad-caret">${open ? '▾' : '▸'}</span>
+                        </div>
+                        ${open ? adminRangeHTML(groupKey, r.name, weekKey) : ''}`;
+                    }).join('')}
+                </div>
+            </div>`;
         });
 
-        container.innerHTML = html || '<p style="text-align:center;padding:var(--s5);color:var(--color-text-tertiary)">조회 가능한 데이터가 없습니다</p>';
+        container.innerHTML = html || '<div class="ad-empty">표시할 항목이 없습니다.</div>';
+    }
+
+    /* 항목을 펼쳤을 때: 최근 N주 × 필드 표 */
+    function adminRangeHTML(groupKey, itemName, endWeekKey) {
+        const weeks = adminRecentWeeks(endWeekKey, adminRangeWeeks);
+        const recs = weeks.map(wk => ({ wk, data: submissionStatus[wk]?.[`${wk}:${groupKey}:${itemName}`]?.data || null }));
+
+        // 실제로 들어온 필드만 모아 열을 만든다
+        // 총계 성격의 필드는 따로 빼둔다. 그대로 열에 두면 '계'에서 이중으로 더해진다.
+        const cols = [];
+        recs.forEach(r => numericEntries(r.data).forEach(([k]) => {
+            if (!isTotalKey(k) && !cols.includes(k)) cols.push(k);
+        }));
+        if (!cols.length) {
+            return `<div class="ad-range"><div class="ad-range-empty">최근 ${adminRangeWeeks}주 안에 입력된 자료가 없습니다.</div></div>`;
+        }
+
+        const avg = {};
+        cols.forEach(c => {
+            const vals = recs.map(r => r.data?.[c]).filter(v => typeof v === 'number');
+            avg[c] = vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null;
+        });
+
+        return `
+        <div class="ad-range" onclick="event.stopPropagation()">
+            <div class="ad-range-hdr">
+                <span>${itemName} · 최근 ${adminRangeWeeks}주</span>
+                <span class="ad-range-btns">
+                    ${[4, 8, 12].map(n => `<button class="${n === adminRangeWeeks ? 'on' : ''}" onclick="setAdminRange(${n})">${n}주</button>`).join('')}
+                </span>
+            </div>
+            <div class="ad-scroll">
+                <table class="ad-table">
+                    <thead><tr><th>주차</th>${cols.map(c => `<th>${c}</th>`).join('')}<th class="ad-sum">계</th></tr></thead>
+                    <tbody>
+                        ${recs.map(r => {
+                            const has = !!r.data;
+                            const sum = has ? itemTotal(r.data) : null;
+                            return `<tr class="${has ? '' : 'miss'} ${r.wk === endWeekKey ? 'cur' : ''}">
+                                <th>${Number(r.wk.slice(5,7))}/${Number(r.wk.slice(8,10))}</th>
+                                ${cols.map(c => `<td>${has && r.data[c] !== undefined ? Number(r.data[c]).toLocaleString() : '–'}</td>`).join('')}
+                                <td class="ad-sum">${sum === null ? '–' : sum.toLocaleString()}</td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                    <tfoot><tr><th>평균</th>${cols.map(c => `<td>${avg[c] === null ? '–' : avg[c].toLocaleString()}</td>`).join('')}
+                        <td class="ad-sum">${(() => {
+                            const t = recs.map(r => r.data ? itemTotal(r.data) : null).filter(v => v !== null);
+                            return t.length ? Math.round(t.reduce((a, b) => a + b, 0) / t.length).toLocaleString() : '–';
+                        })()}</td></tr></tfoot>
+                </table>
+            </div>
+        </div>`;
     }
 
     /* ══════════════════════════════════════════════════
