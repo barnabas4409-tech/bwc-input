@@ -2014,6 +2014,17 @@
                         </div>
                         <div id="sheet-query-result" style="margin-top:var(--s4)"></div>
                     </div>
+
+                    <!-- 시트 조회 키 -->
+                    <div class="form-card" style="margin-top:var(--s4)">
+                        <div class="form-card-title">시트 조회 키</div>
+                        <p style="font-size:12px;color:var(--color-text-tertiary);margin-bottom:var(--s3)">이 기기에만 저장됩니다. 넣어 두면 데이터 현황과 입력 폼의 기존 값 표시가 됩니다.</p>
+                        <div style="display:flex;gap:var(--s3);align-items:center">
+                            <input type="password" id="read-key-input" placeholder="관리자에게 문의" autocomplete="off" style="flex:1;padding:8px 12px;border:1.5px solid var(--color-border-strong);border-radius:var(--r);font-size:13px;font-family:inherit;background:var(--color-bg-subtle);color:var(--color-text-primary)" />
+                            <button class="btn-secondary" onclick="saveReadKey()" style="flex-shrink:0;padding:8px 16px">저장</button>
+                        </div>
+                        <div id="read-key-msg" style="margin-top:var(--s2);font-size:12px"></div>
+                    </div>
                 </div>
             </div>
 
@@ -5441,13 +5452,45 @@
         if (k) { try { localStorage.setItem(READ_KEY_STORE, k); } catch {} }
         return k;
     }
-    async function gasGet(weekKeys) {
-        let key = getReadKey() || askReadKey();
-        if (!key) throw new Error('조회 키가 필요합니다');
+    /* ask=false 면 키가 없을 때 묻지 않고 조용히 비운다.
+       입력 폼을 열 때 기존 값을 미리 채우는 용도로도 쓰이는데, 거기서
+       키를 물으면 그냥 입력하러 온 교역자에게 난데없는 창이 뜬다. */
+    async function saveReadKey() {
+        const el = document.getElementById('read-key-input');
+        const msg = document.getElementById('read-key-msg');
+        const k = (el.value || '').trim();
+        if (!k) { msg.textContent = '키를 넣어 주세요'; msg.style.color = 'var(--color-text-tertiary)'; return; }
+        msg.textContent = '확인 중...'; msg.style.color = 'var(--color-text-tertiary)';
+        try {
+            const r = await fetch(`${GAS_URL}?weekKeys=${todayWeekKey()}&key=${encodeURIComponent(k)}`).then(x => x.json());
+            if (r && r.error === 'forbidden') {
+                msg.textContent = '키가 맞지 않습니다'; msg.style.color = 'var(--color-danger, #dc2626)'; return;
+            }
+            try { localStorage.setItem(READ_KEY_STORE, k); } catch {}
+            el.value = '';
+            msg.textContent = '저장했습니다'; msg.style.color = 'var(--color-success, #059669)';
+        } catch (e) {
+            msg.textContent = '확인 실패 — ' + e.message; msg.style.color = 'var(--color-danger, #dc2626)';
+        }
+    }
+
+    function todayWeekKey() {
+        const d = new Date(); d.setDate(d.getDate() - d.getDay());
+        return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'),
+                String(d.getDate()).padStart(2, '0')].join('-');
+    }
+
+    async function gasGet(weekKeys, ask = true) {
+        let key = getReadKey() || (ask ? askReadKey() : '');
+        if (!key) {
+            if (!ask) return null;
+            throw new Error('조회 키가 필요합니다');
+        }
         const call = k => fetch(`${GAS_URL}?weekKeys=${weekKeys}&key=${encodeURIComponent(k)}`).then(r => r.json());
         let json = await call(key);
         if (json && json.error === 'forbidden') {          // 키가 틀렸다 — 다시 받는다
             try { localStorage.removeItem(READ_KEY_STORE); } catch {}
+            if (!ask) return null;
             key = askReadKey();
             if (!key) throw new Error('조회 키가 필요합니다');
             json = await call(key);
@@ -5518,7 +5561,7 @@
             for (let i = 0; i < allWeekKeys.length; i += GAS_BATCH_SIZE) {
                 const batch = allWeekKeys.slice(i, i + GAS_BATCH_SIZE);
                 const json = await gasGet(batch.join(','));
-                if (json.success) mergeSheetData(json.data);
+                if (json && json.success) mergeSheetData(json.data);
             }
 
             trimOldLocalStorage();
@@ -5542,8 +5585,8 @@
 
     async function fetchWeekOnDemand(weekKey, renderFn) {
         try {
-            const json = await gasGet(weekKey);
-            if (json.success) {
+            const json = await gasGet(weekKey, false);
+            if (json && json.success) {
                 delete submissionStatus[weekKey];
                 if (json.data?.[weekKey]) {
                     mergeSheetData({ [weekKey]: json.data[weekKey] });
@@ -5590,7 +5633,7 @@
 
         try {
             const json = await gasGet(weekKey);
-            if (!json.success || !json.data[weekKey]) {
+            if (!json || !json.success || !json.data[weekKey]) {
                 resultEl.innerHTML = `<p style="color:var(--color-text-tertiary);font-size:13px">해당 주차 데이터가 없습니다.</p>`;
                 return;
             }
