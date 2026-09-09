@@ -3289,7 +3289,7 @@
         const newWeekKey = document.getElementById('form-week-select').value;
         // 부서 선택 화면 드롭다운 동기화
         document.getElementById('input-week-select').value = newWeekKey;
-        prefillItem(newWeekKey, deptItem?.name, () => openForm(groupKey, deptItem));
+        prefillItem(newWeekKey, groupKey, deptItem?.name, () => openForm(groupKey, deptItem));
     }
 
     function renderPreviousWeeksData(groupKey, deptItem, currentWeekKey) {
@@ -4886,7 +4886,7 @@
         if (!currentSundaySchoolContext) return;
         const newWeekKey = document.getElementById('sunday-school-form-week-select').value;
         document.getElementById('sunday-school-week-select').value = newWeekKey;
-        prefillItem(newWeekKey, currentSundaySchoolContext.deptItem?.name, () => openSundaySchoolForm(
+        prefillItem(newWeekKey, currentSundaySchoolContext.groupKey, currentSundaySchoolContext.deptItem?.name, () => openSundaySchoolForm(
             currentSundaySchoolContext.groupKey,
             currentSundaySchoolContext.deptItem,
             newWeekKey
@@ -5541,8 +5541,9 @@
         rerender();
     }
 
-    async function prefillItem(weekKey, itemName, renderFn) {
-        PREFILLED.delete(`${weekKey}:sunday:${itemName}`);
+    /* 주차를 바꾸면 그 주 값을 다시 받아야 한다 */
+    function prefillItem(weekKey, groupKey, itemName, renderFn) {
+        PREFILLED.delete(`${weekKey}:${groupKey}:${itemName}`);
         renderFn();
     }
 
@@ -5558,6 +5559,9 @@
         }
     }
     const CACHE_WEEKS = 26; // localStorage 캐시 범위 (최근 6개월)
+    // 시작할 때 한 번에 훑는 주차. Apps Script 는 한 사람 요청을 한 번에 하나씩만
+    // 처리해서, 여기서 26주를 두 번에 나눠 받으면 폼에 채울 값이 그만큼 밀린다.
+    const SYNC_WEEKS = 12;  // 나머지 주차는 그 주를 고를 때 받아 온다
 
     function buildFieldLookup() {
         const groupByLabel = {};
@@ -5611,7 +5615,7 @@
                 const [y, m, d] = getWeekKey('sunday').split('-').map(Number);
                 return new Date(y, m - 1, d);
             })();
-            const allWeekKeys = Array.from({length: CACHE_WEEKS}, (_, i) => {
+            const allWeekKeys = Array.from({length: SYNC_WEEKS}, (_, i) => {
                 const dt = new Date(base);
                 dt.setDate(dt.getDate() - i * 7);
                 return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
