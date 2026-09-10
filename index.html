@@ -2437,6 +2437,21 @@
                     {label: '결혼(부부)', key: 'marriage'},
                     {label: '초신자', key: 'new_believer'}
                 ] },
+                { name: '등록자', grid: 'age', fields: [
+                    {label: '20대 이하 남', key: 'age0_m'},
+                    {label: '20대 이하 여', key: 'age0_f'},
+                    {label: '30대 남', key: 'age1_m'},
+                    {label: '30대 여', key: 'age1_f'},
+                    {label: '40대 남', key: 'age2_m'},
+                    {label: '40대 여', key: 'age2_f'},
+                    {label: '50대 남', key: 'age3_m'},
+                    {label: '50대 여', key: 'age3_f'},
+                    {label: '60대 남', key: 'age4_m'},
+                    {label: '60대 여', key: 'age4_f'},
+                    {label: '70대 이상 남', key: 'age5_m'},
+                    {label: '70대 이상 여', key: 'age5_f'},
+                    {label: '비고', key: 'note', type: 'text'}
+                ] },
                 { name: '청년 새가족', fields: [
                     {label: '등록 가능', key: 'reg_available'},
                     {label: '등록 불가능', key: 'reg_unavailable'},
@@ -3058,6 +3073,8 @@
     let currentFormContext = { groupKey: null, deptItem: null };
 
     function openForm(groupKey, deptItem) {
+        // 연령대×성별처럼 칸이 많은 항목은 세로로 늘어놓으면 못 쓴다. 표로 넘긴다.
+        if (deptItem && deptItem.grid === 'age') return openAgeGrid(groupKey, deptItem);
         districtGridContext = null;
         worshipCtx = null;
         const _sb = document.getElementById('form-submit-btn');
@@ -4162,6 +4179,164 @@
        교구를 하나씩 15번 열지 않고 한 표에서 모두 입력한다.
        구글시트(GAS)는 항목 하나씩 받으므로, 제출할 때 교구별로 나눠 보낸다.
        ══════════════════════════════════════════════════ */
+    /* ── 등록자 연령대 × 성별 ──
+       교적 자료에서 손으로 피벗을 만들어 쓰던 것을 여기서 바로 받는다.
+       이름·연락처 같은 개인정보는 넣지 않는다 — 집계만 있으면 된다. */
+    let ageGridCtx = null;
+    const AGE_BANDS = ['20대 이하', '30대', '40대', '50대', '60대', '70대 이상'];
+
+    function openAgeGrid(groupKey, deptItem) {
+        districtGridContext = null;
+        worshipCtx = null;
+        ageGridCtx = { groupKey, deptItem };
+        currentFormContext = { groupKey, deptItem };
+
+        document.getElementById('screen-select').style.display = 'none';
+        document.getElementById('screen-form').style.display = 'block';
+        document.getElementById('screen-done').style.display = 'none';
+        document.getElementById('screen-previous').style.display = 'none';
+
+        document.getElementById('form-dept-name').textContent = '새가족 · 등록자';
+        const meta = document.getElementById('form-dept-meta');
+        if (meta) meta.textContent = '교육을 마치고 등록한 사람 — 연령대·성별';
+        const alertArea = document.getElementById('form-alert-area');
+        if (alertArea) alertArea.innerHTML = '';
+        const prevArea = document.getElementById('form-previous-weeks-area');
+        if (prevArea) prevArea.style.display = 'none';
+
+        const formWeekSelect = document.getElementById('form-week-select');
+        const allWeeks = getPreviousWeeks();
+        const cur = getWeekKey('sunday');
+        if (!allWeeks.includes(cur)) allWeeks.unshift(cur);
+        formWeekSelect.innerHTML = '';
+        allWeeks.forEach(wk => {
+            const opt = document.createElement('option');
+            opt.value = wk;
+            const [, m, d] = wk.split('-').map(Number);
+            opt.textContent = `📅 ${m}월 ${d}일(주일)`;
+            formWeekSelect.appendChild(opt);
+        });
+        formWeekSelect.value = document.getElementById('input-week-select')?.value || cur;
+        formWeekSelect.onchange = () => openAgeGrid(groupKey, deptItem);
+
+        document.getElementById('form-fields-area').innerHTML = `
+        <div class="form-card">
+            <div class="form-card-title">등록자 · 연령대별 인원</div>
+            <div class="grid-scroll">
+                <table class="grid-table">
+                    <thead><tr>
+                        <th class="grid-sticky">연령대</th><th>남</th><th>여</th><th class="grid-sum">계</th>
+                    </tr></thead>
+                    <tbody>
+                        ${AGE_BANDS.map((b, i) => `
+                        <tr>
+                            <th class="grid-sticky">${b}</th>
+                            <td><input type="number" inputmode="numeric" min="0" class="grid-input"
+                                       data-row="${b}" data-key="age${i}_m" oninput="updateAgeTotals()" placeholder="·"></td>
+                            <td><input type="number" inputmode="numeric" min="0" class="grid-input"
+                                       data-row="${b}" data-key="age${i}_f" oninput="updateAgeTotals()" placeholder="·"></td>
+                            <td class="grid-sum" data-rowsum="${b}">0</td>
+                        </tr>`).join('')}
+                    </tbody>
+                    <tfoot><tr>
+                        <th class="grid-sticky">합계</th>
+                        <td class="grid-sum" data-colsum="m">0</td>
+                        <td class="grid-sum" data-colsum="f">0</td>
+                        <td class="grid-sum grid-total" data-grandsum>0</td>
+                    </tr></tfoot>
+                </table>
+            </div>
+            <label style="display:block;margin-top:var(--s4);font-size:12px;color:var(--color-text-tertiary)">비고
+                <input type="text" id="age-note" style="width:100%;margin-top:var(--s2);padding:8px 12px;border:1.5px solid var(--color-border-strong);border-radius:var(--r);font:inherit;font-size:13px">
+            </label>
+            <div class="grid-hint">교육을 마치고 <b>등록한</b> 사람만 넣습니다. 등록요청·등록가능은 장년/청년 새가족 항목에 그대로 넣으세요.
+                빈 칸은 0으로 저장됩니다.</div>
+        </div>`;
+
+        restoreAgeGrid(formWeekSelect.value);
+        updateAgeTotals();
+
+        const btn = document.getElementById('form-submit-btn');
+        btn.setAttribute('onclick', 'submitAgeGrid()');
+        btn.textContent = '제출하기';
+        btn.disabled = false;
+        btn.classList.remove('btn-loading');
+    }
+
+    function updateAgeTotals() {
+        let gm = 0, gf = 0;
+        AGE_BANDS.forEach((b, i) => {
+            const m = +(document.querySelector(`.grid-input[data-key="age${i}_m"]`)?.value || 0);
+            const f = +(document.querySelector(`.grid-input[data-key="age${i}_f"]`)?.value || 0);
+            gm += m; gf += f;
+            const cell = document.querySelector(`[data-rowsum="${b}"]`);
+            if (cell) cell.textContent = m + f;
+        });
+        const set = (sel, v) => { const el = document.querySelector(sel); if (el) el.textContent = v; };
+        set('[data-colsum="m"]', gm); set('[data-colsum="f"]', gf); set('[data-grandsum]', gm + gf);
+    }
+
+    function restoreAgeGrid(weekKey) {
+        const saved = submissionStatus[weekKey]?.[`${weekKey}:newfam:등록자`]?.data || {};
+        document.querySelectorAll('.grid-input').forEach(inp => {
+            const v = saved[inp.dataset.key];
+            if (v != null && v !== '') inp.value = v;
+        });
+        const note = document.getElementById('age-note');
+        if (note && saved.note) note.value = saved.note;
+    }
+
+    async function submitAgeGrid() {
+        if (!ageGridCtx) return;
+        const weekKey = document.getElementById('form-week-select').value;
+        const alertArea = document.getElementById('form-alert-area');
+        const data = {};
+        document.querySelectorAll('.grid-input').forEach(inp => {
+            data[inp.dataset.key] = inp.value.trim() === '' ? 0 : (parseInt(inp.value) || 0);
+        });
+        const note = (document.getElementById('age-note')?.value || '').trim();
+        if (note) data.note = note;
+        if (!Object.entries(data).some(([k, v]) => k !== 'note' && v > 0)) {
+            if (alertArea) alertArea.innerHTML = `<div style="padding:var(--s3) var(--s4);background:var(--color-negative-bg);border:1px solid rgba(192,18,60,0.2);border-radius:var(--r);color:var(--color-negative);font-size:13px">⚠️ 최소 한 명 이상 입력해주세요</div>`;
+            return;
+        }
+
+        const btn = document.getElementById('form-submit-btn');
+        btn.classList.add('btn-loading'); btn.disabled = true; btn.textContent = '저장 중…';
+
+        const item = ageGridCtx.deptItem;
+        const formDataKorean = {};
+        item.fields.forEach(f => { if (data[f.key] !== undefined) formDataKorean[f.label] = data[f.key]; });
+        try {
+            const res = await fetch(GAS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ weekKey, groupKey: '새가족', itemName: '등록자', formData: formDataKorean }),
+            });
+            const out = await res.json();
+            if (!res.ok || !out.success) throw new Error(out.message || '저장 실패');
+            markSubmitted('newfam', '등록자', getDeptType('newfam'), data, weekKey,
+                          { submittedAt: out.savedAt || new Date().toISOString(), fromSheet: true });
+            PREFILLED.delete(`${weekKey}:newfam:등록자`);
+            document.getElementById('screen-form').style.display = 'none';
+            document.getElementById('screen-done').style.display = 'block';
+            document.getElementById('done-dept-name').textContent = '등록자 제출 완료';
+            const sub = document.getElementById('done-subtitle');
+            const total = Object.entries(data).filter(([k]) => k !== 'note').reduce((a, [, v]) => a + v, 0);
+            if (sub) sub.textContent = `${total}명 구글시트 저장 완료 · 감사합니다`;
+            const now = new Date();
+            document.getElementById('done-time').textContent =
+                `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            const area = document.getElementById('done-data-area');
+            if (area) area.innerHTML = '';
+            renderDepartmentList(); renderStatus();
+        } catch (e) {
+            if (alertArea) alertArea.innerHTML = `<div style="padding:var(--s3) var(--s4);background:var(--color-negative-bg);border:1px solid rgba(192,18,60,0.2);border-radius:var(--r);color:var(--color-negative);font-size:13px">⚠️ ${e.message}</div>`;
+        } finally {
+            btn.classList.remove('btn-loading'); btn.disabled = false; btn.textContent = '제출하기';
+        }
+    }
+
     let districtGridContext = null;
 
     function districtCols(groupKey) {
