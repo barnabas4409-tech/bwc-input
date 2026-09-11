@@ -2437,7 +2437,7 @@
                     {label: '결혼(부부)', key: 'marriage'},
                     {label: '초신자', key: 'new_believer'}
                 ] },
-                { name: '등록자', grid: 'age', fields: [
+                { name: '장년등록자', grid: 'age', fields: [
                     {label: '20대 이하 남', key: 'age0_m'},
                     {label: '20대 이하 여', key: 'age0_f'},
                     {label: '30대 남', key: 'age1_m'},
@@ -4196,7 +4196,7 @@
         document.getElementById('screen-done').style.display = 'none';
         document.getElementById('screen-previous').style.display = 'none';
 
-        document.getElementById('form-dept-name').textContent = '새가족 · 등록자';
+        document.getElementById('form-dept-name').textContent = '새가족 · 장년등록자';
         const meta = document.getElementById('form-dept-meta');
         if (meta) meta.textContent = '교육을 마치고 등록한 사람 — 연령대·성별';
         const alertArea = document.getElementById('form-alert-area');
@@ -4221,7 +4221,7 @@
 
         document.getElementById('form-fields-area').innerHTML = `
         <div class="form-card">
-            <div class="form-card-title">등록자 · 연령대별 인원</div>
+            <div class="form-card-title">장년등록자 · 연령대별 인원</div>
             <div class="grid-scroll">
                 <table class="grid-table">
                     <thead><tr>
@@ -4276,7 +4276,7 @@
     }
 
     function restoreAgeGrid(weekKey) {
-        const saved = submissionStatus[weekKey]?.[`${weekKey}:newfam:등록자`]?.data || {};
+        const saved = submissionStatus[weekKey]?.[`${weekKey}:newfam:장년등록자`]?.data || {};
         document.querySelectorAll('.grid-input').forEach(inp => {
             const v = saved[inp.dataset.key];
             if (v != null && v !== '') inp.value = v;
@@ -4310,16 +4310,16 @@
             const res = await fetch(GAS_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ weekKey, groupKey: '새가족', itemName: '등록자', formData: formDataKorean }),
+                body: JSON.stringify({ weekKey, groupKey: '새가족', itemName: '장년등록자', formData: formDataKorean }),
             });
             const out = await res.json();
             if (!res.ok || !out.success) throw new Error(out.message || '저장 실패');
-            markSubmitted('newfam', '등록자', getDeptType('newfam'), data, weekKey,
+            markSubmitted('newfam', '장년등록자', getDeptType('newfam'), data, weekKey,
                           { submittedAt: out.savedAt || new Date().toISOString(), fromSheet: true });
-            PREFILLED.delete(`${weekKey}:newfam:등록자`);
+            PREFILLED.delete(`${weekKey}:newfam:장년등록자`);
             document.getElementById('screen-form').style.display = 'none';
             document.getElementById('screen-done').style.display = 'block';
-            document.getElementById('done-dept-name').textContent = '등록자 제출 완료';
+            document.getElementById('done-dept-name').textContent = '장년등록자 제출 완료';
             const sub = document.getElementById('done-subtitle');
             const total = Object.entries(data).filter(([k]) => k !== 'note').reduce((a, [, v]) => a + v, 0);
             if (sub) sub.textContent = `${total}명 구글시트 저장 완료 · 감사합니다`;
