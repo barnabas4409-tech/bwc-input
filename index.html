@@ -2310,11 +2310,11 @@
         weekday: {
             label: '주중예배/새벽기도',
             items: [
-                { name: '수요예배', baseDay: 3, fields: [
+                { name: '수요예배', baseDay: -4, fields: [
                     { label: '인원', key: 'count' },
                     { label: '비고', key: 'note', type: 'text' }
                 ]},
-                { name: '금요기도회', baseDay: 5, fields: [
+                { name: '금요기도회', baseDay: -2, fields: [
                     { label: '인원', key: 'count' },
                     { label: '비고', key: 'note', type: 'text' }
                 ]},
@@ -5961,9 +5961,8 @@
         const rawDate = dateInput.value;
         if (!rawDate) return;
 
-        const d = new Date(rawDate + 'T00:00:00');
-        d.setDate(d.getDate() - d.getDay());
-        const weekKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        // 주차는 '그 주가 끝나는 주일'이다. 9/23(수)을 고르면 9/27 주차.
+        const weekKey = sundayOfWeek(rawDate);
 
         resultEl.innerHTML = `<p style="color:var(--color-text-tertiary);font-size:13px">⏳ ${weekKey} 불러오는 중...</p>`;
 
