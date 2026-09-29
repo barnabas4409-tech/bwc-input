@@ -2331,10 +2331,19 @@
                     ]
                 },
                 {
+                    /* 실시간 접속 PC 수를 센다. 주일은 부별로 따로 세고
+                       '주일 온라인'은 1~5부 합계를 자동으로 채운다 —
+                       대시보드가 예전부터 읽어 온 칸이라 그대로 남겨 둔다. */
                     name: '온라인예배',
                     baseDay: 0,
                     fields: [
-                        { label: '주일 온라인', key: 'sunday_online' },
+                        { label: '주일 1부', key: 'sun1_online' },
+                        { label: '주일 2부', key: 'sun2_online' },
+                        { label: '주일 3부', key: 'sun3_online' },
+                        { label: '주일 4부', key: 'sun4_online' },
+                        { label: '주일 5부', key: 'sun5_online' },
+                        { label: '주일 온라인', key: 'sunday_online', isTotal: true,
+                          sumOf: ['sun1_online','sun2_online','sun3_online','sun4_online','sun5_online'] },
                         { label: '수요 온라인', key: 'wed_online' },
                         { label: '금요 온라인', key: 'fri_online' }
                     ]
@@ -3153,7 +3162,11 @@
         const dawnDayOffset = { mon: -6, tue: -5, wed: -4, thu: -3, fri: -2, sat: -1 };
         const isDawn = deptItem.name === '새벽기도';
         // 온라인예배: 주일·수요·금요 각 날짜 매핑
-        const onlineDayOffset = { sunday_online: 0, wed_online: 3, fri_online: 5 };
+        // 새벽기도(월~토)와 같은 주간을 가리키도록 수요·금요는 주일 직전으로 센다
+        const onlineDayOffset = {
+            sun1_online: 0, sun2_online: 0, sun3_online: 0, sun4_online: 0, sun5_online: 0,
+            sunday_online: 0, wed_online: -4, fri_online: -2,
+        };
         const isOnline = deptItem.name === '온라인예배';
 
         // 이전 2주 데이터 조회
@@ -3395,7 +3408,10 @@
         deptItem.fields.forEach(field => {
             if (field.isTotal) {
                 const deptPrefix = field.key.replace(' 총계', '');
-                const relatedFields = deptItem.fields.filter(f => !f.isTotal && f.key.startsWith(deptPrefix));
+                // sumOf 를 적어 두면 그 칸들만 더한다. 없으면 이름 앞부분으로 찾는다.
+                const relatedFields = field.sumOf
+                    ? field.sumOf.map(k => ({ key: k }))
+                    : deptItem.fields.filter(f => !f.isTotal && f.key.startsWith(deptPrefix));
                 const totalInput = document.querySelector(`[data-field="${field.key}"]`);
                 if (totalInput) {
                     const total = relatedFields.reduce((sum, f) => {
@@ -4598,17 +4614,19 @@
             }
         });
 
-        // 총계 자동 계산 (주일예배 등에서)
-        if (groupKey === 'sunday' || groupKey === 'youth') {
+        // 총계 자동 계산 — sumOf 가 있으면 그 칸들만, 없으면 이름 앞부분으로 찾는다
+        {
             const fields = deptItem.fields || [];
             fields.forEach(field => {
-                if (field.isTotal) {
-                    // 총계 키에서 부서명 추출 (예: '서현 총계' → '서현')
-                    const deptPrefix = field.key.replace(' 총계', '');
-                    const relatedFields = fields.filter(f => !f.isTotal && f.key.startsWith(deptPrefix));
-                    const total = relatedFields.reduce((sum, f) => sum + (formData[f.key] || 0), 0);
-                    formData[field.key] = total;
-                }
+                if (!field.isTotal) return;
+                if (!field.sumOf && groupKey !== 'sunday' && groupKey !== 'youth') return;
+                // 총계 키에서 부서명 추출 (예: '서현 총계' → '서현')
+                const deptPrefix = field.key.replace(' 총계', '');
+                const relatedFields = field.sumOf
+                    ? field.sumOf.map(k => ({ key: k }))
+                    : fields.filter(f => !f.isTotal && f.key.startsWith(deptPrefix));
+                const total = relatedFields.reduce((sum, f) => sum + (formData[f.key] || 0), 0);
+                formData[field.key] = total;
             });
         }
 
@@ -4635,7 +4653,12 @@
         setTimeout(async () => {
             try {
             // Google Apps Script로 데이터 전송 (한글 라벨로 변환)
-            const fields = deptItem.fields || [{label: '인원', key: 'count'}];
+            // 폼이 자동으로 붙여 준 '비고' 도 같이 넣는다. 빼면 비고가
+            // 라벨 없이 'note' 라는 칸으로 시트에 들어간다.
+            const fields = [...(deptItem.fields || [{label: '인원', key: 'count'}])];
+            if (!fields.some(f => f.key === 'note')) {
+                fields.push({ label: '비고', key: 'note', type: 'text' });
+            }
             const labelMap = {};
             const textFieldKeys = new Set(fields.filter(f => f.type === 'text').map(f => f.key));
             fields.forEach(field => { labelMap[field.key] = field.label; });
@@ -5857,7 +5880,39 @@
         });
     }
 
-    async function fetchWeekOnDemand(weekKey, renderFn) {
+    /* 주차를 옮길 때 시트를 다시 확인한다는 표시.
+       구글 시트 왕복이 5초를 넘어서, 아무 표시가 없으면 멈춘 줄로 안다. */
+    function setWeekBusy(selectId, on) {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        const id = 'wk-busy-' + selectId;
+        let tag = document.getElementById(id);
+        if (on) {
+            if (!tag) {
+                tag = document.createElement('span');
+                tag.id = id;
+                tag.textContent = '시트 확인 중…';
+                tag.setAttribute('role', 'status');
+                tag.style.cssText = 'font-size:11px;color:var(--color-text-tertiary);white-space:nowrap';
+                select.parentNode.appendChild(tag);
+            }
+            tag.style.display = '';
+        } else if (tag) {
+            tag.style.display = 'none';
+        }
+    }
+
+    /* 고른 주차를 그린다.
+
+       갖고 있는 것으로 **먼저** 그린다. 처음 들어올 때 최근 12주를 이미
+       받아 두므로 대개는 이 한 번으로 끝난다. 시트 왕복을 기다렸다 그리면
+       ‹ › 를 눌러도 몇 초 동안 앞 주차 화면이 그대로 남아, 주차만 바뀌고
+       내용은 안 바뀌는 것처럼 보인다. 받아 온 뒤 달라진 게 있으면 다시
+       그린다 — 늦게 도착해도 renderFn 이 그때의 선택을 읽으니 어긋나지 않는다. */
+    async function fetchWeekOnDemand(weekKey, renderFn, selectId) {
+        renderFn();
+        const before = JSON.stringify(submissionStatus[weekKey] || null);
+        if (selectId) setWeekBusy(selectId, true);
         try {
             const json = getReadKey()
                 ? await gasGet(weekKey)
@@ -5876,27 +5931,28 @@
         } catch(e) {
             console.warn('온디맨드 조회 실패:', weekKey, e);
         }
-        renderFn();
+        if (selectId) setWeekBusy(selectId, false);
+        if (JSON.stringify(submissionStatus[weekKey] || null) !== before) renderFn();
     }
 
     function onInputWeekChange() {
         const weekKey = getSelectedWeekKey('input-week-select');
-        fetchWeekOnDemand(weekKey, renderDepartmentList);
+        fetchWeekOnDemand(weekKey, renderDepartmentList, 'input-week-select');
     }
 
     function onSundaySchoolWeekChange() {
         const weekKey = getSelectedWeekKey('sunday-school-week-select');
-        fetchWeekOnDemand(weekKey, renderSundaySchoolDeptList);
+        fetchWeekOnDemand(weekKey, renderSundaySchoolDeptList, 'sunday-school-week-select');
     }
 
     function onStatusWeekChange() {
         const weekKey = getSelectedWeekKey('status-week-select');
-        fetchWeekOnDemand(weekKey, renderStatus);
+        fetchWeekOnDemand(weekKey, renderStatus, 'status-week-select');
     }
 
     function onAdminWeekChange() {
         const weekKey = getSelectedWeekKey('admin-week-select');
-        fetchWeekOnDemand(weekKey, renderAdminData);
+        fetchWeekOnDemand(weekKey, renderAdminData, 'admin-week-select');
     }
 
     async function querySheetByDate() {
