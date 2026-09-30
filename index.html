@@ -1233,6 +1233,13 @@
         justify-content: center;
         border-left: 1px solid var(--color-border-default);
     }
+    /* 지난주 값 줄 — 읽기만 하는 줄이라 입력 줄과 구분되게 흐리고 낮게 */
+    .school-matrix-prev {
+        background: var(--color-bg-subtle);
+        color: var(--color-text-tertiary);
+        font-size: 12px;
+    }
+    .school-matrix-prev .school-matrix-cell { min-height: 30px; }
     .school-matrix-cell:first-child {
         border-left: 0;
         font-weight: 700;
@@ -5257,6 +5264,15 @@
                                 </div>`;
                             }).join('')}
                         </div>
+                        ${[[prev1Label0, prev1Sub0], [prev2Label0, prev2Sub0]].map(([lab, sub]) => `
+                        <div class="school-matrix-row school-matrix-prev">
+                            <div class="school-matrix-cell">${lab}</div>
+                            ${metricFields.map(field => {
+                                const v = sub?.data?.[`${row.prefix}_${field.suffix}`];
+                                return `<div class="school-matrix-cell">${
+                                    v === undefined || v === null || v === '' ? '·' : Number(v).toLocaleString()}</div>`;
+                            }).join('')}
+                        </div>`).join('')}
                     `).join('')}
                 </div>
             </div>
