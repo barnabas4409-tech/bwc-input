@@ -2146,8 +2146,9 @@
                 <div class="admin-login">
                     <div class="admin-login-icon">🔒</div>
                     <h3>관리자 로그인</h3>
-                    <p>입력된 실제 데이터를 조회·수정하려면<br>관리자 비밀번호를 입력해주세요</p>
-                    <input type="password" class="admin-input" id="admin-pwd" placeholder="비밀번호" aria-label="관리자 비밀번호 입력" onkeydown="if(event.key==='Enter')adminLogin()">
+                    <p>입력된 실제 데이터를 조회·수정하려면<br>아이디와 비밀번호를 입력해주세요</p>
+                    <input type="text" class="admin-input" id="admin-id" placeholder="아이디" aria-label="관리자 아이디 입력" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter')adminLogin()">
+                    <input type="password" class="admin-input" id="admin-pwd" placeholder="비밀번호" aria-label="관리자 비밀번호 입력" autocomplete="current-password" onkeydown="if(event.key==='Enter')adminLogin()">
                     <button class="btn-primary" onclick="adminLogin()" aria-label="관리자 로그인하기">로그인</button>
                 </div>
             </div>
@@ -4846,19 +4847,29 @@
     }
     window.genAdminHash = async (pw) => { const h = await sha256Hex(pw); console.log(h); return h; };
 
+    /* 관리자 아이디. 대소문자·앞뒤 공백은 무시한다.
+       조회 키를 푸는 것은 비밀번호 쪽이라, 아이디는 여기서만 본다. */
+    const ADMIN_ID = 'admin';
+
     async function adminLogin() {
+        const idInput = document.getElementById('admin-id');
         const input = document.getElementById('admin-pwd');
+        const id = idInput.value.trim().toLowerCase();
         const pw = input.value;
-        const ok = (await sha256Hex(pw)) === ADMIN_PW_HASH;
+        const ok = id === ADMIN_ID && (await sha256Hex(pw)) === ADMIN_PW_HASH;
         if (ok) {
             await unlockReadKey(pw);   // 전체 조회 키를 이 비밀번호로 푼다
+            idInput.value = '';
             input.value = '';
             document.getElementById('admin-login-screen').style.display = 'none';
             document.getElementById('admin-dashboard').style.display = 'block';
             initAdminWeekSelect();
             renderAdminData();
         } else {
-            alert('비밀번호가 일치하지 않습니다');
+            // 어느 쪽이 틀렸는지는 알려 주지 않는다
+            alert('아이디 또는 비밀번호가 일치하지 않습니다');
+            input.value = '';
+            input.focus();
         }
     }
 
