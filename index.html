@@ -3092,7 +3092,16 @@
     // 현재 편집 중인 부서 정보
     let currentFormContext = { groupKey: null, deptItem: null };
 
-    function openForm(groupKey, deptItem) {
+    /* 지금 폼에 적혀 있는 값. 뒤에서 값을 받아 와 다시 그릴 때
+       사람이 치던 것을 잃지 않으려고 들고 있는다. */
+    function readFormInputs() {
+        const out = {};
+        document.querySelectorAll('#screen-form input.form-input[data-field]:not([disabled])')
+            .forEach(i => { if (i.value !== '') out[i.getAttribute('data-field')] = i.value; });
+        return out;
+    }
+
+    function openForm(groupKey, deptItem, keep) {
         // 연령대×성별처럼 칸이 많은 항목은 세로로 늘어놓으면 못 쓴다. 표로 넘긴다.
         if (deptItem && deptItem.grid === 'age') return openAgeGrid(groupKey, deptItem);
         districtGridContext = null;
@@ -3110,10 +3119,10 @@
 
         const deptName = deptItem.name || deptItem;
         document.getElementById('form-dept-name').textContent = deptName;
-        // 지난번 값을 뒤에서 받아 채운다 (있으면 그대로 다시 그린다)
-        setTimeout(() => ensureItemValues(
+        // 지난번 값을 뒤에서 받아 채운다 (이 주 + 비교 칸의 지난 2주)
+        setTimeout(() => ensureFormHistory(
             document.getElementById('form-week-select')?.value || getWeekKey('sunday'),
-            groupKey, deptName, () => openForm(groupKey, deptItem)), 0);
+            groupKey, deptName, () => openForm(groupKey, deptItem, readFormInputs())), 0);
 
         // 폼 내 주차 드롭다운 채우기
         const formWeekSelect = document.getElementById('form-week-select');
@@ -3257,11 +3266,21 @@
         document.getElementById('form-fields-area').innerHTML = fieldsHTML;
         document.getElementById('form-previous-weeks-area').style.display = 'none';
 
+        /* 이 주에 이미 낸 값이 있으면 채워 넣는다. 고치러 들어왔을 때
+           빈 칸부터 다시 치게 하면 안 된다. 치던 값(keep)이 우선이다. */
+        const mine = submissionStatus[selectedWeekKey]?.[`${selectedWeekKey}:${groupKey}:${deptName}`]?.data || {};
+        document.querySelectorAll('#screen-form input.form-input[data-field]').forEach(inp => {
+            const k = inp.getAttribute('data-field');
+            const v = keep && keep[k] !== undefined ? keep[k] : mine[k];
+            if (v !== undefined && v !== null && v !== '') inp.value = v;
+        });
+
         // 총계 필드 자동 업데이트 이벤트 연결
         const inputs = document.querySelectorAll('#screen-form input.form-input[data-field]:not([disabled])');
         inputs.forEach(input => {
             input.addEventListener('input', updateTotalFields);
         });
+        updateTotalFields();
     }
 
     function openSubmittedDept(groupKey, deptItem) {
@@ -3462,29 +3481,12 @@
         inputTab.setAttribute('aria-selected', 'true');
         document.getElementById('sec-input').classList.add('on');
 
-        // 입력 주차 드롭다운을 해당 주차로 맞추고 폼 열기
+        // 입력 주차 드롭다운을 해당 주차로 맞추고 폼 열기.
+        // 낸 값은 openForm 이 알아서 채운다 — 아직 안 받아 왔으면
+        // 뒤에서 받아 와 다시 그린다(ensureFormHistory).
         const inputWeekSelect = document.getElementById('input-week-select');
         if (inputWeekSelect && weekKey) inputWeekSelect.value = weekKey;
         openForm(groupKey, deptItem);
-
-        // 기존 데이터 미리 채우기
-        const fields = deptItem.fields || [{label: '인원', key: 'count'}];
-        fields.forEach(field => {
-            const input = document.querySelector(`[data-field="${field.key}"]`);
-            if (input && submission.data && submission.data[field.key] !== undefined) {
-                input.value = submission.data[field.key];
-            }
-        });
-
-        // 총계 필드 이벤트 연결 (중복 방지: remove 후 add)
-        const inputs = document.querySelectorAll('#screen-form input.form-input[data-field]:not([disabled])');
-        inputs.forEach(input => {
-            input.removeEventListener('input', updateTotalFields);
-            input.addEventListener('input', updateTotalFields);
-        });
-
-        // 초기 총계 값 계산 및 표시
-        updateTotalFields();
 
         // 사용자에게 수정 모드임을 알림
         const alertArea = document.getElementById('form-alert-area');
@@ -3770,6 +3772,11 @@
         const { meeting } = specialCtx;
         SPECIAL_PLACES.forEach(p => specialCtx.extras[p] = specialExtras(meeting, p, wk));
         renderSpecialForm();
+        setTimeout(() => ensureItemValues(wk, 'special', meeting.name, () => {
+            if (specialCtx?.meeting !== meeting) return;
+            SPECIAL_PLACES.forEach(p => specialCtx.extras[p] = specialExtras(meeting, p, wk));
+            renderSpecialForm();
+        }), 0);
     }
 
     function renderSpecialForm() {
@@ -4019,6 +4026,11 @@
 
         worshipCtx = { itemName, extras: savedExtraLocations(itemName, formWeekSelect.value) };
         renderWorshipGrid();
+        setTimeout(() => ensureItemValues(formWeekSelect.value, 'sunday', itemName, () => {
+            if (worshipCtx?.itemName !== itemName) return;   // 그 사이 다른 데로 갔으면 그만둔다
+            worshipCtx.extras = savedExtraLocations(itemName, formWeekSelect.value);
+            renderWorshipGrid();
+        }), 0);
 
         const btn = document.getElementById('form-submit-btn');
         btn.setAttribute('onclick', 'submitWorshipGrid()');
@@ -4029,6 +4041,10 @@
         formWeekSelect.onchange = () => {
             worshipCtx.extras = savedExtraLocations(worshipCtx.itemName, formWeekSelect.value);
             renderWorshipGrid();
+            ensureItemValues(formWeekSelect.value, 'sunday', worshipCtx.itemName, () => {
+                worshipCtx.extras = savedExtraLocations(worshipCtx.itemName, formWeekSelect.value);
+                renderWorshipGrid();
+            });
         };
     }
 
@@ -4263,6 +4279,8 @@
         });
         formWeekSelect.value = document.getElementById('input-week-select')?.value || cur;
         formWeekSelect.onchange = () => openAgeGrid(groupKey, deptItem);
+        setTimeout(() => ensureItemValues(formWeekSelect.value, groupKey, deptItem.name,
+            () => { if (ageGridCtx?.deptItem === deptItem) openAgeGrid(groupKey, deptItem); }), 0);
 
         document.getElementById('form-fields-area').innerHTML = `
         <div class="form-card">
@@ -4467,7 +4485,16 @@
         btn.disabled = false;
         btn.classList.remove('btn-loading');
 
-        formWeekSelect.onchange = () => { restoreDistrictGrid(groupKey, formWeekSelect.value); updateGridTotals(); };
+        formWeekSelect.onchange = () => {
+            restoreDistrictGrid(groupKey, formWeekSelect.value); updateGridTotals();
+            ensureGroupValues(formWeekSelect.value, groupKey, () => {
+                restoreDistrictGrid(groupKey, formWeekSelect.value); updateGridTotals();
+            });
+        };
+        setTimeout(() => ensureGroupValues(formWeekSelect.value, groupKey, () => {
+            if (districtGridContext?.groupKey !== groupKey) return;
+            restoreDistrictGrid(groupKey, formWeekSelect.value); updateGridTotals();
+        }), 0);
     }
 
     function restoreDistrictGrid(groupKey, weekKey) {
@@ -5146,7 +5173,7 @@
         currentSundaySchoolContext = { groupKey, deptItem, weekKey };
 
         const deptName = deptItem.name;
-        setTimeout(() => ensureItemValues(weekKey, groupKey, deptName,
+        setTimeout(() => ensureFormHistory(weekKey, groupKey, deptName,
             () => openSundaySchoolForm(groupKey, deptItem, weekKey)), 0);
         const [year, month, day] = weekKey.split('-').map(Number);
         const sundayDate = new Date(year, month - 1, day);
@@ -5821,6 +5848,65 @@
         rerender();
     }
 
+    /* 폼은 그 주 값만이 아니라 '지난 2주' 칸도 보여 준다.
+
+       그 두 주는 들어올 때 '냈다/안 냈다'만 받아 둔 터라 숫자가 없어,
+       비교 칸이 늘 가운뎃점(·)이었다. 폼을 열 때 세 주를 같이 받아 온다.
+       한 번 받은 주차는 PREFILLED 가 막아 주므로 다시 받지 않는다. */
+    function weeksBackFrom(weekKey, n) {
+        const [y, m, d] = weekKey.split('-').map(Number);
+        const out = [];
+        for (let i = 0; i <= n; i++) {
+            const dt = new Date(y, m - 1, d - i * 7);
+            out.push(`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`);
+        }
+        return out;
+    }
+
+    /* 표 화면(주일예배 장소별·교구·연령대·특별예배)은 저장된 값을 되살려
+       보여 준다. 그런데 그 값은 들어올 때 받아 두지 않는다 — 제출 여부만
+       받는다. 그래서 지난주를 열면 냈는데도 칸이 다 비어 보였다.
+       화면을 열 때 그 주 값을 받아 와 다시 그린다. */
+    const GROUP_FETCHED = new Set();
+    async function ensureGroupValues(weekKey, groupKey, rerender) {
+        if (!weekKey || !groupKey) return;
+        const mark = `${weekKey}::${groupKey}`;
+        if (GROUP_FETCHED.has(mark)) return;
+        GROUP_FETCHED.add(mark);
+        const label = DEPARTMENTS[groupKey]?.label || groupKey;
+        try {
+            const q = new URLSearchParams({ mode: 'item', weekKeys: weekKey, group: label });
+            const json = await fetch(`${GAS_URL}?${q}`).then(r => r.json());
+            const got = json?.success ? json.data?.[weekKey] : null;
+            if (!got || !Object.keys(got).length) return;
+            mergeSheetData({ [weekKey]: got });
+            saveSubmissionStatus();
+            rerender();
+        } catch (e) {
+            GROUP_FETCHED.delete(mark);
+            console.warn('묶음 조회 실패:', groupKey, e);
+        }
+    }
+
+    async function ensureFormHistory(weekKey, groupKey, itemName, rerender) {
+        if (!weekKey || !itemName) return;
+        const weeks = weeksBackFrom(weekKey, 2).filter(w => {
+            const fk = `${w}:${groupKey}:${itemName}`;
+            if (PREFILLED.has(fk)) return false;
+            const cur = submissionStatus[w]?.[fk];
+            return !(cur?.data && Object.keys(cur.data).length);
+        });
+        if (!weeks.length) return;
+        weeks.forEach(w => PREFILLED.add(`${w}:${groupKey}:${itemName}`));
+        // 세 주를 한 번에 받는다. 한 주씩 물으면 왕복이 세 번이라 그만큼 늦다.
+        const json = await gasGetItem(weeks.join(','), '', itemName);
+        const got = json?.success ? json.data : null;
+        if (!got || !Object.keys(got).length) return;
+        mergeSheetData(got);
+        saveSubmissionStatus();
+        rerender();
+    }
+
     /* 주차를 바꾸면 그 주 값을 다시 받아야 한다 */
     function prefillItem(weekKey, groupKey, itemName, renderFn) {
         PREFILLED.delete(`${weekKey}:${groupKey}:${itemName}`);
@@ -5858,6 +5944,11 @@
                 (item.fields || [{label: '인원', key: 'count'}]).forEach(f => {
                     fieldByLabel[groupKey][item.name][f.label] = f.key;
                 });
+                // 폼은 비고 칸을 따로 적어 두지 않은 항목에도 붙여 준다.
+                // 여기서도 같이 맞춰 둬야 지난주 비고가 비교 칸에 들어온다.
+                if (!fieldByLabel[groupKey][item.name]['비고']) {
+                    fieldByLabel[groupKey][item.name]['비고'] = 'note';
+                }
             });
         });
         return { groupByLabel, fieldByLabel };
