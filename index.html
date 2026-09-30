@@ -2754,9 +2754,10 @@
 
                     // 둘 다 제출되었을 때 제출 시간 오름차순 (먼저 제출한 것이 앞에)
                     if (statusA?.submitted && statusB?.submitted) {
-                        const timeA = new Date(statusA.submittedAt).getTime();
-                        const timeB = new Date(statusB.submittedAt).getTime();
-                        return timeA - timeB;
+                        // 시각을 모르는 것은 뒤로 (NaN 이면 순서가 뒤엉킨다)
+                        const t = v => { const n = new Date(v?.submittedAt ?? '').getTime();
+                                         return Number.isNaN(n) ? Infinity : n; };
+                        return t(statusA) - t(statusB);
                     }
 
                     // 둘 다 미제출이면 원래 순서 유지
@@ -2934,9 +2935,10 @@
                     if (statusA?.submitted && !statusB?.submitted) return -1;
 
                     if (statusA?.submitted && statusB?.submitted) {
-                        const timeA = new Date(statusA.submittedAt).getTime();
-                        const timeB = new Date(statusB.submittedAt).getTime();
-                        return timeA - timeB;
+                        // 시각을 모르는 것은 뒤로 (NaN 이면 순서가 뒤엉킨다)
+                        const t = v => { const n = new Date(v?.submittedAt ?? '').getTime();
+                                         return Number.isNaN(n) ? Infinity : n; };
+                        return t(statusA) - t(statusB);
                     }
 
                     return 0;
@@ -4864,7 +4866,12 @@
             document.getElementById('admin-login-screen').style.display = 'none';
             document.getElementById('admin-dashboard').style.display = 'block';
             initAdminWeekSelect();
-            renderAdminData();
+            /* 값을 받아 온다.
+
+               들어올 때는 조회 키가 없어 '누가 냈는지'만 받아 뒀다. 그래서
+               지금 갖고 있는 것에는 숫자가 없고, 그대로 그리면 표가 빈다.
+               이제 키가 풀렸으니 이 화면이 보여 줄 주차만 값까지 다시 받는다. */
+            onAdminWeekChange();
         } else {
             // 어느 쪽이 틀렸는지는 알려 주지 않는다
             alert('아이디 또는 비밀번호가 일치하지 않습니다');
@@ -5459,7 +5466,32 @@
     }
     const adminRec = (wk, groupKey, name) => submissionStatus[wk]?.[`${wk}:${groupKey}:${name}`];
 
-    function setAdminRange(n) { adminRangeWeeks = n; renderAdminData(); }
+    /* 4·8·12주 보기는 지나간 주차의 값까지 쓴다. 아직 값을 안 받아 둔 주차가
+       있으면 받아 온 뒤 다시 그린다 (한 번 받아 둔 주차는 건너뛴다). */
+    const ADMIN_FETCHED = new Set();
+    let adminLoading = false;
+    async function setAdminRange(n) {
+        adminRangeWeeks = n;
+        if (n === 1 || !getReadKey()) { renderAdminData(); return; }
+        const weeks = adminRecentWeeks(document.getElementById('admin-week-select').value, n)
+            .filter(w => !ADMIN_FETCHED.has(w));
+        if (!weeks.length) { renderAdminData(); return; }
+        adminLoading = true;
+        renderAdminData();
+        setWeekBusy('admin-week-select', true);
+        for (const w of weeks) {
+            ADMIN_FETCHED.add(w);
+            try {
+                const json = await gasGet(w);
+                if (json?.success && json.data?.[w]) mergeSheetData({ [w]: json.data[w] });
+            } catch (e) { console.warn('관리자 조회 실패:', w, e); }
+            renderAdminData();   // 한 주 받을 때마다 채워 나간다
+        }
+        saveSubmissionStatus();
+        adminLoading = false;
+        setWeekBusy('admin-week-select', false);
+        renderAdminData();
+    }
 
     function renderAdminData() {
         const weekKey = document.getElementById('admin-week-select').value;
@@ -5477,7 +5509,9 @@
                 ${[[1, '이번 주 상세'], [4, '4주'], [8, '8주'], [12, '12주']].map(([n, t]) =>
                     `<button class="${n === adminRangeWeeks ? 'on' : ''}" onclick="setAdminRange(${n})">${t}</button>`).join('')}
             </div>
-            <span class="ad-bar-note">${adminRangeWeeks === 1
+            <span class="ad-bar-note">${adminLoading
+                ? '⏳ 시트에서 값을 불러오는 중… (10~20초)'
+                : adminRangeWeeks === 1
                 ? '선택한 주의 모든 부서 입력값을 항목별로 보여줍니다'
                 : `최근 ${adminRangeWeeks}주 합계 추이 · 빈 칸은 미입력`}</span>
         </div>`;
@@ -5539,7 +5573,9 @@
                     </tr></tfoot>
                 </table>
             </div>`
-            : `<div class="ad-none">이 주차에 입력된 자료가 없습니다 · ${rows.length}개 항목 대기</div>`;
+            : `<div class="ad-none">${adminLoading
+                    ? '⏳ 불러오는 중…'
+                    : `이 주차에 입력된 자료가 없습니다 · ${rows.length}개 항목 대기`}</div>`;
 
         return `
         <div class="ad-group">
@@ -5568,7 +5604,8 @@
             return `
             <div class="ad-group">
                 <div class="ad-group-hdr"><div class="ad-group-title">${group.label}</div></div>
-                <div class="ad-none">최근 ${adminRangeWeeks}주 안에 입력된 자료가 없습니다.</div>
+                <div class="ad-none">${adminLoading ? '⏳ 불러오는 중…'
+                    : `최근 ${adminRangeWeeks}주 안에 입력된 자료가 없습니다.`}</div>
             </div>`;
         }
 
@@ -5721,7 +5758,11 @@
     }
 
     /* 값 없이 제출 여부만 표시한다. 이미 갖고 있던 값은 그대로 둔다 —
-       폼을 다시 열었을 때 채워 보여 주는 데 쓰인다. */
+       폼을 다시 열었을 때 채워 보여 주는 데 쓰인다.
+
+       제출 시각은 시트에 적힌 것을 그대로 쓴다. 예전에는 '지금'을 적었는데,
+       그러면 페이지를 열 때마다 모든 부서가 방금 낸 것처럼 보였다.
+       (옛 배포는 부서 이름만 배열로 주므로 그 모양도 받아 준다.) */
     function mergeSheetStatus(raw) {
         const { groupByLabel } = buildFieldLookup();
         Object.entries(raw || {}).forEach(([weekKey, groups]) => {
@@ -5729,14 +5770,19 @@
             Object.entries(groups).forEach(([groupLabel, depts]) => {
                 const groupKey = groupByLabel[groupLabel];
                 if (!groupKey) return;
-                (depts || []).forEach(deptName => {
+                const entries = Array.isArray(depts)
+                    ? depts.map(d => [d, ''])
+                    : Object.entries(depts || {});
+                entries.forEach(([deptName, at]) => {
                     const fullKey = `${weekKey}:${groupKey}:${deptName}`;
                     const prev = submissionStatus[weekKey][fullKey];
                     submissionStatus[weekKey][fullKey] = {
                         submitted: true,
                         data: prev?.data || {},
                         fromSheet: true,
-                        submittedAt: prev?.submittedAt || new Date().toISOString(),
+                        // 시트 시각이 있으면 그것이 맞다. 내가 방금 낸 뒤라 아직
+                        // 시트에서 못 받았을 때만 갖고 있던 값을 쓴다.
+                        submittedAt: at || prev?.submittedAt || null,
                     };
                 });
             });
@@ -5833,9 +5879,10 @@
                         data[fieldKey || fieldLabel] = value;
                     });
                     const previous = submissionStatus[weekKey][fullKey];
+                    // 시각을 지어내지 않는다. 모르면 비워 두고 '-'로 보인다.
                     submissionStatus[weekKey][fullKey] = {
                         submitted: true, data, fromSheet: true,
-                        submittedAt: previous?.submittedAt || new Date().toISOString()
+                        submittedAt: previous?.submittedAt || null
                     };
                 });
             });
@@ -5961,9 +6008,16 @@
         fetchWeekOnDemand(weekKey, renderStatus, 'status-week-select');
     }
 
-    function onAdminWeekChange() {
+    async function onAdminWeekChange() {
         const weekKey = getSelectedWeekKey('admin-week-select');
-        fetchWeekOnDemand(weekKey, renderAdminData, 'admin-week-select');
+        if (getReadKey()) ADMIN_FETCHED.add(weekKey);
+        adminLoading = true;
+        try {
+            await fetchWeekOnDemand(weekKey, renderAdminData, 'admin-week-select');
+        } finally {
+            adminLoading = false;
+            renderAdminData();
+        }
     }
 
     async function querySheetByDate() {
