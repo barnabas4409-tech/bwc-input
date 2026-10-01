@@ -3,7 +3,7 @@
 교역자가 매주 출석·헌금을 입력하는 화면. HTML 파일 **하나**(`index.html`, 약 6,000줄)로
 되어 있고 빌드 과정이 없다. 저장한 그대로 올라간다.
 
-- 운영 주소 — https://barnabas4409-tech.github.io/bwc-input/
+- 운영 주소 — https://woorichurchplanning-dev.github.io/bwc-input/
 - 배포 — `main` 에 push 하면 GitHub Pages 가 1~2분 안에 반영한다. 그게 전부다.
 - 자료가 들어가는 곳 — 구글시트 `bwc_data_input` (Apps Script 경유)
 
